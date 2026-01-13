@@ -6,10 +6,12 @@ import {
   useRouter,
 } from "@tanstack/solid-router";
 import Home from "lucide-solid/icons/home";
+import Copy from "lucide-solid/icons/copy";
 import Play from "lucide-solid/icons/play";
 import QrCode from "lucide-solid/icons/qr-code";
 import RotateCcw from "lucide-solid/icons/rotate-ccw";
 import Settings from "lucide-solid/icons/settings";
+import Share2 from "lucide-solid/icons/share-2";
 import Users from "lucide-solid/icons/users";
 import {
   createEffect,
@@ -70,6 +72,8 @@ function WheelPage() {
   const [isSpinning, setIsSpinning] = createSignal(false);
   const [selectedEatery, setSelectedEatery] = createSignal<Eatery | null>(null);
   const [showQR, setShowQR] = createSignal(false);
+  const [copiedShareLink, setCopiedShareLink] = createSignal(false);
+  const [manualCopyHint, setManualCopyHint] = createSignal(false);
   const [showUsers, setShowUsers] = createSignal(false);
   const [rotation, setRotation] = createSignal(0);
   const [selectedUsers, setSelectedUsers] = createSignal<string[]>([]);
@@ -80,6 +84,7 @@ function WheelPage() {
   const [pinnedTooltip, setPinnedTooltip] =
     createSignal<WheelTooltipState | null>(null);
   let wheelContainerEl: HTMLDivElement | undefined;
+  let shareUrlEl: HTMLDivElement | undefined;
 
   const setTooltipFromPointerEvent = (
     name: string,
@@ -290,6 +295,29 @@ function WheelPage() {
 
   const myPeerId = usePeer2PeerId();
 
+  const canNativeShare = () =>
+    typeof navigator !== "undefined" &&
+    typeof navigator.share === "function";
+
+  const selectShareUrlText = () => {
+    if (typeof window === "undefined") return;
+    if (!shareUrlEl) return;
+    const selection = window.getSelection();
+    if (!selection) return;
+    const range = document.createRange();
+    range.selectNodeContents(shareUrlEl);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
+
+  const copyTextToClipboard = async (text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+    return false;
+  };
+
   const shareUrl = createMemo(() => {
     const connectToLinkUrl = router.buildLocation({
       to: router.routesByPath["/connect-to"].fullPath,
@@ -306,6 +334,40 @@ function WheelPage() {
     localUrl.hash = connectToLinkUrl.hash;
     return localUrl;
   });
+
+  const copyShareUrl = async () => {
+    try {
+      const copied = await copyTextToClipboard(shareUrl().href);
+      if (copied) {
+        setManualCopyHint(false);
+        setCopiedShareLink(true);
+        window.setTimeout(() => setCopiedShareLink(false), 1500);
+        return;
+      }
+
+      // Clipboard API not available (or blocked). Select the URL so the user can Ctrl/Cmd+C.
+      setCopiedShareLink(false);
+      setManualCopyHint(true);
+      selectShareUrlText();
+    } catch {
+      setCopiedShareLink(false);
+      setManualCopyHint(true);
+      selectShareUrlText();
+    }
+  };
+
+  const nativeShare = async () => {
+    if (!canNativeShare()) return;
+    try {
+      await navigator.share({
+        title: "Where to eat",
+        text: "Join my wheel",
+        url: shareUrl().href,
+      });
+    } catch {
+      // User may cancel; treat as no-op.
+    }
+  };
 
   const generateQRCode = () => {
     const url = new URL("https://api.qrserver.com/v1/create-qr-code");
@@ -361,7 +423,16 @@ function WheelPage() {
             <div class="flex items-center justify-between">
               <h1 class="text-3xl font-bold">Eatery Wheel</h1>
               <div class="flex gap-2">
-                <Dialog open={showQR()} onOpenChange={setShowQR}>
+                <Dialog
+                  open={showQR()}
+                  onOpenChange={(open) => {
+                    setShowQR(open);
+                    if (open) {
+                      setCopiedShareLink(false);
+                      setManualCopyHint(false);
+                    }
+                  }}
+                >
                   <DialogTrigger>
                     <Button
                       variant="outline"
@@ -376,7 +447,7 @@ function WheelPage() {
                     <DialogHeader>
                       <DialogTitle>Share Connection</DialogTitle>
                       <DialogDescription>
-                        Others can scan this QR code or use the ID to connect
+                        Scan the QR code, or copy/share the link
                       </DialogDescription>
                     </DialogHeader>
                     <div class="text-center space-y-4">
@@ -385,11 +456,54 @@ function WheelPage() {
                         alt="QR Code"
                         class="mx-auto"
                       />
-                      <div
-                        class="p-2 bg-secondary rounded text-sm font-mono break-all"
-                        data-testid="share-url"
-                      >
-                        {shareUrl().href}
+                      <div class="space-y-2">
+                        <div
+                          class="p-2 bg-secondary rounded text-sm font-mono break-all cursor-pointer select-all"
+                          data-testid="share-url"
+                          title="Click to copy"
+                          ref={(el) => {
+                            shareUrlEl = el;
+                          }}
+                          onClick={() => void copyShareUrl()}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              void copyShareUrl();
+                            }
+                          }}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          {shareUrl().href}
+                        </div>
+                        <Show when={manualCopyHint()}>
+                          <div class="text-xs text-muted-foreground">
+                            Clipboard access isn’t available here; select the link above and press
+                            <span class="font-medium"> Ctrl+C</span> (or <span class="font-medium">Cmd+C</span>).
+                          </div>
+                        </Show>
+                        <div class="flex items-center justify-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void copyShareUrl()}
+                            data-testid="copy-share-url"
+                          >
+                            <Copy class="w-4 h-4 mr-2" />
+                            {copiedShareLink() ? "Copied" : "Copy link"}
+                          </Button>
+                          <Show when={canNativeShare()}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => void nativeShare()}
+                              data-testid="native-share-url"
+                            >
+                              <Share2 class="w-4 h-4 mr-2" />
+                              Share…
+                            </Button>
+                          </Show>
+                        </div>
                       </div>
                     </div>
                   </DialogContent>
