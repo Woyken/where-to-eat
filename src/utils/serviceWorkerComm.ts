@@ -16,7 +16,9 @@ let wbRegistered = false;
 function getWorkbox(): Workbox | null {
   if (typeof window === "undefined") return null;
   if (!wb) {
-    wb = new Workbox("/sw.js");
+    // Use BASE_URL to ensure correct path on GitHub Pages
+    const basePath = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+    wb = new Workbox(`${basePath}/sw.js`);
   }
   if (!wbRegistered) {
     wbRegistered = true;
