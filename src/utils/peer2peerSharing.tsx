@@ -62,26 +62,42 @@ if (typeof window !== "undefined") {
   p2pRequestStatus();
 }
 
+// Fallback peer ID (generated once per session if SW is slow to respond)
+let fallbackPeerId: string | undefined;
+function getFallbackPeerId(): string {
+  if (fallbackPeerId) return fallbackPeerId;
+
+  if (typeof sessionStorage !== "undefined") {
+    const stored = sessionStorage.getItem("fallback-peer-id");
+    if (stored) {
+      fallbackPeerId = stored;
+      return stored;
+    }
+    const id = crypto.randomUUID();
+    sessionStorage.setItem("fallback-peer-id", id);
+    fallbackPeerId = id;
+    return id;
+  }
+  fallbackPeerId = crypto.randomUUID();
+  return fallbackPeerId;
+}
+
 /**
  * Get the browser-wide peer ID from the service worker.
  * All tabs in the same browser share this peer ID.
+ * Returns an accessor function for reactivity - the value may update
+ * when the service worker responds with the real peer ID.
  */
-export function usePeer2PeerId(): string {
-  const peerId = globalPeerId();
-  if (peerId) return peerId;
+export function usePeer2PeerId(): () => string {
+  // Create a memo that returns the global peer ID or fallback
+  // This ensures reactivity when globalPeerId updates
+  const peerId = createMemo(() => {
+    const swPeerId = globalPeerId();
+    if (swPeerId) return swPeerId;
+    return getFallbackPeerId();
+  });
 
-  // Fallback: use sessionStorage while waiting for SW
-  const fallbackId =
-    typeof sessionStorage !== "undefined"
-      ? sessionStorage.getItem("fallback-peer-id") ||
-        (() => {
-          const id = crypto.randomUUID();
-          sessionStorage.setItem("fallback-peer-id", id);
-          return id;
-        })()
-      : crypto.randomUUID();
-
-  return fallbackId;
+  return peerId;
 }
 
 const peer2PeerContext = createContext<{

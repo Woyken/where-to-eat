@@ -14,6 +14,8 @@ dotenv.config({ path: path.resolve(__dirname, ".env.local") });
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
+  fullyParallel: true,
+
   testDir: "./tests/e2e",
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
