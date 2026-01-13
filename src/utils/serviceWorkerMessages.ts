@@ -55,6 +55,13 @@ export const peer2PeerDataSchema = v.variant("type", [
     data: v.array(v.string()),
   }),
   v.object({
+    type: v.literal("request-connection-ids"),
+  }),
+  v.object({
+    type: v.literal("connection-ids"),
+    data: v.array(v.string()),
+  }),
+  v.object({
     type: v.literal("request-storage"),
     data: v.object({ connectionId: v.string() }),
   }),

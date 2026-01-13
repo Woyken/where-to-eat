@@ -454,22 +454,9 @@ export function Peer2PeerSharing(props: ParentProps) {
         return next;
       });
       peerConnectionSend(conn, { type: "request-known-peers" });
-
-      // Send all our connection data to the new peer so they have latest state
-      // This handles the case where they reconnect after missing updates
-      setTimeout(() => {
-        const connections = settingsStorage.store.connections;
-        for (const connectionData of connections) {
-          const data = unwrap(connectionData);
-          if (data) {
-            console.log(
-              "P2P [Leader]: Sending storage to new peer for connection:",
-              data.id,
-            );
-            peerConnectionSend(conn, { type: "storage", data });
-          }
-        }
-      }, 100); // Small delay to let the connection stabilize
+      // Request which connection IDs the remote peer has
+      // We only share connections that both peers have in common
+      peerConnectionSend(conn, { type: "request-connection-ids" });
     });
 
     conn.on("data", (rawData) => {
@@ -567,6 +554,32 @@ export function Peer2PeerSharing(props: ParentProps) {
         // Persist gossip-learned peers to localStorage
         persistKnownPeers(message.data);
         return;
+      case "request-connection-ids":
+        // Respond with the connection IDs we have locally
+        peerConnectionSend(conn, {
+          type: "connection-ids",
+          data: settingsStorage.store.connections.map((c) => c.id),
+        });
+        return;
+      case "connection-ids": {
+        // The remote peer has these connection IDs
+        // Send storage data only for connections that we BOTH have
+        const remoteConnectionIds = new Set(message.data);
+        const localConnections = settingsStorage.store.connections;
+        for (const connectionData of localConnections) {
+          if (remoteConnectionIds.has(connectionData.id)) {
+            const data = unwrap(connectionData);
+            if (data) {
+              console.log(
+                "P2P [Leader]: Sending storage to peer for shared connection:",
+                data.id,
+              );
+              peerConnectionSend(conn, { type: "storage", data });
+            }
+          }
+        }
+        return;
+      }
     }
 
     // Forward data messages to all tabs (including self)
@@ -584,7 +597,9 @@ export function Peer2PeerSharing(props: ParentProps) {
     switch (event.type) {
       case "known-peers":
       case "request-known-peers":
-        // Already handled by leader
+      case "request-connection-ids":
+      case "connection-ids":
+        // Already handled by leader in handleIncomingPeerData
         break;
       case "request-storage": {
         console.log(
@@ -696,7 +711,7 @@ export function Peer2PeerSharing(props: ParentProps) {
       if (alreadyConnected.has(peerId)) continue;
 
       console.log("P2P [Leader]: Connecting to known peer:", peerId);
-      const conn = p.connect(peerId, { serialization: "json" });
+      const conn = p.connect(peerId, { serialization: "binary" });
       setupConnection(conn, "outgoing");
     }
   });

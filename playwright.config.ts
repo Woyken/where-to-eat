@@ -75,6 +75,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: [
     {
+      name: "PeerJS-server",
       command: "pnpm peer-server",
       url: "http://localhost:9000/peerjs",
       reuseExistingServer: !process.env.CI,
@@ -83,6 +84,7 @@ export default defineConfig({
       stderr: "pipe",
     },
     {
+      name: "WebApp",
       command: "pnpm build:skip-check && pnpm preview",
       url: "http://localhost:3000",
       reuseExistingServer: !process.env.CI,
