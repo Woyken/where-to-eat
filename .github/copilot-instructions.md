@@ -23,7 +23,7 @@ pnpm test:e2e:ui      # Playwright UI mode
 | Framework | SolidJS 1.9 |
 | Router | @tanstack/solid-router |
 | Styling | Tailwind CSS 4, tw-animate-css |
-| UI Components | Kobalte (headless), lucide-solid icons |
+| UI Components | solid-ui (shadcn-like), Kobalte (headless), lucide-solid icons |
 | State | solid-js/store, @tanstack/solid-store |
 | P2P | PeerJS, localForage |
 | Validation | Valibot |
@@ -83,7 +83,11 @@ peer.broadcast({ type: "updated-eatery", data: { connectionId, eatery } });
 - `sync-request`, `sync-response`
 
 ## UI Components (src/components/ui/)
-All components use Kobalte + Tailwind. Available: `Button`, `Card`, `Dialog`, `Select`, `TextField`, `ToggleGroup`, `Badge`, `Label`, `DropdownMenu`
+UI components use **solid-ui** (https://www.solid-ui.com/docs/cli), a shadcn-like component system for SolidJS built on Kobalte primitives + Tailwind.
+
+Available components: `Button`, `Card`, `Dialog`, `Select`, `TextField`, `ToggleGroup`, `Badge`, `Label`, `DropdownMenu`
+
+Add new components via CLI: `pnpx solid-ui-cli@latest add <component-name>`
 
 ## Testing
 - E2E tests in `tests/e2e/` using Playwright
@@ -106,8 +110,8 @@ All components use Kobalte + Tailwind. Available: `Button`, `Card`, `Dialog`, `S
 5. Handle in `peer2peerSharing.tsx` message handler
 
 ### Add a UI component
-1. Create in `src/components/ui/`
-2. Use Kobalte primitives + `class-variance-authority` for variants
+1. Use solid-ui CLI: `pnpx solid-ui-cli@latest add <component-name>`
+2. Or manually create in `src/components/ui/` using Kobalte primitives + `class-variance-authority`
 3. Follow existing patterns (see `button.tsx`)
 
 ## Gotchas
