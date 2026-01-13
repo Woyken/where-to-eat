@@ -321,110 +321,111 @@ function WheelPage() {
       <Show
         when={activeEateries().length > 0}
         fallback={
-          <div class="min-h-screen p-4">
-            <div class="max-w-2xl mx-auto space-y-6">
-              <div class="flex items-center justify-between">
-                <h1 class="text-3xl font-bold">Eatery Wheel</h1>
-                <Link to="/">
-                  <Button variant="outline" size="sm">
-                    <Home class="w-4 h-4 mr-2" />
-                    Home
-                  </Button>
-                </Link>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Setup Required</CardTitle>
-                </CardHeader>
-                <CardContent class="space-y-4">
-                  <p class="text-muted-foreground">
-                    You need to add some eateries before you can spin the wheel.
-                  </p>
+          <div class="grid place-items-center py-16">
+            <Card class="w-full max-w-2xl overflow-hidden">
+              <CardHeader class="border-b">
+                <CardTitle>Almost ready</CardTitle>
+              </CardHeader>
+              <CardContent class="grid gap-4 pt-6">
+                <div class="text-sm text-muted-foreground">
+                  Add a few eateries first, then come back to spin.
+                </div>
+                <div class="flex flex-wrap gap-2">
                   <Link
                     to="/settings/$connectionId"
                     params={{ connectionId: connectionId() }}
                   >
                     <Button>
-                      <Settings class="w-4 h-4 mr-2" />
-                      Go to Settings
+                      <Settings class="mr-2 size-4" />
+                      Open settings
                     </Button>
                   </Link>
-                </CardContent>
-              </Card>
-            </div>
+                  <Link to="/">
+                    <Button variant="outline">
+                      <Home class="mr-2 size-4" />
+                      Home
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         }
       >
-        <div class="min-h-screen">
-          <div class="max-w-4xl mx-auto space-y-6">
-            <div class="flex items-center justify-between">
-              <h1 class="text-3xl font-bold">Eatery Wheel</h1>
-              <div class="flex gap-2">
-                <Dialog open={showQR()} onOpenChange={setShowQR}>
-                  <DialogTrigger>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      data-testid="share-button"
-                    >
-                      <QrCode class="w-4 h-4 mr-2" />
-                      Share
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Share Connection</DialogTitle>
-                      <DialogDescription>
-                        Others can scan this QR code or use the ID to connect
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div class="text-center space-y-4">
+        <div class="grid gap-6">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div class="min-w-0">
+              <div class="text-sm text-muted-foreground">Room</div>
+              <h1 class="truncate text-3xl font-semibold tracking-tight">
+                {currentConnection()?.settings.connection.name ?? "Eatery wheel"}
+              </h1>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <Dialog open={showQR()} onOpenChange={setShowQR}>
+                <DialogTrigger>
+                  <Button variant="outline" size="sm" data-testid="share-button">
+                    <QrCode class="mr-2 size-4" />
+                    Share
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Share this room</DialogTitle>
+                    <DialogDescription>
+                      Others can scan the QR code or open the link.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div class="grid gap-4">
+                    <div class="grid place-items-center rounded-xl border bg-card p-4">
                       <img
                         src={generateQRCode() || "/placeholder.svg"}
                         alt="QR Code"
-                        class="mx-auto"
+                        class="h-[220px] w-[220px]"
                       />
-                      <div
-                        class="p-2 bg-secondary rounded text-sm font-mono break-all"
-                        data-testid="share-url"
-                      >
-                        {shareUrl().href}
-                      </div>
                     </div>
-                  </DialogContent>
-                </Dialog>
-                <Link
-                  to="/settings/$connectionId"
-                  params={{ connectionId: connectionId() }}
-                >
-                  <Button variant="outline" size="sm">
-                    <Settings class="w-4 h-4 mr-2" />
-                    Settings
-                  </Button>
-                </Link>
-                <Link to="/">
-                  <Button variant="outline" size="sm">
-                    <Home class="w-4 h-4 mr-2" />
-                    Home
-                  </Button>
-                </Link>
-              </div>
-            </div>
+                    <div
+                      class="rounded-xl border bg-card p-3 text-xs font-mono break-all"
+                      data-testid="share-url"
+                    >
+                      {shareUrl().href}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
-            <div class="grid lg:grid-cols-3 gap-6">
-              <div class="lg:col-span-2 space-y-6">
-                <Card>
-                  <CardContent class="p-6">
-                    <div class="relative w-80 h-80 mx-auto">
-                      {/* Pointer at top */}
-                      <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
-                        <div class="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent border-t-red-600 drop-shadow-lg" />
+              <Link
+                to="/settings/$connectionId"
+                params={{ connectionId: connectionId() }}
+              >
+                <Button variant="outline" size="sm">
+                  <Settings class="mr-2 size-4" />
+                  Settings
+                </Button>
+              </Link>
+              <Link to="/">
+                <Button variant="outline" size="sm">
+                  <Home class="mr-2 size-4" />
+                  Home
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div class="grid gap-6 lg:grid-cols-[1fr_340px]">
+            <div class="grid gap-6">
+              <Card class="overflow-hidden">
+                <CardHeader class="border-b">
+                  <CardTitle>Wheel</CardTitle>
+                </CardHeader>
+                <CardContent class="p-6">
+                  <div class="mx-auto w-[min(22rem,80vw)]">
+                    <div class="relative aspect-square">
+                      <div class="absolute -top-1 left-1/2 z-10 -translate-x-1/2">
+                        <div class="h-0 w-0 border-l-[11px] border-r-[11px] border-t-[20px] border-l-transparent border-r-transparent border-t-primary drop-shadow" />
                       </div>
 
-                      {/* Wheel container */}
                       <div
-                        class="relative w-full h-full"
+                        class="relative size-full"
                         ref={(el) => {
                           wheelContainerEl = el;
                         }}
@@ -450,7 +451,7 @@ function WheelPage() {
                         </Show>
 
                         <div
-                          class="w-full h-full rounded-full border-8 border-gray-800 shadow-2xl relative overflow-hidden"
+                          class="size-full rounded-full border-[10px] border-foreground/15 bg-card shadow-[0_18px_50px_-18px_color-mix(in_oklch,var(--foreground)_40%,transparent)] overflow-hidden"
                           style={{
                             transform: `rotate(${rotation()}deg)`,
                             transition: isSpinning()
@@ -458,7 +459,7 @@ function WheelPage() {
                               : "none",
                           }}
                         >
-                          <svg class="w-full h-full" viewBox="0 0 200 200">
+                          <svg class="size-full" viewBox="0 0 200 200">
                             <defs>
                               <filter
                                 id="shadow"
@@ -639,140 +640,165 @@ function WheelPage() {
                               cx="100"
                               cy="100"
                               r="18"
-                              fill="#374151"
-                              stroke="#1f2937"
+                              fill="rgba(15, 23, 42, 0.82)"
+                              stroke="rgba(15, 23, 42, 0.92)"
                               stroke-width="3"
                             />
-                            <circle cx="100" cy="100" r="8" fill="#6b7280" />
+                            <circle cx="100" cy="100" r="8" fill="rgba(148, 163, 184, 0.9)" />
                           </svg>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </CardContent>
+              </Card>
 
-                <div class="flex justify-center gap-4">
-                  <Button
-                    onClick={spinWheel}
-                    disabled={isSpinning() || segments().length === 0}
-                    size="lg"
-                    class="px-8"
-                    data-testid="spin-wheel"
-                  >
-                    <Play class="w-5 h-5 mr-2" />
-                    {isSpinning() ? "Spinning..." : "Spin Wheel"}
-                  </Button>
-                  <Button
-                    onClick={resetWheel}
-                    variant="outline"
-                    size="lg"
-                    disabled={isSpinning()}
-                  >
-                    <RotateCcw class="w-5 h-5 mr-2" />
-                    Reset
-                  </Button>
-                </div>
+              <div class="flex flex-wrap justify-center gap-3">
+                <Button
+                  onClick={spinWheel}
+                  disabled={isSpinning() || segments().length === 0}
+                  size="lg"
+                  class="px-8"
+                  data-testid="spin-wheel"
+                >
+                  <Play class="mr-2 size-5" />
+                  {isSpinning() ? "Spinning…" : "Spin"}
+                </Button>
+                <Button
+                  onClick={resetWheel}
+                  variant="outline"
+                  size="lg"
+                  disabled={isSpinning()}
+                >
+                  <RotateCcw class="mr-2 size-5" />
+                  Reset
+                </Button>
+              </div>
 
-                {selectedEatery() && (
-                  <Card class="border-warning bg-success">
-                    <CardHeader>
-                      <CardTitle class="text-success-foreground">
-                        🎉 Winner!
-                      </CardTitle>
+              <Show when={selectedEatery()}>
+                {(eatery) => (
+                  <Card class="overflow-hidden border-0 bg-gradient-to-br from-success/35 via-card to-accent/20">
+                    <CardHeader class="border-b border-foreground/10">
+                      <CardTitle>Winner</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div class="text-2xl font-bold text-success-foreground">
-                        {selectedEatery()!.name}
+                    <CardContent class="grid gap-2 pt-6">
+                      <div class="text-2xl font-semibold tracking-tight">
+                        {eatery().name}
                       </div>
-                      {selectedEatery()!.cuisine && (
-                        <Badge variant="secondary" class="mt-2">
-                          {selectedEatery()!.cuisine}
+                      <Show when={eatery().cuisine}>
+                        <Badge variant="secondary" class="w-fit">
+                          {eatery().cuisine}
                         </Badge>
-                      )}
+                      </Show>
                     </CardContent>
                   </Card>
                 )}
-              </div>
+              </Show>
+            </div>
 
-              <div class="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle class="flex items-center gap-2">
-                      <Users class="w-5 h-5" />
-                      Participating Users
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent class="space-y-3">
-                    {activeUsers().map((user) => (
-                      <div class="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`user-${user.id}`}
-                          checked={selectedUsers().includes(user.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedUsers([...selectedUsers(), user.id]);
-                            } else {
-                              setSelectedUsers(
-                                selectedUsers().filter((id) => id !== user.id),
-                              );
-                            }
-                          }}
-                          class="rounded border-secondary"
-                        />
+            <div class="grid gap-6">
+              <Card>
+                <CardHeader class="border-b">
+                  <CardTitle class="flex items-center gap-2">
+                    <Users class="size-5" />
+                    Participants
+                  </CardTitle>
+                </CardHeader>
+                <CardContent class="grid gap-3 pt-6">
+                  <Show
+                    when={activeUsers().length > 0}
+                    fallback={
+                      <div class="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+                        Add users in settings to start scoring.
+                      </div>
+                    }
+                  >
+                    <div class="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setSelectedUsers(activeUsers().map((u) => u.id))}
+                      >
+                        Select all
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedUsers([])}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+
+                    <div class="grid gap-2">
+                      {activeUsers().map((user) => (
                         <label
                           for={`user-${user.id}`}
-                          class={`text-sm font-medium`}
+                          class="flex cursor-pointer items-center gap-3 rounded-xl border bg-card px-3 py-2"
                         >
-                          {user.name}
+                          <input
+                            type="checkbox"
+                            id={`user-${user.id}`}
+                            checked={selectedUsers().includes(user.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedUsers([...selectedUsers(), user.id]);
+                              } else {
+                                setSelectedUsers(
+                                  selectedUsers().filter((id) => id !== user.id),
+                                );
+                              }
+                            }}
+                            class="size-4 rounded border-border bg-background text-primary"
+                          />
+                          <span class="text-sm font-medium">{user.name}</span>
                         </label>
-                      </div>
-                    ))}
-                    {selectedUsers().length === 0 && (
-                      <p class="text-sm text-destructive">
-                        Select at least one user to spin
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
+                      ))}
+                    </div>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle class="flex items-center gap-2">
-                      Eateries ({activeEateries().length})
-                      <Show when={vetoedEateryCount() > 0}>
-                        <Badge variant="secondary">
-                          {vetoedEateryCount()} vetoed
-                        </Badge>
-                      </Show>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div class="space-y-2 max-h-60 overflow-y-auto">
-                      {getWheelSegments().map((segment) => (
-                        <div class="flex items-center justify-between p-2 border-[3px] rounded">
-                          <div>
-                            <div class="font-medium">{segment.eatery.name}</div>
-                            {segment.eatery.cuisine && (
+                    <Show when={selectedUsers().length === 0}>
+                      <div class="text-sm text-destructive">
+                        Select at least one participant to spin.
+                      </div>
+                    </Show>
+                  </Show>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader class="border-b">
+                  <CardTitle class="flex items-center gap-2">
+                    Eateries ({activeEateries().length})
+                    <Show when={vetoedEateryCount() > 0}>
+                      <Badge variant="secondary">{vetoedEateryCount()} vetoed</Badge>
+                    </Show>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent class="pt-6">
+                  <div class="grid gap-2 max-h-72 overflow-y-auto">
+                    <For each={segments()}>
+                      {(segment) => (
+                        <div class="flex items-start justify-between gap-3 rounded-xl border bg-card p-3">
+                          <div class="min-w-0">
+                            <div class="truncate font-medium">{segment.eatery.name}</div>
+                            <Show when={segment.eatery.cuisine}>
                               <div class="text-sm text-muted-foreground">
                                 {segment.eatery.cuisine}
                               </div>
-                            )}
+                            </Show>
                           </div>
-                          <div class="text-right">
-                            <div class="text-sm font-medium">
-                              Score: {segment.combinedScore}
-                            </div>
+                          <div class="shrink-0 text-right">
+                            <div class="text-sm font-medium">{segment.combinedScore}</div>
                             <div class="text-xs text-muted-foreground">
-                              {segment.percentage.toFixed(1)}% of wheel
+                              {segment.percentage.toFixed(1)}%
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                      )}
+                    </For>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

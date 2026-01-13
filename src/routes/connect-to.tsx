@@ -2,6 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/solid-router";
 import { createEffect, createSignal, Match, onMount, Switch } from "solid-js";
 import * as v from "valibot";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { usePeer2Peer } from "~/utils/peer2peerSharing";
 
 const searchSchema = v.object({
@@ -84,16 +85,49 @@ function RouteComponent() {
   });
 
   return (
-    <Switch>
-      <Match when={currentStatus() === "connecting"}>
-        <div>Connecting...</div>
-      </Match>
-      <Match when={currentStatus() === "waiting-for-data"}>
-        <div>Waiting for data...</div>
-      </Match>
-      <Match when={currentStatus() === "received-data"}>
-        <div>Data received!</div>
-      </Match>
-    </Switch>
+    <div class="grid place-items-center py-16">
+      <Card class="w-full max-w-lg">
+        <CardHeader>
+          <CardTitle>Joining shared wheel…</CardTitle>
+        </CardHeader>
+        <CardContent class="grid gap-4">
+          <Switch>
+            <Match when={currentStatus() === "connecting"}>
+              <StatusRow title="Connecting" description="Setting up a peer connection." />
+            </Match>
+            <Match when={currentStatus() === "waiting-for-data"}>
+              <StatusRow title="Waiting for data" description="Requesting the room’s data from the host." />
+            </Match>
+            <Match when={currentStatus() === "received-data"}>
+              <StatusRow title="Data received" description="Opening the wheel now." />
+            </Match>
+          </Switch>
+
+          <div class="rounded-lg border bg-card p-3 text-xs text-muted-foreground">
+            <div>
+              Connection: <span class="font-mono text-foreground">{connectionId()}</span>
+            </div>
+            <div>
+              Peer: <span class="font-mono text-foreground">{peerId()}</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function StatusRow(props: { title: string; description: string }) {
+  return (
+    <div class="flex items-start gap-3">
+      <div
+        class="mt-0.5 size-4 rounded-full border-2 border-muted-foreground/50 border-t-transparent animate-spin"
+        aria-hidden="true"
+      />
+      <div class="grid gap-1">
+        <div class="text-sm font-medium">{props.title}</div>
+        <div class="text-sm text-muted-foreground">{props.description}</div>
+      </div>
+    </div>
   );
 }

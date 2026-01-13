@@ -238,33 +238,37 @@ function SettingsPage() {
 
   return (
     <Show when={currentConnection()} fallback={null}>
-      <div class="min-h-screen p-4">
-        <div class="max-w-4xl mx-auto space-y-6">
-          <div class="flex items-center justify-between">
-            <h1 class="text-3xl font-bold">Settings</h1>
-            <div class="flex gap-2">
-              <Link
-                to="/wheel/$connectionId"
-                params={{ connectionId: connectionId() }}
-              >
-                <Button variant="outline" size="sm">
-                  Back to Wheel
-                </Button>
-              </Link>
-              <Link to="/">
-                <Button variant="outline" size="sm">
-                  <Home class="w-4 h-4 mr-2" />
-                  Home
-                </Button>
-              </Link>
-            </div>
+      <div class="grid gap-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div class="min-w-0">
+            <div class="text-sm text-muted-foreground">Settings</div>
+            <h1 class="truncate text-3xl font-semibold tracking-tight">
+              {currentConnection()?.settings.connection.name ?? "Room"}
+            </h1>
           </div>
+          <div class="flex flex-wrap gap-2">
+            <Link
+              to="/wheel/$connectionId"
+              params={{ connectionId: connectionId() }}
+            >
+              <Button variant="outline" size="sm">
+                Back to wheel
+              </Button>
+            </Link>
+            <Link to="/">
+              <Button variant="outline" size="sm">
+                <Home class="mr-2 size-4" />
+                Home
+              </Button>
+            </Link>
+          </div>
+        </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Connection</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardHeader class="border-b">
+            <CardTitle>Room</CardTitle>
+          </CardHeader>
+          <CardContent class="pt-6">
               <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
                 <div class="flex-1">
                   <TextField
@@ -287,12 +291,12 @@ function SettingsPage() {
                   Save
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+          </CardContent>
+        </Card>
 
-          <div class="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
+        <div class="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader class="border-b">
                 <CardTitle class="flex items-center justify-between">
                   Eateries ({activeEateries().length})
                   <Dialog
@@ -301,7 +305,7 @@ function SettingsPage() {
                   >
                     <DialogTrigger>
                       <Button size="sm" data-testid="add-eatery-open">
-                        <Plus class="w-4 h-4 mr-2" />
+                        <Plus class="mr-2 size-4" />
                         Add
                       </Button>
                     </DialogTrigger>
@@ -356,12 +360,12 @@ function SettingsPage() {
                   </Dialog>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div class="space-y-3 max-h-96 overflow-y-auto">
+              <CardContent class="pt-6">
+                <div class="grid gap-2 max-h-96 overflow-y-auto">
                   <Show
                     when={activeEateries().length > 0}
                     fallback={
-                      <p class="text-muted-foreground text-center py-8">
+                      <p class="text-muted-foreground text-center py-10">
                         No eateries added yet. Add some to get started!
                       </p>
                     }
@@ -369,7 +373,7 @@ function SettingsPage() {
                     <For each={activeEateries()}>
                       {(eatery) => (
                         <div
-                          class="flex items-center justify-between p-3 border-[3px] rounded-lg"
+                          class="flex items-center justify-between gap-3 rounded-xl border bg-card p-3"
                           data-eatery-name={eatery.name}
                         >
                           <div>
@@ -386,7 +390,8 @@ function SettingsPage() {
                             onClick={() => removeEatery(eatery.id)}
                             data-testid="delete-eatery"
                           >
-                            <Trash2 class="w-4 h-4" />
+                            <Trash2 class="size-4" />
+                            <span class="sr-only">Delete</span>
                           </Button>
                         </div>
                       )}
@@ -394,16 +399,16 @@ function SettingsPage() {
                   </Show>
                 </div>
               </CardContent>
-            </Card>
+          </Card>
 
-            <Card>
-              <CardHeader>
+          <Card>
+            <CardHeader class="border-b">
                 <CardTitle class="flex items-center justify-between">
                   Users ({currentConnection()?.settings.users.length})
                   <Dialog open={showAddUser()} onOpenChange={setShowAddUser}>
                     <DialogTrigger>
                       <Button size="sm" data-testid="add-user-open">
-                        <Plus class="w-4 h-4 mr-2" />
+                        <Plus class="mr-2 size-4" />
                         Add
                       </Button>
                     </DialogTrigger>
@@ -443,12 +448,12 @@ function SettingsPage() {
                   </Dialog>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div class="space-y-3 max-h-96 overflow-y-auto">
+              <CardContent class="pt-6">
+                <div class="grid gap-2 max-h-96 overflow-y-auto">
                   <Show
                     when={activeUsers().length > 0}
                     fallback={
-                      <p class="text-muted-foreground text-center py-8">
+                      <p class="text-muted-foreground text-center py-10">
                         No users added yet. Add some to get started!
                       </p>
                     }
@@ -456,7 +461,7 @@ function SettingsPage() {
                     <For each={activeUsers()}>
                       {(user) => (
                         <div
-                          class="flex items-center justify-between p-3 border-[3px] rounded-lg"
+                          class="flex items-center justify-between gap-3 rounded-xl border bg-card p-3"
                           data-user-name={user.name}
                         >
                           <div>
@@ -471,7 +476,8 @@ function SettingsPage() {
                             onClick={() => removeUser(user.id)}
                             data-testid="delete-user"
                           >
-                            <Trash2 class="w-4 h-4" />
+                            <Trash2 class="size-4" />
+                            <span class="sr-only">Delete</span>
                           </Button>
                         </div>
                       )}
@@ -479,15 +485,15 @@ function SettingsPage() {
                   </Show>
                 </div>
               </CardContent>
-            </Card>
-          </div>
+          </Card>
+        </div>
 
-          <Show when={activeUsers().length > 0 && activeEateries().length > 0}>
-            <Card>
-              <CardHeader>
-                <CardTitle>User Ratings</CardTitle>
-              </CardHeader>
-              <CardContent>
+        <Show when={activeUsers().length > 0 && activeEateries().length > 0}>
+          <Card>
+            <CardHeader class="border-b">
+              <CardTitle>Ratings</CardTitle>
+            </CardHeader>
+            <CardContent class="pt-6">
                 <div class="space-y-4">
                   <div class="space-y-2">
                     <ToggleGroup
@@ -513,19 +519,17 @@ function SettingsPage() {
                   <Show when={selectedUser()}>
                     {(user) => (
                       <div class="space-y-3">
-                        <h3 class="font-medium">
-                          Rate Eateries for {user().name}
-                        </h3>
-                        <div class="grid gap-4">
+                        <h3 class="font-medium">Rate for {user().name}</h3>
+                        <div class="grid gap-3">
                           <For each={activeEateries()}>
                             {(eatery) => {
                               const vetoed = () =>
                                 isEateryVetoed(user().id, eatery.id);
                               return (
                                 <div
-                                  class="p-4 border-[3px] rounded-lg space-y-3"
+                                  class="rounded-xl border bg-card p-4 space-y-3"
                                   classList={{
-                                    "border-red-300 bg-red-50 dark:bg-red-950/20":
+                                    "border-red-300/70 bg-red-50/60 dark:bg-red-950/20":
                                       vetoed(),
                                   }}
                                   data-eatery-name={eatery.name}
@@ -555,10 +559,11 @@ function SettingsPage() {
                                         }
                                         data-testid="veto-toggle"
                                       >
-                                        <Ban class="w-4 h-4" />
+                                        <Ban class="size-4" />
+                                        <span class="sr-only">Toggle veto</span>
                                       </Button>
                                       <Show when={!vetoed()}>
-                                        <div class="text-lg font-bold text-blue-600">
+                                        <div class="text-lg font-semibold text-primary">
                                           {selectedUserScores()?.find(
                                             (x) => x.eateryId === eatery.id,
                                           )?.score ?? 0}
@@ -599,7 +604,7 @@ function SettingsPage() {
                                             Number.parseInt(e.target.value),
                                           )
                                         }
-                                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                                        class="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer"
                                         style={{
                                           background: `linear-gradient(to right, #ef4444 0%, #f97316 25%, #eab308 50%, #22c55e 75%, #16a34a 100%)`,
                                         }}
@@ -623,10 +628,9 @@ function SettingsPage() {
                     )}
                   </Show>
                 </div>
-              </CardContent>
-            </Card>
-          </Show>
-        </div>
+            </CardContent>
+          </Card>
+        </Show>
       </div>
     </Show>
   );
