@@ -1,9 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/solid-router";
 import Plus from "lucide-solid/icons/plus";
-import QrCode from "lucide-solid/icons/qr-code";
-import Scan from "lucide-solid/icons/scan";
 import Trash2 from "lucide-solid/icons/trash-2";
-import { createEffect, createSignal, For, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
 import { Button } from "~/components/ui/button";
 import {
@@ -15,46 +13,33 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
-import {
   TextField,
   TextFieldInput,
   TextFieldLabel,
 } from "~/components/ui/text-field";
-import type { StorageSchemaType } from "~/utils/jsonStorage";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-interface Connection {
-  id: string;
-  name: string;
-  updatedAt: number;
-}
-
 function HomePage() {
   const [connectId, setConnectId] = createSignal("");
   const [connectionName, setConnectionName] = createSignal("");
   const [showConnectDialog, setShowConnectDialog] = createSignal(false);
-  const [showQRScanner, setShowQRScanner] = createSignal(false);
 
   const settingsStorage = useSettingsStorage();
 
   const createFreshConnection = () => {
     console.log("createFreshConnection called");
     try {
+      const trimmedName = connectionName().trim();
       const newId = settingsStorage.addNewConnection(
-        connectionName() ||
+        trimmedName ||
           `Connection ${settingsStorage.store.connections.length + 1}`,
       );
       console.log("Created connection", newId);
+
+      setConnectionName("");
 
       router.navigate({
         to: "/wheel/$connectionId",
@@ -103,11 +88,6 @@ function HomePage() {
 
   const deleteConnection = (id: string) => {
     settingsStorage.removeConnection(id);
-  };
-
-  const handleQRScan = (result: string) => {
-    setConnectId(result);
-    setShowQRScanner(false);
   };
 
   const connections = () => settingsStorage.store.connections;
@@ -174,7 +154,7 @@ function HomePage() {
                       setConnectId={setConnectId}
                       setConnectionName={setConnectionName}
                       setShowConnectDialog={setShowConnectDialog}
-                      setShowQRScanner={setShowQRScanner}
+                      setShowQRScanner={() => {}}
                       showConnectDialog={showConnectDialog()}
                     />
                   </CardFooter>
@@ -261,7 +241,7 @@ function HomePage() {
                   setConnectId={setConnectId}
                   setConnectionName={setConnectionName}
                   setShowConnectDialog={setShowConnectDialog}
-                  setShowQRScanner={setShowQRScanner}
+                  setShowQRScanner={() => {}}
                   showConnectDialog={showConnectDialog()}
                 />
               </CardFooter>

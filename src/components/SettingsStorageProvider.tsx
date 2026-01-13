@@ -6,7 +6,11 @@ type SettingsStorage = {
   store: { connections: StorageSchemaType[] };
   addNewConnection: (name: string) => string;
   removeConnection: (id: string) => void;
-  updateConnection: (id: string, name: string) => void;
+  updateConnection: (id: string, name: string, updatedAt?: number) => void;
+  upsertConnectionInfo: (
+    connectionId: string,
+    connection: StorageSchemaType["settings"]["connection"],
+  ) => void;
   setConnection: (connection: StorageSchemaType) => void;
   addUser: (connectionId: string, name: string, email?: string) => string;
   removeUser: (connectionId: string, userId: string) => void;
@@ -47,7 +51,9 @@ type SettingsStorage = {
     connectionId: string,
     userId: string,
     eateryId: string,
-  ) => NonNullable<StorageSchemaType["settings"]["eateryVetoes"]>[0] | undefined;
+  ) =>
+    | NonNullable<StorageSchemaType["settings"]["eateryVetoes"]>[0]
+    | undefined;
   upsertVeto: (
     connectionId: string,
     veto: NonNullable<StorageSchemaType["settings"]["eateryVetoes"]>[0],
@@ -195,19 +201,53 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
         //reconcile(store.connections.filter((x) => x.id !== id)),
       );
     },
-    updateConnection: (id: string, name: string) => {
+    updateConnection: (id: string, name: string, updatedAt?: number) => {
       const connectionIdx = store.connections.findIndex((x) => x.id === id);
       if (connectionIdx === -1) return;
 
       setSettings(
         "connections",
         connectionIdx,
+        "settings",
+        "connection",
         reconcile({
-          id,
           name,
-          updatedAt: Date.now(),
-          settings: store.connections[connectionIdx].settings,
+          updatedAt: updatedAt ?? Date.now(),
         }),
+      );
+    },
+    upsertConnectionInfo: (
+      connectionId: string,
+      connection: StorageSchemaType["settings"]["connection"],
+    ) => {
+      const connectionIdx = store.connections.findIndex(
+        (x) => x.id === connectionId,
+      );
+
+      if (connectionIdx === -1) {
+        const stub: StorageSchemaType = {
+          id: connectionId,
+          settings: {
+            connection,
+            eateries: [],
+            users: [],
+            eateryScores: [],
+            eateryVetoes: [],
+          },
+        };
+        setSettings("connections", store.connections.length, stub);
+        return;
+      }
+
+      const existing = store.connections[connectionIdx].settings.connection;
+      if ((connection.updatedAt ?? 0) <= (existing.updatedAt ?? 0)) return;
+
+      setSettings(
+        "connections",
+        connectionIdx,
+        "settings",
+        "connection",
+        reconcile(connection),
       );
     },
     setConnection: (connection: StorageSchemaType) => {
@@ -453,7 +493,7 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
         updatedAt: Date.now(),
       };
 
-       const createdScores: StorageSchemaType["settings"]["eateryScores"] = [];
+      const createdScores: StorageSchemaType["settings"]["eateryScores"] = [];
 
       setSettings(
         "connections",
@@ -466,53 +506,54 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
         },
       );
 
-       // Default score of 50 for each active user for this new eatery.
-       // This keeps the data model complete (every user has a score per eatery)
-       // and relies on tombstone semantics if a score already exists.
-       const activeUsers = store.connections[connectionIdx].settings.users.filter(
-         (u) => !u._deleted,
-       );
-       const existingScores = store.connections[connectionIdx].settings.eateryScores;
-       let scoreInsertIdx = existingScores.length;
+      // Default score of 50 for each active user for this new eatery.
+      // This keeps the data model complete (every user has a score per eatery)
+      // and relies on tombstone semantics if a score already exists.
+      const activeUsers = store.connections[
+        connectionIdx
+      ].settings.users.filter((u) => !u._deleted);
+      const existingScores =
+        store.connections[connectionIdx].settings.eateryScores;
+      let scoreInsertIdx = existingScores.length;
 
-       for (const user of activeUsers) {
-         const scoreIdx = existingScores.findIndex(
-           (s) => s.userId === user.id && s.eateryId === newEatery.id,
-         );
+      for (const user of activeUsers) {
+        const scoreIdx = existingScores.findIndex(
+          (s) => s.userId === user.id && s.eateryId === newEatery.id,
+        );
 
-         const defaultScore = {
-           userId: user.id,
-           eateryId: newEatery.id,
-           score: 50,
-           updatedAt: Date.now(),
-           _deleted: false,
-         };
+        const defaultScore = {
+          userId: user.id,
+          eateryId: newEatery.id,
+          score: 50,
+          updatedAt: Date.now(),
+          _deleted: false,
+        };
 
-         if (scoreIdx === -1) {
-           setSettings(
-             "connections",
-             connectionIdx,
-             "settings",
-             "eateryScores",
-             scoreInsertIdx,
-             defaultScore,
-           );
-           scoreInsertIdx++;
-           createdScores.push(defaultScore);
-         } else if (existingScores[scoreIdx]._deleted) {
-           setSettings(
-             "connections",
-             connectionIdx,
-             "settings",
-             "eateryScores",
-             scoreIdx,
-             reconcile(defaultScore),
-           );
-           createdScores.push(defaultScore);
-         }
-       }
+        if (scoreIdx === -1) {
+          setSettings(
+            "connections",
+            connectionIdx,
+            "settings",
+            "eateryScores",
+            scoreInsertIdx,
+            defaultScore,
+          );
+          scoreInsertIdx++;
+          createdScores.push(defaultScore);
+        } else if (existingScores[scoreIdx]._deleted) {
+          setSettings(
+            "connections",
+            connectionIdx,
+            "settings",
+            "eateryScores",
+            scoreIdx,
+            reconcile(defaultScore),
+          );
+          createdScores.push(defaultScore);
+        }
+      }
 
-       return { eateryId: newEatery.id, createdScores };
+      return { eateryId: newEatery.id, createdScores };
     },
     removeEatery: (connectionId, eateryId) => {
       const connectionIdx = store.connections.findIndex(
@@ -696,7 +737,8 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
       );
       if (connectionIdx === -1) return undefined;
 
-      const vetoes = store.connections[connectionIdx].settings.eateryVetoes ?? [];
+      const vetoes =
+        store.connections[connectionIdx].settings.eateryVetoes ?? [];
       const vetoIdx = vetoes.findIndex(
         (x) => x.userId === userId && x.eateryId === eateryId,
       );
@@ -745,7 +787,8 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
       );
       if (connectionIdx === -1) return;
 
-      const vetoes = store.connections[connectionIdx].settings.eateryVetoes ?? [];
+      const vetoes =
+        store.connections[connectionIdx].settings.eateryVetoes ?? [];
       const vetoIdx = vetoes.findIndex(
         (x) => x.userId === veto.userId && x.eateryId === veto.eateryId,
       );

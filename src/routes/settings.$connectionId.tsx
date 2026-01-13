@@ -1,11 +1,6 @@
-import {
-  createFileRoute,
-  Link,
-  Navigate,
-  useRouter,
-} from "@tanstack/solid-router";
-import Home from "lucide-solid/icons/home";
+import { createFileRoute, Link, useRouter } from "@tanstack/solid-router";
 import Ban from "lucide-solid/icons/ban";
+import Home from "lucide-solid/icons/home";
 import Plus from "lucide-solid/icons/plus";
 import Trash2 from "lucide-solid/icons/trash-2";
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
@@ -20,14 +15,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import { Label } from "~/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import {
   TextField,
   TextFieldInput,
@@ -41,27 +28,11 @@ export const Route = createFileRoute("/settings/$connectionId")({
   component: SettingsPage,
 });
 
-interface Eatery {
-  id: string;
-  name: string;
-  cuisine?: string;
-}
-
-interface User {
-  id: string;
-  name: string;
-  scores: { [eateryId: string]: number };
-}
-
-interface WheelSettings {
-  eateries: Eatery[];
-  users: User[];
-  currentUser: string | null;
-}
-
 function SettingsPage() {
   const connectionId = Route.useParams({ select: (p) => p.connectionId });
   const router = useRouter();
+
+  const [connectionName, setConnectionName] = createSignal("");
 
   const [newEateryName, setNewEateryName] = createSignal("");
   const [newEateryCuisine, setNewEateryCuisine] = createSignal("");
@@ -75,6 +46,12 @@ function SettingsPage() {
   const currentConnection = createMemo(() =>
     settingsStorage.store.connections.find((x) => x.id === connectionId()),
   );
+
+  createEffect(() => {
+    const conn = currentConnection();
+    if (!conn) return;
+    setConnectionName(conn.settings.connection.name ?? "");
+  });
 
   const activeEateries = createMemo(
     () =>
@@ -216,11 +193,10 @@ function SettingsPage() {
     ),
   );
 
-  const activeVetoes = createMemo(
-    () =>
-      (currentConnection()?.settings.eateryVetoes ?? []).filter(
-        (x) => !x._deleted,
-      ),
+  const activeVetoes = createMemo(() =>
+    (currentConnection()?.settings.eateryVetoes ?? []).filter(
+      (x) => !x._deleted,
+    ),
   );
 
   const isEateryVetoed = (userId: string, eateryId: string) =>
@@ -237,6 +213,27 @@ function SettingsPage() {
         },
       });
     }
+  };
+
+  const saveConnectionName = () => {
+    const nextName = connectionName().trim();
+    const conn = currentConnection();
+    if (!conn) return;
+    if (!nextName) return;
+    if (nextName === conn.settings.connection.name) return;
+
+    const updatedAt = Date.now();
+    settingsStorage.updateConnection(connectionId(), nextName, updatedAt);
+    peer.broadcast({
+      type: "updated-connection",
+      data: {
+        connectionId: connectionId(),
+        connection: {
+          name: nextName,
+          updatedAt,
+        },
+      },
+    });
   };
 
   return (
@@ -262,6 +259,36 @@ function SettingsPage() {
               </Link>
             </div>
           </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Connection</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
+                <div class="flex-1">
+                  <TextField
+                    value={connectionName()}
+                    onChange={(e) => setConnectionName(e)}
+                  >
+                    <TextFieldLabel for="connection-name">Name</TextFieldLabel>
+                    <TextFieldInput
+                      type="text"
+                      id="connection-name"
+                      placeholder="My Eatery Wheel"
+                      data-testid="connection-name-input"
+                    />
+                  </TextField>
+                </div>
+                <Button
+                  onClick={saveConnectionName}
+                  data-testid="connection-name-save"
+                >
+                  Save
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           <div class="grid md:grid-cols-2 gap-6">
             <Card>
@@ -515,7 +542,9 @@ function SettingsPage() {
                                     <div class="flex items-center gap-2">
                                       <Button
                                         size="sm"
-                                        variant={vetoed() ? "destructive" : "outline"}
+                                        variant={
+                                          vetoed() ? "destructive" : "outline"
+                                        }
                                         onClick={() =>
                                           toggleVeto(user().id, eatery.id)
                                         }
@@ -541,7 +570,11 @@ function SettingsPage() {
                                     when={!vetoed()}
                                     fallback={
                                       <div class="text-sm text-muted-foreground">
-                                        Rating hidden while <span class="text-red-600 font-medium">Never pick</span> is enabled.
+                                        Rating hidden while{" "}
+                                        <span class="text-red-600 font-medium">
+                                          Never pick
+                                        </span>{" "}
+                                        is enabled.
                                       </div>
                                     }
                                   >

@@ -669,6 +669,10 @@ export function Peer2PeerSharing(props: ParentProps) {
         settingsStorage.removeUser(event.data.connectionId, event.data.userId);
         break;
       case "updated-connection":
+        settingsStorage.upsertConnectionInfo(
+          event.data.connectionId,
+          event.data.connection,
+        );
         break;
       default:
         console.warn(
