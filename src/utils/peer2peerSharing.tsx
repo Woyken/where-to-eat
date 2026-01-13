@@ -106,6 +106,7 @@ const peer2PeerContext = createContext<{
   addNewPeer: (peerId: string) => void;
   isPeerConnected: (peerId: string) => boolean;
   connectedPeerCount: () => number;
+  connectedPeerIds: () => string[];
   myPeerId: () => string | undefined;
 }>();
 
@@ -180,6 +181,15 @@ export function Peer2PeerSharing(props: ParentProps) {
       return currentlyConnectedPeerIds().size;
     }
     return peerCount();
+  });
+
+  // Computed: connected peer IDs (leader calculates, followers receive via broadcast)
+  const connectedPeerIds = createMemo(() => {
+    const ids = isLeader()
+      ? Array.from(currentlyConnectedPeerIds())
+      : Array.from(openConnections());
+    ids.sort();
+    return ids;
   });
 
   // Broadcast peer count to followers when it changes (leader only)
@@ -818,6 +828,7 @@ export function Peer2PeerSharing(props: ParentProps) {
         addNewPeer,
         isPeerConnected,
         connectedPeerCount,
+        connectedPeerIds,
         myPeerId,
       }}
     >

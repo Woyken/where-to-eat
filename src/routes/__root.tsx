@@ -16,6 +16,14 @@ import { NotFound } from "~/components/NotFound";
 import { SettingsStorageProvider } from "~/components/SettingsStorageProvider";
 import { Button } from "~/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -107,17 +115,56 @@ export function ModeToggle() {
 
 function ConnectedPeerCount() {
   const ctx = usePeer2PeerOptional();
+  const connectedPeerIds = () => ctx?.connectedPeerIds() ?? [];
 
   return (
-    <div
-      class="flex items-center gap-1 text-sm text-muted-foreground"
-      data-testid="connected-peer-count"
-      title="Connected peers"
-    >
-      <IconUsers class="size-4" />
-      <span data-testid="peer-count-value">
-        {ctx?.connectedPeerCount() ?? 0}
-      </span>
-    </div>
+    <Dialog>
+      <DialogTrigger
+        as={Button<"button">}
+        variant="ghost"
+        size="sm"
+        class="gap-1 px-2 text-sm text-muted-foreground"
+        data-testid="connected-peer-count"
+        title="Active connections"
+      >
+        <IconUsers class="size-4" />
+        <span data-testid="peer-count-value">
+          {ctx?.connectedPeerCount() ?? 0}
+        </span>
+        <span class="sr-only">Open active connections</span>
+      </DialogTrigger>
+      <DialogContent data-testid="active-connections-dialog">
+        <DialogHeader>
+          <DialogTitle>Active connections</DialogTitle>
+          <DialogDescription>
+            Peers currently connected to this browser.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="grid gap-2">
+          <div class="text-sm text-muted-foreground">
+            Your peer ID:{" "}
+            <span class="font-mono">{ctx?.myPeerId() ?? "—"}</span>
+          </div>
+
+          <div class="grid gap-2">
+            {connectedPeerIds().length === 0 ? (
+              <div class="text-sm">No active peer connections.</div>
+            ) : (
+              <ul class="grid gap-1">
+                {connectedPeerIds().map((peerId) => (
+                  <li
+                    class="rounded border px-2 py-1 font-mono text-sm"
+                    data-testid="active-connection-item"
+                  >
+                    {peerId}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

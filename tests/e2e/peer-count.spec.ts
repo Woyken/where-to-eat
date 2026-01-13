@@ -71,7 +71,12 @@ test.describe("connected peer count", () => {
 
     // Wait for connection to be established
     const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(sharer.url());
-    const connectionId = connectionIdMatch![1];
+    if (!connectionIdMatch) {
+      throw new Error(
+        `Expected sharer URL to contain connectionId, got: ${sharer.url()}`,
+      );
+    }
+    const connectionId = connectionIdMatch[1];
 
     await expect(receiver).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 90_000,
@@ -85,6 +90,92 @@ test.describe("connected peer count", () => {
     await expect(receiver.getByTestId("peer-count-value")).toHaveText("1", {
       timeout: 30_000,
     });
+
+    await sharerContext.close();
+    await receiverContext.close();
+
+    await testInfo.attach("browser-console.txt", {
+      body: browserLogs.join("\n"),
+      contentType: "text/plain",
+    });
+  });
+
+  test("opens active connections list when clicked", async ({
+    browser,
+  }, testInfo) => {
+    const sharerContext = await browser.newContext({ ignoreHTTPSErrors: true });
+    const receiverContext = await browser.newContext({
+      ignoreHTTPSErrors: true,
+    });
+
+    const sharer = await sharerContext.newPage();
+    const receiver = await receiverContext.newPage();
+
+    const browserLogs: string[] = [];
+    const wireLogs = (label: string, page: typeof sharer) => {
+      page.on("console", (msg) => {
+        const line = `[${label} console.${msg.type()}] ${msg.text()}`;
+        browserLogs.push(line);
+        console.log(line);
+      });
+    };
+
+    wireLogs("sharer", sharer);
+    wireLogs("receiver", receiver);
+
+    await sharer.goto("/");
+    await sharer.waitForLoadState("networkidle");
+
+    // Create a new connection by clicking "Start Fresh"
+    for (let attempt = 0; attempt < 10; attempt++) {
+      await sharer.getByTestId("start-fresh").click();
+      await sharer.waitForTimeout(250);
+      if (/\/wheel\/[0-9a-f-]{36}$/.test(sharer.url())) break;
+    }
+
+    await expect(sharer).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/, {
+      timeout: 60_000,
+    });
+
+    // Get the share URL
+    await sharer.getByTestId("share-button").click();
+    const shareUrlText = (
+      await sharer.getByTestId("share-url").innerText()
+    ).trim();
+    const shareUrl = new URL(shareUrlText);
+    await sharer.keyboard.press("Escape");
+
+    // Receiver connects
+    await receiver.goto(shareUrl.href);
+    const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(sharer.url());
+    if (!connectionIdMatch) {
+      throw new Error(
+        `Expected sharer URL to contain connectionId, got: ${sharer.url()}`,
+      );
+    }
+    const connectionId = connectionIdMatch[1];
+    await expect(receiver).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
+      timeout: 90_000,
+    });
+
+    // Wait for peer count to update
+    await expect(sharer.getByTestId("peer-count-value")).toHaveText("1", {
+      timeout: 30_000,
+    });
+    await expect(receiver.getByTestId("peer-count-value")).toHaveText("1", {
+      timeout: 30_000,
+    });
+
+    // Clicking the icon opens a list of active connections
+    await sharer.getByTestId("connected-peer-count").click();
+    await expect(sharer.getByTestId("active-connections-dialog")).toBeVisible();
+    await expect(sharer.getByTestId("active-connection-item")).toHaveCount(1);
+
+    await receiver.getByTestId("connected-peer-count").click();
+    await expect(
+      receiver.getByTestId("active-connections-dialog"),
+    ).toBeVisible();
+    await expect(receiver.getByTestId("active-connection-item")).toHaveCount(1);
 
     await sharerContext.close();
     await receiverContext.close();
@@ -146,7 +237,12 @@ test.describe("connected peer count", () => {
     await receiver.goto(shareUrl.href);
 
     const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(sharer.url());
-    const connectionId = connectionIdMatch![1];
+    if (!connectionIdMatch) {
+      throw new Error(
+        `Expected sharer URL to contain connectionId, got: ${sharer.url()}`,
+      );
+    }
+    const connectionId = connectionIdMatch[1];
 
     await expect(receiver).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 90_000,
@@ -234,7 +330,12 @@ test.describe("connected peer count", () => {
     await sharer.keyboard.press("Escape");
 
     const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(sharer.url());
-    const connectionId = connectionIdMatch![1];
+    if (!connectionIdMatch) {
+      throw new Error(
+        `Expected sharer URL to contain connectionId, got: ${sharer.url()}`,
+      );
+    }
+    const connectionId = connectionIdMatch[1];
 
     // First receiver connects
     await receiver1.goto(shareUrl.href);
@@ -314,7 +415,12 @@ test.describe("connected peer count", () => {
     });
 
     const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(userATab1.url());
-    const connectionId = connectionIdMatch![1];
+    if (!connectionIdMatch) {
+      throw new Error(
+        `Expected user A tab URL to contain connectionId, got: ${userATab1.url()}`,
+      );
+    }
+    const connectionId = connectionIdMatch[1];
 
     await userATab1.getByTestId("share-button").click();
     const shareUrl = (
