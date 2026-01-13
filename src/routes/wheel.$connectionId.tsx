@@ -202,8 +202,9 @@ function WheelPage() {
       return new URL("http://localhost");
     }
     const localUrl = new URL(location.href);
-    // buildLocation returns path relative to basepath, so use href which includes the full path
-    localUrl.pathname = connectToLinkUrl.href.split('?')[0].split('#')[0];
+    // Get the base path from the router and construct the full pathname
+    const basePath = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+    localUrl.pathname = basePath + connectToLinkUrl.pathname;
     localUrl.search = connectToLinkUrl.searchStr;
     localUrl.hash = connectToLinkUrl.hash;
     return localUrl;
