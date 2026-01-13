@@ -11,7 +11,7 @@ import QrCode from "lucide-solid/icons/qr-code";
 import RotateCcw from "lucide-solid/icons/rotate-ccw";
 import Settings from "lucide-solid/icons/settings";
 import Users from "lucide-solid/icons/users";
-import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -66,6 +66,41 @@ function WheelPage() {
   const [showUsers, setShowUsers] = createSignal(false);
   const [rotation, setRotation] = createSignal(0);
   const [selectedUsers, setSelectedUsers] = createSignal<string[]>([]);
+
+  type WheelTooltipState = { name: string; x: number; y: number };
+  const [hoverTooltip, setHoverTooltip] = createSignal<WheelTooltipState | null>(
+    null,
+  );
+  const [pinnedTooltip, setPinnedTooltip] = createSignal<
+    WheelTooltipState | null
+  >(null);
+  let wheelContainerEl: HTMLDivElement | undefined;
+
+  const setTooltipFromPointerEvent = (
+    name: string,
+    ev: PointerEvent,
+    setter: (v: WheelTooltipState | null) => void,
+  ) => {
+    if (!wheelContainerEl) return;
+    const rect = wheelContainerEl.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    const y = ev.clientY - rect.top;
+    setter({ name, x, y });
+  };
+
+  // Close pinned tooltip when tapping/clicking outside the wheel.
+  createEffect(() => {
+    if (typeof document === "undefined") return;
+    const handler = (ev: PointerEvent) => {
+      const target = ev.target as Node | null;
+      if (!wheelContainerEl || !target) return;
+      if (!wheelContainerEl.contains(target)) {
+        setPinnedTooltip(null);
+      }
+    };
+    document.addEventListener("pointerdown", handler);
+    onCleanup(() => document.removeEventListener("pointerdown", handler));
+  });
 
   const settingsStorage = useSettingsStorage();
   const peer = usePeer2Peer();
@@ -161,9 +196,9 @@ function WheelPage() {
     setIsSpinning(true);
     setSelectedEatery(null);
 
-    // Calculate random rotation
-    const minRotation = 1440;
-    const maxRotation = 2160;
+    // Calculate random rotation - more spins for better visual effect
+    const minRotation = 2160; // 6 full rotations
+    const maxRotation = 3600; // 10 full rotations
     const randomRotation =
       Math.random() * (maxRotation - minRotation) + minRotation;
     const newRotation = rotation() + randomRotation;
@@ -171,19 +206,25 @@ function WheelPage() {
     setRotation(newRotation);
 
     // Calculate which eatery was selected based on proportional segments
+    // Pointer is at top (0 degrees), wheel rotates clockwise
     setTimeout(() => {
-      const normalizedRotation = (360 - (newRotation % 360)) % 360;
+      // The pointer is at top (0°), segments start from top going clockwise
+      // After rotation, find where the pointer lands
+      const normalizedRotation = newRotation % 360;
+      // Pointer at 0° means we need to find which segment contains (360 - normalizedRotation)
+      const pointerPosition = (360 - normalizedRotation + 360) % 360;
+
       const selectedSegment = segments.find(
         (segment) =>
-          normalizedRotation >= segment.startAngle &&
-          normalizedRotation < segment.endAngle,
+          pointerPosition >= segment.startAngle &&
+          pointerPosition < segment.endAngle,
       );
 
       if (selectedSegment) {
         setSelectedEatery(selectedSegment.eatery);
       }
       setIsSpinning(false);
-    }, 3000);
+    }, 4100); // Match the CSS transition duration + small buffer
   };
 
   const resetWheel = () => {
@@ -196,7 +237,7 @@ function WheelPage() {
   const shareUrl = createMemo(() => {
     const connectToLinkUrl = router.buildLocation({
       to: router.routesByPath["/connect-to"].fullPath,
-      search: { peerId: myPeerId, connectionId: connectionId() },
+      search: { peerId: myPeerId(), connectionId: connectionId() },
     });
     if (typeof window === "undefined") {
       return new URL("http://localhost");
@@ -320,80 +361,168 @@ function WheelPage() {
                 <Card>
                   <CardContent class="p-6">
                     <div class="relative w-80 h-80 mx-auto">
-                      <div
-                        class="w-full h-full rounded-full border-4 border-gray-800 relative overflow-hidden transition-transform duration-[3000ms] ease-out"
-                        style={{ transform: `rotate(${rotation}deg)` }}
-                      >
+                      {/* Pointer at top */}
+                      <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
+                        <div class="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent border-t-red-600 drop-shadow-lg" />
+                      </div>
+
+                      {/* Wheel container */}
+                      <div class="relative w-full h-full" ref={(el) => (wheelContainerEl = el)}>
+                        <Show when={pinnedTooltip() ?? hoverTooltip()}>
+                          {(tooltip) => (
+                            <Card
+                              class="absolute z-20 pointer-events-none px-2 py-1 text-sm bg-background/95 backdrop-blur shadow-lg w-max max-w-[220px]"
+                              style={{
+                                left: `${tooltip().x}px`,
+                                top: `${tooltip().y}px`,
+                                transform: "translate(-50%, -130%)",
+                              }}
+                            >
+                              <div class="font-medium break-words">{tooltip().name}</div>
+                              <div class="text-xs text-muted-foreground">
+                                Tap to pin • Tap outside to close
+                              </div>
+                            </Card>
+                          )}
+                        </Show>
+
+                        <div
+                          class="w-full h-full rounded-full border-8 border-gray-800 shadow-2xl relative overflow-hidden"
+                          style={{
+                            transform: `rotate(${rotation()}deg)`,
+                            transition: isSpinning()
+                              ? "transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)"
+                              : "none",
+                          }}
+                        >
                         <svg class="w-full h-full" viewBox="0 0 200 200">
+                          <defs>
+                            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                              <feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity="0.3"/>
+                            </filter>
+                          </defs>
                           <For each={segments()}>
                             {(segment) => {
-                              const startAngleRad =
-                                (segment.startAngle * Math.PI) / 180;
-                              const endAngleRad =
-                                (segment.endAngle * Math.PI) / 180;
-                              const largeArcFlag =
-                                segment.endAngle - segment.startAngle > 180
-                                  ? 1
-                                  : 0;
+                              const startAngleRad = ((segment.startAngle - 90) * Math.PI) / 180;
+                              const endAngleRad = ((segment.endAngle - 90) * Math.PI) / 180;
+                              const largeArcFlag = segment.endAngle - segment.startAngle > 180 ? 1 : 0;
 
-                              const x1 = 100 + 90 * Math.cos(startAngleRad);
-                              const y1 = 100 + 90 * Math.sin(startAngleRad);
-                              const x2 = 100 + 90 * Math.cos(endAngleRad);
-                              const y2 = 100 + 90 * Math.sin(endAngleRad);
+                              const x1 = 100 + 95 * Math.cos(startAngleRad);
+                              const y1 = 100 + 95 * Math.sin(startAngleRad);
+                              const x2 = 100 + 95 * Math.cos(endAngleRad);
+                              const y2 = 100 + 95 * Math.sin(endAngleRad);
 
-                              const textAngle =
-                                (segment.startAngle + segment.endAngle) / 2;
-                              const textAngleRad = (textAngle * Math.PI) / 180;
-                              const textX = 100 + 60 * Math.cos(textAngleRad);
-                              const textY = 100 + 60 * Math.sin(textAngleRad);
+                              // Segment label placement
+                              const midAngle = (segment.startAngle + segment.endAngle) / 2;
+                              const midAngleRad = ((midAngle - 90) * Math.PI) / 180;
+                              const textRadius = 52;
+                              const textX = 100 + textRadius * Math.cos(midAngleRad);
+                              const textY = 100 + textRadius * Math.sin(midAngleRad);
+                              const shouldFlip = midAngle > 90 && midAngle < 270;
+                              const textRotation = shouldFlip ? midAngle + 180 : midAngle;
 
-                              // Adjust font size based on segment size
-                              const fontSize = Math.max(
-                                8,
-                                Math.min(12, segment.percentage / 5),
+                              // Calculate available arc length for text sizing
+                              const arcAngle = segment.endAngle - segment.startAngle;
+                              const arcLength = ((arcAngle * Math.PI) / 180) * textRadius;
+
+                              // Truncate name if too long
+                              const maxCharsFromArc = Math.max(3, Math.floor(arcLength / 5.5));
+                              // Also cap based on how much horizontal room we have inside the 200x200 viewBox.
+                              // This avoids labels near the edges getting clipped even when the segment is large.
+                              const viewBoxSize = 200;
+                              const edgePadding = 6;
+                              const maxTextWidth =
+                                2 *
+                                Math.max(
+                                  0,
+                                  Math.min(
+                                    textX - edgePadding,
+                                    viewBoxSize - edgePadding - textX,
+                                  ),
+                                );
+                              const approxCharWidth = 4.7; // empirically ~5 at font-size=9
+                              const maxCharsFromViewBox = Math.max(
+                                3,
+                                Math.floor(maxTextWidth / approxCharWidth),
                               );
+                              const maxChars = Math.min(
+                                maxCharsFromArc,
+                                maxCharsFromViewBox,
+                              );
+                              const displayName = segment.eatery.name.length > maxChars
+                                ? segment.eatery.name.slice(0, maxChars - 1) + "…"
+                                : segment.eatery.name;
 
                               return (
-                                <g>
+                                <g
+                                  onPointerEnter={(e) => {
+                                    if (pinnedTooltip()) return;
+                                    setTooltipFromPointerEvent(
+                                      segment.eatery.name,
+                                      e,
+                                      setHoverTooltip,
+                                    );
+                                  }}
+                                  onPointerMove={(e) => {
+                                    if (pinnedTooltip()) return;
+                                    setTooltipFromPointerEvent(
+                                      segment.eatery.name,
+                                      e,
+                                      setHoverTooltip,
+                                    );
+                                  }}
+                                  onPointerLeave={() => {
+                                    setHoverTooltip(null);
+                                  }}
+                                  onPointerDown={(e) => {
+                                    // Tap/click pins the tooltip (mobile-friendly).
+                                    const current = pinnedTooltip();
+                                    if (current?.name === segment.eatery.name) {
+                                      setPinnedTooltip(null);
+                                      return;
+                                    }
+                                    setTooltipFromPointerEvent(
+                                      segment.eatery.name,
+                                      e,
+                                      setPinnedTooltip,
+                                    );
+                                  }}
+                                >
+                                  <title>{segment.eatery.name}</title>
                                   <path
-                                    d={`M 100 100 L ${x1} ${y1} A 90 90 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
+                                    d={`M 100 100 L ${x1} ${y1} A 95 95 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
                                     fill={segment.color}
-                                    stroke="#fff"
+                                    stroke="rgba(255,255,255,0.8)"
                                     stroke-width="2"
+                                    class="cursor-pointer"
                                   />
+                                  {/* Radial text along the segment */}
                                   <text
                                     x={textX}
                                     y={textY}
+                                    font-size="9"
+                                    font-weight="600"
+                                    fill="white"
+                                    filter="url(#shadow)"
                                     text-anchor="middle"
                                     dominant-baseline="middle"
-                                    font-sizeze={fontSize}
-                                    font-weighteight="bold"
-                                    fill="white"
-                                    transform={`rotate(${textAngle}, ${textX}, ${textY})`}
+                                    paint-order="stroke"
+                                    stroke="rgba(0,0,0,0.35)"
+                                    stroke-width="2"
+                                    transform={`rotate(${textRotation}, ${textX}, ${textY})`}
+                                    class="cursor-pointer"
                                   >
-                                    {segment.eatery.name}
+                                    {displayName}
                                   </text>
-                                  {segment.percentage > 10 && (
-                                    <text
-                                      x={textX}
-                                      y={textY + fontSize + 2}
-                                      text-anchorhor="middle"
-                                      dominant-baselinetBaseline="middle"
-                                      font-sizeize={fontSize - 2}
-                                      fill="white"
-                                      transform={`rotate(${textAngle}, ${textX}, ${textY + fontSize + 2})`}
-                                    >
-                                      {segment.combinedScore}
-                                    </text>
-                                  )}
                                 </g>
                               );
                             }}
                           </For>
+                          {/* Center circle */}
+                          <circle cx="100" cy="100" r="18" fill="#374151" stroke="#1f2937" stroke-width="3" />
+                          <circle cx="100" cy="100" r="8" fill="#6b7280" />
                         </svg>
-                      </div>
-                      <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2">
-                        <div class="w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>

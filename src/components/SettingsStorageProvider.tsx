@@ -22,7 +22,13 @@ type SettingsStorage = {
     eateryId: string,
     score: number,
   ) => void;
-  addEatery: (connectionId: string, name: string) => string;
+  addEatery: (
+    connectionId: string,
+    name: string,
+  ) => {
+    eateryId: string;
+    createdScores: StorageSchemaType["settings"]["eateryScores"];
+  };
   removeEatery: (connectionId: string, eateryId: string) => void;
   updateEatery: (connectionId: string, eateryId: string, name: string) => void;
   upsertEatery: (
@@ -433,6 +439,8 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
         updatedAt: Date.now(),
       };
 
+       const createdScores: StorageSchemaType["settings"]["eateryScores"] = [];
+
       setSettings(
         "connections",
         connectionIdx,
@@ -444,7 +452,53 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
         },
       );
 
-      return newEatery.id;
+       // Default score of 50 for each active user for this new eatery.
+       // This keeps the data model complete (every user has a score per eatery)
+       // and relies on tombstone semantics if a score already exists.
+       const activeUsers = store.connections[connectionIdx].settings.users.filter(
+         (u) => !u._deleted,
+       );
+       const existingScores = store.connections[connectionIdx].settings.eateryScores;
+       let scoreInsertIdx = existingScores.length;
+
+       for (const user of activeUsers) {
+         const scoreIdx = existingScores.findIndex(
+           (s) => s.userId === user.id && s.eateryId === newEatery.id,
+         );
+
+         const defaultScore = {
+           userId: user.id,
+           eateryId: newEatery.id,
+           score: 50,
+           updatedAt: Date.now(),
+           _deleted: false,
+         };
+
+         if (scoreIdx === -1) {
+           setSettings(
+             "connections",
+             connectionIdx,
+             "settings",
+             "eateryScores",
+             scoreInsertIdx,
+             defaultScore,
+           );
+           scoreInsertIdx++;
+           createdScores.push(defaultScore);
+         } else if (existingScores[scoreIdx]._deleted) {
+           setSettings(
+             "connections",
+             connectionIdx,
+             "settings",
+             "eateryScores",
+             scoreIdx,
+             reconcile(defaultScore),
+           );
+           createdScores.push(defaultScore);
+         }
+       }
+
+       return { eateryId: newEatery.id, createdScores };
     },
     removeEatery: (connectionId, eateryId) => {
       const connectionIdx = store.connections.findIndex(

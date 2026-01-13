@@ -1,39 +1,120 @@
 # Copilot Instructions for where-to-eat
 
+## Quick Start Commands
+```bash
+pnpm install          # Install dependencies
+pnpm dev              # Start dev server (Vite)
+pnpm dev:full         # Start dev + peer server (for P2P testing)
+pnpm peer-server      # Start standalone peer server
+pnpm build            # Build + type check
+pnpm test:e2e         # Run Playwright E2E tests
+pnpm test:e2e:ui      # Playwright UI mode
+```
+
 ## Project Overview
-- This is a peer-to-peer web app for collaboratively choosing where to eat, featuring a spinning wheel UI that selects an `Eatery` based on user scores.
-- Users and eateries are managed per-connection (UUID). Settings and data are synchronized between peers using service workers and peer-to-peer messaging.
+- **SolidJS** peer-to-peer web app for collaboratively choosing where to eat via a spinning wheel UI
+- Uses **TanStack Router** for file-based routing with dynamic `$connectionId` segments
+- P2P sync via **PeerJS** + **localForage** + service worker message passing
+- State management: **solid-js/store** with `SettingsStorageProvider` context
 
-## Architecture & Data Flow
-- Main app logic is in `src/`, with routes in `src/routes/` and UI components in `src/components/`.
-- Peer-to-peer sync is implemented in `src/utils/peerjsLocalForageCollection.ts` using localForage for storage and tombstone-based deletion for conflict-free sync.
-- Service worker communication is handled via `src/utils/serviceWorkerComm.ts` and related files.
-- Settings, users, and eateries are stored per-connection (UUID) and changes are broadcast to peers.
-- The spinning wheel logic is in `src/routes/wheel.$connectionId.tsx`.
+## Tech Stack
+| Layer | Technology |
+|-------|------------|
+| Framework | SolidJS 1.9 |
+| Router | @tanstack/solid-router |
+| Styling | Tailwind CSS 4, tw-animate-css |
+| UI Components | Kobalte (headless), lucide-solid icons |
+| State | solid-js/store, @tanstack/solid-store |
+| P2P | PeerJS, localForage |
+| Validation | Valibot |
+| Build | Vite 7, vite-plugin-pwa |
+| Testing | Playwright (E2E in `tests/e2e/`) |
 
-## Key Patterns & Conventions
-- All deletions are handled with tombstones (`_deleted: true`, `deletedAt`) to prevent deleted data from reappearing after sync.
-- Peer-to-peer messages are always routed through the service worker for reliability.
-- Each user and connection is identified by a UUID.
-- UI components are colocated in `src/components/ui/` and follow a functional, composable pattern.
-- Route files use the `.tsx` extension and are named for their route (e.g., `settings.$connectionId.tsx`).
+## Core Data Models (src/utils/jsonStorage.ts)
+```typescript
+// Connection = a shared room containing users, eateries, scores
+StorageSchemaType = {
+  id: string;                    // UUID connection ID
+  settings: {
+    connection: { name, updatedAt };
+    eateries: Array<{ id, name, updatedAt, _deleted? }>;
+    users: Array<{ id, name, email?, updatedAt, _deleted? }>;
+    eateryScores: Array<{ userId, eateryId, score, updatedAt, _deleted? }>;
+  }
+}
+```
+**Important:** All entities use `_deleted: boolean` + `updatedAt: number` for tombstone-based sync.
 
-## Developer Workflows
-- Use `pnpm` for all package management and scripts.
-- Build and run with Vite (`vite.config.ts`).
-- Tailwind CSS is configured via `tailwind.config.mjs` and `postcss.config.mjs`.
-- No explicit test setup found; add tests in a `tests/` directory if needed.
-- For PWA features, see `vite-plugin-pwa` and related config files.
+## Key Files & Their Purpose
+| File | Purpose |
+|------|---------|
+| `src/components/SettingsStorageProvider.tsx` | Central state context. Use `useSettingsStorage()` for CRUD operations |
+| `src/utils/peer2peerSharing.tsx` | P2P context. Use `usePeer2Peer()` to broadcast messages, `usePeer2PeerId()` for peer ID |
+| `src/utils/jsonStorage.ts` | Valibot schemas for all data models |
+| `src/utils/serviceWorkerComm.ts` | Main→SW message helpers |
+| `src/utils/serviceWorkerMessages.ts` | SW message type definitions |
+| `src/routes/wheel.$connectionId.tsx` | Main wheel UI (532 lines, spinning logic, segment calculation) |
+| `src/routes/settings.$connectionId.tsx` | User/eatery/score management UI |
 
-## Integration Points
-- Peer-to-peer sync: `src/utils/peerjsLocalForageCollection.ts`, `src/utils/serviceWorkerComm.ts`
-- Service worker: `public/sw.js`, `src/sw.ts`
-- UI: `src/components/ui/`, `src/routes/`
-- Settings and user management: `src/routes/settings.$connectionId.tsx`, `src/utils/users.tsx`
+## Routing Pattern
+Routes use TanStack Router file-based routing:
+- `src/routes/index.tsx` → `/` (home/connection list)
+- `src/routes/wheel.$connectionId.tsx` → `/wheel/:connectionId`
+- `src/routes/settings.$connectionId.tsx` → `/settings/:connectionId`
+- `src/routes/connect-to.tsx` → `/connect-to` (join via QR/link)
 
-## Examples
-- To add a new peer-synced collection, follow the pattern in `peerjsLocalForageCollection.ts` (including tombstone handling).
-- To add a new route, create a `.tsx` file in `src/routes/` following the existing naming convention.
+Access route params: `Route.useParams({ select: (p) => p.connectionId })`
+
+## State Management Pattern
+```typescript
+// Reading state
+const settingsStorage = useSettingsStorage();
+const connection = settingsStorage.store.connections.find(x => x.id === connectionId);
+
+// Mutating + broadcasting
+settingsStorage.addEatery(connectionId, "Pizza Place");
+peer.broadcast({ type: "updated-eatery", data: { connectionId, eatery } });
+```
+
+## P2P Message Types (broadcast via `peer.broadcast()`)
+- `updated-eatery`, `removed-eatery`
+- `updated-user`, `removed-user`
+- `updated-score`
+- `sync-request`, `sync-response`
+
+## UI Components (src/components/ui/)
+All components use Kobalte + Tailwind. Available: `Button`, `Card`, `Dialog`, `Select`, `TextField`, `ToggleGroup`, `Badge`, `Label`, `DropdownMenu`
+
+## Testing
+- E2E tests in `tests/e2e/` using Playwright
+- Helper: `injectConnection(page, connectionId)` seeds localStorage before test
+- Run specific test: `pnpm test:e2e tests/e2e/scores.spec.ts`
+
+## Common Tasks
+
+### Add a new route
+1. Create `src/routes/myroute.$connectionId.tsx`
+2. Export `Route` using `createFileRoute("/myroute/$connectionId")`
+3. Export component function
+4. Router auto-generates types in `src/routeTree.gen.ts`
+
+### Add a new synced entity type
+1. Add Valibot schema to `src/utils/jsonStorage.ts`
+2. Add to `StorageSchemaType.settings`
+3. Add CRUD methods in `SettingsStorageProvider.tsx`
+4. Add message types in `serviceWorkerMessages.ts`
+5. Handle in `peer2peerSharing.tsx` message handler
+
+### Add a UI component
+1. Create in `src/components/ui/`
+2. Use Kobalte primitives + `class-variance-authority` for variants
+3. Follow existing patterns (see `button.tsx`)
+
+## Gotchas
+- **Tombstones required:** Never hard-delete; set `_deleted: true, updatedAt: Date.now()`
+- **Broadcast after mutations:** Always call `peer.broadcast()` after local state changes
+- **Active items filter:** Use `.filter(x => !x._deleted)` when displaying lists
+- **Service worker routing:** All P2P messages go through SW for offline reliability
 
 ---
-If you update architectural patterns or workflows, please update this file to keep AI agents productive.
+*Update this file when adding new patterns or significant architecture changes.*

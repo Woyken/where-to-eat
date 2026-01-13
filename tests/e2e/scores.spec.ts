@@ -357,10 +357,10 @@ test("scores: score changes reflect on wheel page", async ({
   await expect(spinButton).toBeVisible();
 
   // The wheel should be rendered with segments
-  // We can't easily verify the exact proportions without inspecting the SVG,
-  // but we can verify that both eateries appear in the wheel
-  await expect(pageA.locator("svg").getByText(eatery1)).toBeVisible();
-  await expect(pageA.locator("svg").getByText(eatery2)).toBeVisible();
+  // Verify that both eateries appear in the eatery list panel (SVG may truncate names)
+  const eateryList = pageA.locator('[class*="max-h-60"]');
+  await expect(eateryList.getByText(eatery1)).toBeVisible();
+  await expect(eateryList.getByText(eatery2)).toBeVisible();
 
   console.log("Wheel reflects scores");
 

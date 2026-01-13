@@ -107,7 +107,7 @@ function SettingsPage() {
   const addEatery = () => {
     if (!newEateryName().trim()) return;
 
-    const newEateryId = settingsStorage.addEatery(
+    const { eateryId: newEateryId, createdScores } = settingsStorage.addEatery(
       connectionId(),
       newEateryName().trim(),
     );
@@ -128,6 +128,17 @@ function SettingsPage() {
         eatery: newEatery,
       },
     });
+
+    // When adding a new eatery, initialize scores for all existing users.
+    for (const eateryScore of createdScores) {
+      peer.broadcast({
+        type: "updated-eateryScore",
+        data: {
+          connectionId: connectionId(),
+          eateryScore,
+        },
+      });
+    }
   };
 
   const removeEatery = (id: string) => {
