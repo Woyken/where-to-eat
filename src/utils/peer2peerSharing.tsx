@@ -628,6 +628,12 @@ export function Peer2PeerSharing(props: ParentProps) {
           event.data.eateryScore,
         );
         break;
+      case "updated-eateryVeto":
+        settingsStorage.upsertVeto(
+          event.data.connectionId,
+          event.data.eateryVeto,
+        );
+        break;
       case "removed-eatery":
         settingsStorage.removeEatery(
           event.data.connectionId,

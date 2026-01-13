@@ -43,6 +43,15 @@ type SettingsStorage = {
     connectionId: string,
     score: StorageSchemaType["settings"]["eateryScores"][0],
   ) => void;
+  toggleVeto: (
+    connectionId: string,
+    userId: string,
+    eateryId: string,
+  ) => NonNullable<StorageSchemaType["settings"]["eateryVetoes"]>[0] | undefined;
+  upsertVeto: (
+    connectionId: string,
+    veto: NonNullable<StorageSchemaType["settings"]["eateryVetoes"]>[0],
+  ) => void;
 };
 
 const SettingsStorageContext = Solid.createContext<SettingsStorage>();
@@ -168,6 +177,7 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
           eateries: eateries,
           eateryScores: scores,
           users: users,
+          eateryVetoes: [],
         },
       };
 
@@ -273,6 +283,10 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
               eateryScores: mergeScores(
                 existing.settings.eateryScores,
                 connection.settings.eateryScores,
+              ),
+              eateryVetoes: mergeScores(
+                existing.settings.eateryVetoes ?? [],
+                connection.settings.eateryVetoes ?? [],
               ),
             },
           }),
@@ -671,6 +685,89 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
             "eateryScores",
             scoreIdx,
             score,
+          );
+        }
+      }
+    },
+
+    toggleVeto: (connectionId, userId, eateryId) => {
+      const connectionIdx = store.connections.findIndex(
+        (x) => x.id === connectionId,
+      );
+      if (connectionIdx === -1) return undefined;
+
+      const vetoes = store.connections[connectionIdx].settings.eateryVetoes ?? [];
+      const vetoIdx = vetoes.findIndex(
+        (x) => x.userId === userId && x.eateryId === eateryId,
+      );
+
+      const now = Date.now();
+
+      if (vetoIdx === -1) {
+        const newVeto = {
+          userId,
+          eateryId,
+          updatedAt: now,
+          _deleted: false,
+        };
+        setSettings(
+          "connections",
+          connectionIdx,
+          "settings",
+          "eateryVetoes",
+          (v) => [...(v ?? []), newVeto],
+        );
+        return newVeto;
+      }
+
+      const existingVeto = vetoes[vetoIdx];
+      const updatedVeto = {
+        ...existingVeto,
+        _deleted: !existingVeto._deleted,
+        updatedAt: now,
+      };
+
+      setSettings(
+        "connections",
+        connectionIdx,
+        "settings",
+        "eateryVetoes",
+        vetoIdx,
+        reconcile(updatedVeto),
+      );
+
+      return updatedVeto;
+    },
+
+    upsertVeto: (connectionId, veto) => {
+      const connectionIdx = store.connections.findIndex(
+        (x) => x.id === connectionId,
+      );
+      if (connectionIdx === -1) return;
+
+      const vetoes = store.connections[connectionIdx].settings.eateryVetoes ?? [];
+      const vetoIdx = vetoes.findIndex(
+        (x) => x.userId === veto.userId && x.eateryId === veto.eateryId,
+      );
+
+      if (vetoIdx === -1) {
+        setSettings(
+          "connections",
+          connectionIdx,
+          "settings",
+          "eateryVetoes",
+          (v) => [...(v ?? []), veto],
+        );
+      } else {
+        const existing = vetoes[vetoIdx];
+        if (veto.updatedAt > (existing.updatedAt ?? 0)) {
+          setSettings(
+            "connections",
+            connectionIdx,
+            "settings",
+            "eateryVetoes",
+            vetoIdx,
+            veto,
           );
         }
       }

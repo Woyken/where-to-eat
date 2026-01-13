@@ -24,6 +24,13 @@ export const storageEateryScoreSchema = v.object({
   _deleted: v.optional(v.boolean()),
 });
 
+export const storageEateryVetoSchema = v.object({
+  userId: v.string(),
+  eateryId: v.string(),
+  updatedAt: v.number(),
+  _deleted: v.optional(v.boolean()),
+});
+
 export const storageSchema = v.object({
   id: v.string(),
   settings: v.object({
@@ -34,6 +41,7 @@ export const storageSchema = v.object({
     eateries: v.array(storageEaterySchema),
     users: v.array(storageUserSchema),
     eateryScores: v.array(storageEateryScoreSchema),
+    eateryVetoes: v.optional(v.array(storageEateryVetoSchema)),
   }),
 });
 
@@ -63,6 +71,13 @@ export const peer2PeerDataSchema = v.variant("type", [
     data: v.object({
       connectionId: v.string(),
       eateryScore: storageEateryScoreSchema,
+    }),
+  }),
+  v.object({
+    type: v.literal("updated-eateryVeto"),
+    data: v.object({
+      connectionId: v.string(),
+      eateryVeto: storageEateryVetoSchema,
     }),
   }),
   v.object({

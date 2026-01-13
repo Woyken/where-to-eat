@@ -116,6 +116,45 @@ function WheelPage() {
   const activeUsers = createMemo(
     () => currentConnection()?.settings.users.filter((x) => !x._deleted) ?? [],
   );
+  const activeVetoes = createMemo<
+    NonNullable<
+      NonNullable<typeof currentConnection> extends () => infer T
+        ? T extends { settings: { eateryVetoes?: infer V } }
+          ? V
+          : never
+        : never
+    >
+  >(
+    () =>
+      (currentConnection()?.settings.eateryVetoes ?? []).filter(
+        (x) => !x._deleted,
+      ) as NonNullable<
+        NonNullable<typeof currentConnection> extends () => infer T
+          ? T extends { settings: { eateryVetoes?: infer V } }
+            ? V
+            : never
+          : never
+      >,
+  );
+
+  const vetoedEateryCount = createMemo(() => {
+    const selected = selectedUsers();
+    if (selected.length === 0) return 0;
+
+    const activeEateryIds = new Set(activeEateries().map((e) => e.id));
+    const vetoedIds = new Set<string>();
+    for (const veto of activeVetoes()) {
+      if (selected.includes(veto.userId)) {
+        vetoedIds.add(veto.eateryId);
+      }
+    }
+
+    let count = 0;
+    for (const id of vetoedIds) {
+      if (activeEateryIds.has(id)) count++;
+    }
+    return count;
+  });
 
   // Redirect if connection not found
   createEffect(() => {
@@ -129,8 +168,20 @@ function WheelPage() {
     if (activeEateries().length === 0 || selectedUsers().length === 0)
       return [];
 
+    // Filter out eateries that have been vetoed by any selected user
+    const vetoes = activeVetoes();
+    const eligibleEateries = activeEateries().filter((eatery) => {
+      // An eatery is ineligible if any selected user has vetoed it
+      const isVetoed = selectedUsers().some((userId) =>
+        vetoes.some((v) => v.userId === userId && v.eateryId === eatery.id),
+      );
+      return !isVetoed;
+    });
+
+    if (eligibleEateries.length === 0) return [];
+
     // Calculate combined scores for each eatery
-    const eateryScores = activeEateries().map((eatery) => {
+    const eateryScores = eligibleEateries.map((eatery) => {
       const combinedScore = selectedUsers().reduce((total, userId) => {
         const userEateryScore =
           currentConnection()?.settings.eateryScores.find(
@@ -403,6 +454,11 @@ function WheelPage() {
                           </defs>
                           <For each={segments()}>
                             {(segment) => {
+                              const arcAngle = segment.endAngle - segment.startAngle;
+                              // SVG arc commands can't draw a full 360° (start=end becomes a tiny sliver).
+                              // When a segment covers the whole wheel, render it as a circle instead.
+                              const isFullCircle = arcAngle >= 359.999;
+
                               const startAngleRad = ((segment.startAngle - 90) * Math.PI) / 180;
                               const endAngleRad = ((segment.endAngle - 90) * Math.PI) / 180;
                               const largeArcFlag = segment.endAngle - segment.startAngle > 180 ? 1 : 0;
@@ -422,7 +478,6 @@ function WheelPage() {
                               const textRotation = shouldFlip ? midAngle + 180 : midAngle;
 
                               // Calculate available arc length for text sizing
-                              const arcAngle = segment.endAngle - segment.startAngle;
                               const arcLength = ((arcAngle * Math.PI) / 180) * textRadius;
 
                               // Truncate name if too long
@@ -489,13 +544,28 @@ function WheelPage() {
                                   }}
                                 >
                                   <title>{segment.eatery.name}</title>
-                                  <path
-                                    d={`M 100 100 L ${x1} ${y1} A 95 95 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
-                                    fill={segment.color}
-                                    stroke="rgba(255,255,255,0.8)"
-                                    stroke-width="2"
-                                    class="cursor-pointer"
-                                  />
+                                  <Show
+                                    when={!isFullCircle}
+                                    fallback={
+                                      <circle
+                                        cx="100"
+                                        cy="100"
+                                        r="95"
+                                        fill={segment.color}
+                                        stroke="rgba(255,255,255,0.8)"
+                                        stroke-width="2"
+                                        class="cursor-pointer"
+                                      />
+                                    }
+                                  >
+                                    <path
+                                      d={`M 100 100 L ${x1} ${y1} A 95 95 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
+                                      fill={segment.color}
+                                      stroke="rgba(255,255,255,0.8)"
+                                      stroke-width="2"
+                                      class="cursor-pointer"
+                                    />
+                                  </Show>
                                   {/* Radial text along the segment */}
                                   <text
                                     x={textX}
@@ -615,7 +685,12 @@ function WheelPage() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Eateries ({activeEateries().length})</CardTitle>
+                    <CardTitle class="flex items-center gap-2">
+                      Eateries ({activeEateries().length})
+                      <Show when={vetoedEateryCount() > 0}>
+                        <Badge variant="secondary">{vetoedEateryCount()} vetoed</Badge>
+                      </Show>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div class="space-y-2 max-h-60 overflow-y-auto">

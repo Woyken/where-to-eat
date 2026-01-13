@@ -5,6 +5,7 @@ import {
   useRouter,
 } from "@tanstack/solid-router";
 import Home from "lucide-solid/icons/home";
+import Ban from "lucide-solid/icons/ban";
 import Plus from "lucide-solid/icons/plus";
 import Trash2 from "lucide-solid/icons/trash-2";
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
@@ -214,6 +215,29 @@ function SettingsPage() {
       (x) => x.userId === selectedUser()?.id,
     ),
   );
+
+  const activeVetoes = createMemo(
+    () =>
+      (currentConnection()?.settings.eateryVetoes ?? []).filter(
+        (x) => !x._deleted,
+      ),
+  );
+
+  const isEateryVetoed = (userId: string, eateryId: string) =>
+    activeVetoes().some((v) => v.userId === userId && v.eateryId === eateryId);
+
+  const toggleVeto = (userId: string, eateryId: string) => {
+    const veto = settingsStorage.toggleVeto(connectionId(), userId, eateryId);
+    if (veto) {
+      peer.broadcast({
+        type: "updated-eateryVeto",
+        data: {
+          connectionId: connectionId(),
+          eateryVeto: veto,
+        },
+      });
+    }
+  };
 
   return (
     <Show when={currentConnection()} fallback={null}>
@@ -467,63 +491,99 @@ function SettingsPage() {
                         </h3>
                         <div class="grid gap-4">
                           <For each={activeEateries()}>
-                            {(eatery) => (
-                              <div
-                                class="p-4 border-[3px] rounded-lg space-y-3"
-                                data-eatery-name={eatery.name}
-                              >
-                                <div class="flex items-center justify-between">
-                                  <div>
-                                    <h4 class="font-medium">{eatery.name}</h4>
-                                    {/* {eatery.cuisine && (
-                                  <p class="text-sm text-muted-foreground">
-                                    {eatery.cuisine}
-                                  </p>
-                                )} */}
+                            {(eatery) => {
+                              const vetoed = () =>
+                                isEateryVetoed(user().id, eatery.id);
+                              return (
+                                <div
+                                  class="p-4 border-[3px] rounded-lg space-y-3"
+                                  classList={{
+                                    "border-red-300 bg-red-50 dark:bg-red-950/20":
+                                      vetoed(),
+                                  }}
+                                  data-eatery-name={eatery.name}
+                                >
+                                  <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                      <h4 class="font-medium">{eatery.name}</h4>
+                                      <Show when={vetoed()}>
+                                        <span class="text-xs text-red-600 font-medium">
+                                          (Never pick)
+                                        </span>
+                                      </Show>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                      <Button
+                                        size="sm"
+                                        variant={vetoed() ? "destructive" : "outline"}
+                                        onClick={() =>
+                                          toggleVeto(user().id, eatery.id)
+                                        }
+                                        title={
+                                          vetoed()
+                                            ? "Remove never pick"
+                                            : "Never pick this place"
+                                        }
+                                        data-testid="veto-toggle"
+                                      >
+                                        <Ban class="w-4 h-4" />
+                                      </Button>
+                                      <Show when={!vetoed()}>
+                                        <div class="text-lg font-bold text-blue-600">
+                                          {selectedUserScores()?.find(
+                                            (x) => x.eateryId === eatery.id,
+                                          )?.score ?? 0}
+                                        </div>
+                                      </Show>
+                                    </div>
                                   </div>
-                                  <div class="text-lg font-bold text-blue-600">
-                                    {selectedUserScores()?.find(
-                                      (x) => x.eateryId === eatery.id,
-                                    )?.score ?? 0}
-                                  </div>
-                                </div>
-                                <div class="space-y-2">
-                                  <div class="flex justify-between text-sm text-muted-foreground ">
-                                    <span>🤮 (0)</span>
-                                    <span>😍 (100)</span>
-                                  </div>
-                                  <input
-                                    type="range"
-                                    min="0"
-                                    max="100"
-                                    value={
-                                      selectedUserScores()?.find(
-                                        (x) => x.eateryId === eatery.id,
-                                      )?.score ?? 0
+                                  <Show
+                                    when={!vetoed()}
+                                    fallback={
+                                      <div class="text-sm text-muted-foreground">
+                                        Rating hidden while <span class="text-red-600 font-medium">Never pick</span> is enabled.
+                                      </div>
                                     }
-                                    onChange={(e) =>
-                                      updateUserScore(
-                                        user().id,
-                                        eatery.id,
-                                        Number.parseInt(e.target.value),
-                                      )
-                                    }
-                                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                                    style={{
-                                      background: `linear-gradient(to right, #ef4444 0%, #f97316 25%, #eab308 50%, #22c55e 75%, #16a34a 100%)`,
-                                    }}
-                                    data-testid="score-slider"
-                                  />
-                                  <div class="text-center text-sm text-muted-foreground">
-                                    Score:{" "}
-                                    {selectedUserScores()?.find(
-                                      (x) => x.eateryId === eatery.id,
-                                    )?.score ?? 0}
-                                    /100
-                                  </div>
+                                  >
+                                    <div class="space-y-2">
+                                      <div class="flex justify-between text-sm text-muted-foreground ">
+                                        <span>🤮 (0)</span>
+                                        <span>😍 (100)</span>
+                                      </div>
+                                      <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={
+                                          selectedUserScores()?.find(
+                                            (x) => x.eateryId === eatery.id,
+                                          )?.score ?? 0
+                                        }
+                                        onChange={(e) =>
+                                          updateUserScore(
+                                            user().id,
+                                            eatery.id,
+                                            Number.parseInt(e.target.value),
+                                          )
+                                        }
+                                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                                        style={{
+                                          background: `linear-gradient(to right, #ef4444 0%, #f97316 25%, #eab308 50%, #22c55e 75%, #16a34a 100%)`,
+                                        }}
+                                        data-testid="score-slider"
+                                      />
+                                      <div class="text-center text-sm text-muted-foreground">
+                                        Score:{" "}
+                                        {selectedUserScores()?.find(
+                                          (x) => x.eateryId === eatery.id,
+                                        )?.score ?? 0}
+                                        /100
+                                      </div>
+                                    </div>
+                                  </Show>
                                 </div>
-                              </div>
-                            )}
+                              );
+                            }}
                           </For>
                         </div>
                       </div>
