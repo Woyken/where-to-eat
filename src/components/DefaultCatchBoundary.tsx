@@ -6,6 +6,8 @@ import {
   useRouter,
 } from "@tanstack/solid-router";
 import type { ErrorComponentProps } from "@tanstack/solid-router";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
 export function DefaultCatchBoundary(props: ErrorComponentProps) {
   const router = useRouter();
@@ -17,38 +19,42 @@ export function DefaultCatchBoundary(props: ErrorComponentProps) {
   console.error("DefaultCatchBoundary Error:", props.error);
 
   return (
-    <div class="min-w-0 flex-1 p-4 flex flex-col items-center justify-center gap-6">
-      <ErrorComponent error={props.error} />
-      <div class="flex gap-2 items-center flex-wrap">
-        <button
-          type="button"
-          onClick={() => {
-            router.invalidate();
-          }}
-          class={`px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded text-white uppercase font-extrabold`}
-        >
-          Try Again
-        </button>
-        {isRoot() ? (
-          <Link
-            to="/"
-            class={`px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded text-white uppercase font-extrabold`}
-          >
-            Home
-          </Link>
-        ) : (
-          <Link
-            to="/"
-            class={`px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded text-white uppercase font-extrabold`}
-            onClick={(e) => {
-              e.preventDefault();
-              window.history.back();
-            }}
-          >
-            Go Back
-          </Link>
-        )}
-      </div>
+    <div class="grid place-items-center py-16">
+      <Card class="w-full max-w-2xl">
+        <CardHeader>
+          <CardTitle>Something went wrong</CardTitle>
+        </CardHeader>
+        <CardContent class="grid gap-6">
+          <div class="rounded-lg border bg-card p-4 text-sm">
+            <ErrorComponent error={props.error} />
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                router.invalidate();
+              }}
+            >
+              Try again
+            </Button>
+            {isRoot() ? (
+              <Link to="/">
+                <Button>Home</Button>
+              </Link>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => window.history.back()}
+              >
+                Go back
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

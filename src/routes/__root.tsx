@@ -47,31 +47,35 @@ function RootComponent() {
       <ColorModeProvider>
         <SettingsStorageProvider>
           <Peer2PeerSharing>
-            <div class="p-2 flex gap-2 text-lg items-center">
-              <Link
-                to="/"
-                activeProps={{
-                  class: "font-bold",
-                }}
-                activeOptions={{ exact: true }}
-              >
-                Home
-              </Link>{" "}
-              <Link
-                // @ts-expect-error
-                to="/this-route-does-not-exist"
-                activeProps={{
-                  class: "font-bold",
-                }}
-              >
-                This Route Does Not Exist
-              </Link>
-              <div class="flex-1" />
-              <ConnectedPeerCount />
-              <ModeToggle />
+            <div class="min-h-dvh">
+              <header class="sticky top-0 z-40 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div class="container flex h-14 items-center gap-3">
+                  <Link
+                    to="/"
+                    class="inline-flex items-center gap-2 font-semibold tracking-tight"
+                    activeOptions={{ exact: true }}
+                  >
+                    <span class="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                      W
+                    </span>
+                    <span>Where to eat</span>
+                  </Link>
+                  <div class="flex-1" />
+                  <ConnectedPeerCount />
+                  <ModeToggle />
+                </div>
+              </header>
+
+              <main class="container py-8">
+                <Outlet />
+              </main>
+
+              <footer class="container pb-8">
+                <div class="text-xs text-muted-foreground">
+                  Peer-to-peer • Works offline • No account required
+                </div>
+              </footer>
             </div>
-            <hr />
-            <Outlet />
           </Peer2PeerSharing>
         </SettingsStorageProvider>
         <TanStackRouterDevtools position="bottom-right" />
