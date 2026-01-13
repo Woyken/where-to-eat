@@ -27,7 +27,9 @@
           if (redirectPath) {
             params.delete('redirect');
             var newSearch = params.toString();
-            var newUrl = redirectPath + (newSearch ? '?' + newSearch : '');
+            // Get base path from current location (e.g., /where-to-eat)
+            var basePath = location.pathname.replace(/\/$/, '');
+            var newUrl = basePath + redirectPath + (newSearch ? '?' + newSearch : '');
             history.replaceState(null, null, newUrl);
           }
         }
