@@ -7,18 +7,19 @@
       // Single Page App redirect for GitHub Pages
       // This script redirects 404s to the main app while preserving the path
       // The path is converted to a query string which the app will restore
-      const pathSegmentsToKeep = 1; // Keep '/where-to-eat' as base
-      const location = window.location;
-      const repo = '/where-to-eat';
+      (function() {
+        var loc = window.location;
+        var repo = '/where-to-eat';
 
-      // Redirect to the SPA with the path as a query parameter
-      const redirectUrl =
-        location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '') +
-        repo + '/?redirect=' + encodeURIComponent(
-          location.pathname.replace(repo, '') + location.search + location.hash
-        );
+        // Redirect to the SPA with the path as a query parameter
+        var redirectUrl =
+          loc.protocol + '//' + loc.hostname + (loc.port ? ':' + loc.port : '') +
+          repo + '/?redirect=' + encodeURIComponent(
+            loc.pathname.replace(repo, '') + loc.search + loc.hash
+          );
 
-      location.replace(redirectUrl);
+        loc.replace(redirectUrl);
+      })();
     </script>
   </head>
   <body>
