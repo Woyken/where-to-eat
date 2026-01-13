@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/sw.ts", "src/utils/serviceWorkerMessages.ts"],
+  "compilerOptions": {
+    "lib": ["WebWorker", "ES2022", "ESNext"]
+  }
+}
