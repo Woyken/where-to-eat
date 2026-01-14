@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectOrCreateUser } from "./helpers";
 
 test("mesh: four-peer chain topology (A->B->C->D)", async ({
   browser,
@@ -37,6 +38,7 @@ test("mesh: four-peer chain topology (A->B->C->D)", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -52,6 +54,7 @@ test("mesh: four-peer chain topology (A->B->C->D)", async ({
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
   console.log("B connected to A");
 
   // Wait for gossip protocol
@@ -66,6 +69,7 @@ test("mesh: four-peer chain topology (A->B->C->D)", async ({
   await expect(pageC).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageC, "User C");
   console.log("C connected to B");
 
   // Wait for gossip protocol
@@ -80,6 +84,7 @@ test("mesh: four-peer chain topology (A->B->C->D)", async ({
   await expect(pageD).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageD, "User D");
   console.log("D connected to C");
 
   // Wait for full mesh to establish via gossip
@@ -184,6 +189,7 @@ test("mesh: changes propagate after intermediate peer in chain closes", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -195,6 +201,7 @@ test("mesh: changes propagate after intermediate peer in chain closes", async ({
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
   console.log("B connected to A");
 
   await pageB.waitForTimeout(3000);
@@ -206,6 +213,7 @@ test("mesh: changes propagate after intermediate peer in chain closes", async ({
   await expect(pageC).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageC, "User C");
   console.log("C connected to B");
 
   // Wait for mesh to form
@@ -290,6 +298,7 @@ test("mesh: star topology - one hub connected to multiple clients", async ({
   await pageHub.waitForLoadState("networkidle");
   await pageHub.getByTestId("start-fresh").click();
   await expect(pageHub).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageHub, "Hub User");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageHub.url());
   const connectionId = connectionIdMatch![1];
@@ -302,18 +311,21 @@ test("mesh: star topology - one hub connected to multiple clients", async ({
   await expect(pageClient1).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageClient1, "Client 1");
   console.log("Client 1 connected");
 
   await pageClient2.goto(shareUrl);
   await expect(pageClient2).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageClient2, "Client 2");
   console.log("Client 2 connected");
 
   await pageClient3.goto(shareUrl);
   await expect(pageClient3).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageClient3, "Client 3");
   console.log("Client 3 connected");
 
   // Wait for gossip to connect clients to each other

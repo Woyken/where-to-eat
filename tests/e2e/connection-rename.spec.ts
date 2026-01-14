@@ -1,14 +1,18 @@
 import { expect, test } from "@playwright/test";
+import { selectOrCreateUser } from "./helpers";
 
 test("can name a new connection and rename it", async ({ page }) => {
   await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(500);
 
-  await page
-    .getByLabel("Session name")
-    .fill("My Test Connection");
+  await page.getByLabel("Session name").fill("My Test Connection");
   await page.getByTestId("start-fresh").click();
 
   await expect(page).toHaveURL(/\/wheel\//);
+
+  // Handle user selection dialog
+  await selectOrCreateUser(page, "Test User");
 
   await page.getByRole("button", { name: "Settings" }).click();
   await expect(page).toHaveURL(/\/settings\//);
@@ -46,6 +50,9 @@ test("connection name syncs to another peer", async ({ browser }) => {
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
 
+  // Handle user selection dialog for A
+  await selectOrCreateUser(pageA, "User A");
+
   // Share URL contains the connectionId and points B to /connect-to
   await pageA.getByTestId("share-button").click();
   const shareUrlText = (
@@ -59,6 +66,9 @@ test("connection name syncs to another peer", async ({ browser }) => {
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+
+  // Handle user selection dialog for B
+  await selectOrCreateUser(pageB, "User B");
 
   // Ensure peers are actually connected (non-zero peer count)
   await expect(pageA.getByTestId("peer-count-value")).not.toHaveText("0", {

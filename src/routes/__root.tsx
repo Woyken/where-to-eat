@@ -13,6 +13,8 @@ import IconSun from "lucide-solid/icons/sun";
 import IconUsers from "lucide-solid/icons/users";
 import UtensilsCrossed from "lucide-solid/icons/utensils-crossed";
 import { createSignal, onCleanup, onMount, Show } from "solid-js";
+import { CurrentUserDisplay } from "~/components/CurrentUserDisplay";
+import { CurrentUserProvider } from "~/components/CurrentUserProvider";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { NotFound } from "~/components/NotFound";
 import { SettingsStorageProvider } from "~/components/SettingsStorageProvider";
@@ -52,94 +54,93 @@ function RootComponent() {
       <ColorModeScript />
       <ColorModeProvider>
         <SettingsStorageProvider>
-          <Peer2PeerSharing>
-            <div class="min-h-screen flex flex-col">
-              {/* Header */}
-              <header class="sticky top-0 z-50 backdrop-blur-md bg-background/95 border-b border-border">
-                <div class="max-w-5xl mx-auto px-4 py-3">
-                  <div class="flex items-center justify-between">
-                    {/* Logo & Brand */}
-                    <Link
-                      to="/"
-                      class="flex items-center gap-3 group"
-                    >
-                      <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center group-hover:bg-primary/90 transition-colors">
-                        <UtensilsCrossed class="w-5 h-5 text-primary-foreground" />
-                      </div>
-                      <div class="flex flex-col">
-                        <span class="font-semibold text-lg text-foreground leading-none">
-                          Where to Eat
-                        </span>
-                        <span class="text-xs text-muted-foreground">
-                          Decide together
-                        </span>
-                      </div>
-                    </Link>
+          <CurrentUserProvider>
+            <Peer2PeerSharing>
+              <div class="min-h-screen flex flex-col">
+                {/* Header */}
+                <header class="sticky top-0 z-50 backdrop-blur-md bg-background/95 border-b border-border">
+                  <div class="max-w-5xl mx-auto px-4 py-3">
+                    <div class="flex items-center justify-between">
+                      {/* Logo & Brand */}
+                      <Link to="/" class="flex items-center gap-3 group">
+                        <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center group-hover:bg-primary/90 transition-colors">
+                          <UtensilsCrossed class="w-5 h-5 text-primary-foreground" />
+                        </div>
+                        <div class="flex flex-col">
+                          <span class="font-semibold text-lg text-foreground leading-none">
+                            Where to Eat
+                          </span>
+                          <span class="text-xs text-muted-foreground">
+                            Decide together
+                          </span>
+                        </div>
+                      </Link>
 
-                    {/* Navigation & Actions */}
-                    <div class="flex items-center gap-1">
-                      <ConnectedPeerCount />
-                      <ModeToggle />
+                      {/* Navigation & Actions */}
+                      <div class="flex items-center gap-1">
+                        <CurrentUserDisplay />
+                        <ConnectedPeerCount />
+                        <ModeToggle />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </header>
+                </header>
 
-              <UpdateNotification />
+                <UpdateNotification />
 
-              {/* Main Content */}
-              <main class="flex-1">
-                <Outlet />
-              </main>
+                {/* Main Content */}
+                <main class="flex-1">
+                  <Outlet />
+                </main>
 
-              {/* Footer */}
-              <footer class="border-t border-border py-4 mt-auto">
-                <div class="max-w-5xl mx-auto px-4 text-center">
-                  <p class="text-xs text-muted-foreground">
-                    Where to Eat — Collaborative restaurant decisions
-                  </p>
-                </div>
-              </footer>
-            </div>
-          </Peer2PeerSharing>
+                {/* Footer */}
+                <footer class="border-t border-border py-4 mt-auto">
+                  <div class="max-w-5xl mx-auto px-4 text-center">
+                    <p class="text-xs text-muted-foreground">
+                      Where to Eat — Collaborative restaurant decisions
+                    </p>
+                  </div>
+                </footer>
+              </div>
+            </Peer2PeerSharing>
+          </CurrentUserProvider>
         </SettingsStorageProvider>
         <TanStackRouterDevtools position="bottom-right" />
       </ColorModeProvider>
     </>
   );
-function UpdateNotification() {
-  const [showUpdate, setShowUpdate] = createSignal(false);
+  function UpdateNotification() {
+    const [showUpdate, setShowUpdate] = createSignal(false);
 
-  onMount(() => {
-    const unsub = subscribeToSwUpdate(() => {
-      setShowUpdate(true);
+    onMount(() => {
+      const unsub = subscribeToSwUpdate(() => {
+        setShowUpdate(true);
+      });
+      onCleanup(unsub);
     });
-    onCleanup(unsub);
-  });
 
-  return (
-    <Show when={showUpdate()}>
-      <div class="fixed bottom-4 right-4 z-50 animate-in fade-in slide-in-from-bottom-5">
-        <div class="bg-card text-card-foreground border border-border shadow-lg rounded-lg p-4 max-w-sm flex items-start gap-4">
-          <div class="flex-1">
-            <h4 class="text-sm font-semibold">Update Available</h4>
-            <p class="text-xs text-muted-foreground mt-1">
-              A new version of the app is available. Refresh to update.
-            </p>
+    return (
+      <Show when={showUpdate()}>
+        <div class="fixed bottom-4 right-4 z-50 animate-in fade-in slide-in-from-bottom-5">
+          <div class="bg-card text-card-foreground border border-border shadow-lg rounded-lg p-4 max-w-sm flex items-start gap-4">
+            <div class="flex-1">
+              <h4 class="text-sm font-semibold">Update Available</h4>
+              <p class="text-xs text-muted-foreground mt-1">
+                A new version of the app is available. Refresh to update.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => updateServiceWorker()}
+              class="shrink-0"
+            >
+              Update
+            </Button>
           </div>
-          <Button
-            size="sm"
-            onClick={() => updateServiceWorker()}
-            class="shrink-0"
-          >
-            Update
-          </Button>
         </div>
-      </div>
-    </Show>
-  );
-}
-
+      </Show>
+    );
+  }
 }
 
 export function ModeToggle() {
@@ -158,15 +159,24 @@ export function ModeToggle() {
         <span class="sr-only">Toggle theme</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent class="min-w-[120px]">
-        <DropdownMenuItem onSelect={() => setColorMode("light")} class="gap-2 cursor-pointer text-sm">
+        <DropdownMenuItem
+          onSelect={() => setColorMode("light")}
+          class="gap-2 cursor-pointer text-sm"
+        >
           <IconSun class="size-4" />
           <span>Light</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setColorMode("dark")} class="gap-2 cursor-pointer text-sm">
+        <DropdownMenuItem
+          onSelect={() => setColorMode("dark")}
+          class="gap-2 cursor-pointer text-sm"
+        >
           <IconMoon class="size-4" />
           <span>Dark</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setColorMode("system")} class="gap-2 cursor-pointer text-sm">
+        <DropdownMenuItem
+          onSelect={() => setColorMode("system")}
+          class="gap-2 cursor-pointer text-sm"
+        >
           <IconLaptop class="size-4" />
           <span>System</span>
         </DropdownMenuItem>
@@ -198,11 +208,17 @@ function ConnectedPeerCount() {
             </span>
           )}
         </div>
-        <span class="text-sm text-muted-foreground hidden sm:inline" data-testid="peer-count-value">
+        <span
+          class="text-sm text-muted-foreground hidden sm:inline"
+          data-testid="peer-count-value"
+        >
           {peerCount()}
         </span>
       </DialogTrigger>
-      <DialogContent data-testid="active-connections-dialog" class="sm:max-w-md">
+      <DialogContent
+        data-testid="active-connections-dialog"
+        class="sm:max-w-md"
+      >
         <DialogHeader>
           <DialogTitle class="flex items-center gap-2">
             <IconUsers class="w-4 h-4 text-primary" />
@@ -236,7 +252,9 @@ function ConnectedPeerCount() {
                     <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
                       <IconUsers class="w-3 h-3 text-primary" />
                     </div>
-                    <span class="font-mono text-xs truncate flex-1">{peerId}</span>
+                    <span class="font-mono text-xs truncate flex-1">
+                      {peerId}
+                    </span>
                     <span class="w-2 h-2 rounded-full bg-green-500" />
                   </li>
                 ))}

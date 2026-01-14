@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectOrCreateUser } from "./helpers";
 
 test("tombstone: deleted eatery doesn't reappear after sync", async ({
   browser,
@@ -31,6 +32,7 @@ test("tombstone: deleted eatery doesn't reappear after sync", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -46,6 +48,7 @@ test("tombstone: deleted eatery doesn't reappear after sync", async ({
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   // Go to settings and add an eatery
   await pageA.goto(`/settings/${connectionId}`);
@@ -84,6 +87,7 @@ test("tombstone: deleted eatery doesn't reappear after sync", async ({
   await expect(pageC).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageC, "User C");
 
   await pageC.goto(`/settings/${connectionId}`);
   await pageC.waitForLoadState("networkidle");
@@ -131,6 +135,7 @@ test("tombstone: deleted user doesn't reappear after sync", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -156,6 +161,7 @@ test("tombstone: deleted user doesn't reappear after sync", async ({
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   await pageB.goto(`/settings/${connectionId}`);
   await expect(
@@ -212,6 +218,7 @@ test("tombstone: concurrent delete and update resolves correctly", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -226,6 +233,7 @@ test("tombstone: concurrent delete and update resolves correctly", async ({
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   // Add an eatery from A
   await pageA.goto(`/settings/${connectionId}`);
@@ -247,6 +255,9 @@ test("tombstone: concurrent delete and update resolves correctly", async ({
   // For now, we'll just test that delete takes precedence
 
   // A deletes the eatery
+  await expect(pageA.getByTestId("peer-count-value")).toHaveText("1", {
+    timeout: 30_000,
+  });
   await pageA
     .locator(`[data-eatery-name="${eateryName}"]`)
     .getByTestId("delete-eatery")

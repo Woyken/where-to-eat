@@ -1,4 +1,5 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { selectOrCreateUser, switchCurrentUser } from "./helpers";
 
 test("veto: never pick syncs between peers", async ({ browser }, testInfo) => {
   test.setTimeout(150_000);
@@ -26,6 +27,7 @@ test("veto: never pick syncs between peers", async ({ browser }, testInfo) => {
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -62,6 +64,7 @@ test("veto: never pick syncs between peers", async ({ browser }, testInfo) => {
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   // Ensure B sees the setup
   await pageB.goto(`/settings/${connectionId}`);
@@ -79,7 +82,7 @@ test("veto: never pick syncs between peers", async ({ browser }, testInfo) => {
   // On A: select user and veto eateryB
   await pageA.goto(`/settings/${connectionId}`);
   await pageA.waitForLoadState("networkidle");
-  await selectUser(pageA, userName);
+  await switchCurrentUser(pageA, userName);
 
   const ratingCardA = pageA
     .locator(`[data-eatery-name="${eateryB}"]`)
@@ -91,7 +94,7 @@ test("veto: never pick syncs between peers", async ({ browser }, testInfo) => {
   await expect(ratingCardA).toContainText("Never pick");
 
   // On B: the veto should arrive (slider hidden)
-  await selectUser(pageB, userName);
+  await switchCurrentUser(pageB, userName);
   const ratingCardB = pageB
     .locator(`[data-eatery-name="${eateryB}"]`)
     .filter({ has: pageB.getByTestId("veto-toggle") });
@@ -120,14 +123,3 @@ test("veto: never pick syncs between peers", async ({ browser }, testInfo) => {
     contentType: "text/plain",
   });
 });
-
-async function selectUser(page: Page, userName: string) {
-  const userToggle = page.locator(
-    `[data-testid="user-selector"] button:has-text("${userName}")`,
-  );
-  const isPressed = await userToggle.getAttribute("aria-pressed");
-  if (isPressed !== "true") {
-    await userToggle.click();
-    await expect(userToggle).toHaveAttribute("aria-pressed", "true");
-  }
-}

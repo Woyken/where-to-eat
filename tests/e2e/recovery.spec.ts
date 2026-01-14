@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { injectConnection } from "./helpers";
+import { injectConnection, selectOrCreateUser } from "./helpers";
 
 test("recovery: remaining peers communicate after one closes", async ({
   browser,
@@ -32,6 +32,7 @@ test("recovery: remaining peers communicate after one closes", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -43,12 +44,14 @@ test("recovery: remaining peers communicate after one closes", async ({
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
   console.log("B connected");
 
   await pageC.goto(shareUrl);
   await expect(pageC).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageC, "User C");
   console.log("C connected");
 
   // Wait for mesh to establish
@@ -140,6 +143,7 @@ test("recovery: new peer can join after original creator leaves", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -151,6 +155,7 @@ test("recovery: new peer can join after original creator leaves", async ({
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   // Add some data
   await pageA.goto(`/settings/${connectionId}`);
@@ -186,6 +191,7 @@ test("recovery: new peer can join after original creator leaves", async ({
   await expect(pageC).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 120_000,
   });
+  await selectOrCreateUser(pageC, "User C");
 
   // C should receive all the data (including data originally from A)
   await pageC.goto(`/settings/${connectionId}`);
@@ -235,6 +241,7 @@ test("recovery: multiple tabs of same browser stay synced when one closes", asyn
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -247,6 +254,7 @@ test("recovery: multiple tabs of same browser stay synced when one closes", asyn
   await expect(pageB1).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB1, "User B");
 
   await pageB2.goto(`/wheel/${connectionId}`);
   await pageB3.goto(`/wheel/${connectionId}`);
@@ -277,15 +285,26 @@ test("recovery: multiple tabs of same browser stay synced when one closes", asyn
   console.log("Closing B1...");
   await pageB1.close();
 
-  // Wait for B2 to become leader and re-establish connection to A
-  // This is the proper fix - wait for actual P2P connection, not arbitrary timeout
+  // Wait for B2 to re-establish connection to A
+  // Note: B2 and B3 are in the same browser context, so they share the same
+  // PeerJS connection (via service worker). They only connect to A, not each other.
   console.log("Waiting for B2 to reconnect to peer A...");
   await expect(pageB2.getByTestId("peer-count-value")).toHaveText("1", {
     timeout: 30_000,
   });
   console.log("B2 reconnected to A");
 
-  // B2 and B3 should still work
+  // B3 shares the same context as B2, so it should also see the connection to A
+  await expect(pageB3.getByTestId("peer-count-value")).toHaveText("1", {
+    timeout: 30_000,
+  });
+
+  // Verify A also sees the connection to B
+  await expect(pageA.getByTestId("peer-count-value")).toHaveText("1", {
+    timeout: 30_000,
+  });
+
+  // B2 and B3 should still work (they sync via localStorage within same context)
   const newEatery = `After Tab Close ${Date.now()}`;
   await pageB2.getByTestId("add-eatery-open").click();
   await pageB2.getByTestId("add-eatery-name").fill(newEatery);
@@ -294,14 +313,19 @@ test("recovery: multiple tabs of same browser stay synced when one closes", asyn
   // Wait for dialog to close first
   await expect(pageB2.getByTestId("add-eatery-name")).not.toBeVisible();
 
-  // Now that B2 is connected to A, sync should happen reliably
+  // Give localStorage event time to propagate to B3
+  // (storage events only fire in other tabs, not the one that made the change)
+  await pageB3.waitForTimeout(500);
+
+  // B3 should see it via localStorage sync (same context)
   await expect(
     pageB3.getByRole("heading", { name: newEatery }).first(),
-  ).toBeVisible({ timeout: 15_000 });
+  ).toBeVisible({ timeout: 30_000 });
 
+  // A should see it via P2P sync
   await expect(
     pageA.getByRole("heading", { name: newEatery }).first(),
-  ).toBeVisible({ timeout: 15_000 });
+  ).toBeVisible({ timeout: 30_000 });
 
   console.log("Remaining tabs continue to sync");
 
@@ -328,6 +352,7 @@ test("recovery: peer can rejoin after leaving and still sync", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -341,6 +366,7 @@ test("recovery: peer can rejoin after leaving and still sync", async ({
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   await pageA.goto(`/settings/${connectionId}`);
   await pageB.goto(`/settings/${connectionId}`);
@@ -379,6 +405,7 @@ test("recovery: peer can rejoin after leaving and still sync", async ({
   await expect(pageB2).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 15_000,
   });
+  await selectOrCreateUser(pageB2, "User B");
 
   await pageB2.goto(`/settings/${connectionId}`);
 

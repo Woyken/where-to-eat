@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectOrCreateUser } from "./helpers";
 
 test("stress: syncing large number of eateries across peers", async ({
   browser,
@@ -28,6 +29,7 @@ test("stress: syncing large number of eateries across peers", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -76,6 +78,7 @@ test("stress: syncing large number of eateries across peers", async ({
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 90_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   await pageB.goto(`/settings/${connectionId}`);
   await pageB.waitForLoadState("networkidle");
@@ -125,6 +128,7 @@ test("stress: syncing many users and scores", async ({ browser }, testInfo) => {
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -179,6 +183,7 @@ test("stress: syncing many users and scores", async ({ browser }, testInfo) => {
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 90_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   await pageB.goto(`/settings/${connectionId}`);
   await pageB.waitForLoadState("networkidle");
@@ -218,6 +223,7 @@ test("stress: rapid connection/disconnection doesn't corrupt data", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];

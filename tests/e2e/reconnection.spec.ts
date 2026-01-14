@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
-// import { injectConnection } from "./helpers";
 import fs from "fs";
 import path from "path";
+import { selectOrCreateUser } from "./helpers";
 
 test("reconnection: peer reconnects after temporary network interruption", async ({
   browser,
@@ -25,6 +25,7 @@ test("reconnection: peer reconnects after temporary network interruption", async
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -39,6 +40,7 @@ test("reconnection: peer reconnects after temporary network interruption", async
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   // Add an eatery while connected
   await pageA.goto(`/settings/${connectionId}`);
@@ -91,6 +93,7 @@ test("reconnection: peer reconnects after temporary network interruption", async
   await expect(pageB2).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB2, "User B2");
 
   // After B reconnects, it should receive A's changes (including what was added while offline)
   await pageB2.goto(`/settings/${connectionId}`);
@@ -127,6 +130,7 @@ test("reconnection: changes made while peer is offline sync when it returns", as
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -141,6 +145,7 @@ test("reconnection: changes made while peer is offline sync when it returns", as
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   await pageA.goto(`/settings/${connectionId}`);
   await pageB.goto(`/settings/${connectionId}`);
@@ -196,6 +201,7 @@ test("reconnection: page refresh maintains connection and syncs data", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -210,6 +216,7 @@ test("reconnection: page refresh maintains connection and syncs data", async ({
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   // Add data
   await pageA.goto(`/settings/${connectionId}`);

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectOrCreateUser } from "./helpers";
 
 test("sharing transfers connection data between browsers", async ({
   browser,
@@ -50,6 +51,7 @@ test("sharing transfers connection data between browsers", async ({
   await expect(sharer).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/, {
     timeout: 60_000,
   });
+  await selectOrCreateUser(sharer, "Sharer");
 
   const sharerWheelUrl = sharer.url();
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(sharerWheelUrl);
@@ -85,6 +87,7 @@ test("sharing transfers connection data between browsers", async ({
   await expect(receiver).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 90_000, // P2P connections can be slow
   });
+  await selectOrCreateUser(receiver, "Receiver");
 
   // Make a change in sharer, verify receiver gets it.
   const newEateryName = `Playwright Cafe ${Date.now()}`;

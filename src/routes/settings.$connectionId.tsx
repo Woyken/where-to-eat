@@ -1,14 +1,15 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/solid-router";
+import ArrowLeft from "lucide-solid/icons/arrow-left";
 import Ban from "lucide-solid/icons/ban";
 import Home from "lucide-solid/icons/home";
 import Pencil from "lucide-solid/icons/pencil";
 import Plus from "lucide-solid/icons/plus";
-import Trash2 from "lucide-solid/icons/trash-2";
-import ArrowLeft from "lucide-solid/icons/arrow-left";
 import Save from "lucide-solid/icons/save";
-import { logger } from "~/utils/logger";
+import Trash2 from "lucide-solid/icons/trash-2";
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import { useCurrentUser } from "~/components/CurrentUserProvider";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
+import { UserSelectionDialog } from "~/components/UserSelectionDialog";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
@@ -24,8 +25,7 @@ import {
   TextFieldInput,
   TextFieldLabel,
 } from "~/components/ui/text-field";
-import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
-import type { StorageSchemaType } from "~/utils/jsonStorage";
+import { logger } from "~/utils/logger";
 import { usePeer2Peer } from "~/utils/peer2peerSharing";
 
 export const Route = createFileRoute("/settings/$connectionId")({
@@ -52,10 +52,52 @@ function SettingsPage() {
 
   const settingsStorage = useSettingsStorage();
   const peer = usePeer2Peer();
+  const currentUserCtx = useCurrentUser();
 
   const currentConnection = createMemo(() =>
     settingsStorage.store.connections.find((x) => x.id === connectionId()),
   );
+
+  // Current user for this connection
+  const currentUserId = createMemo(() =>
+    currentUserCtx.getCurrentUser(connectionId()),
+  );
+
+  // Check if current user is still valid (not deleted)
+  const currentUserIsValid = createMemo(() => {
+    const userId = currentUserId();
+    if (!userId) return false;
+    const users = currentConnection()?.settings.users ?? [];
+    const user = users.find((u) => u.id === userId);
+    return user && !user._deleted;
+  });
+
+  // Show selection dialog if no valid current user
+  const showUserSelection = createMemo(() => {
+    if (!currentConnection()) return false;
+    return !currentUserIsValid();
+  });
+
+  const handleSelectCurrentUser = (userId: string) => {
+    currentUserCtx.setCurrentUser(connectionId(), userId);
+  };
+
+  const handleAddNewUser = (name: string): string => {
+    const newUserId = settingsStorage.addUser(connectionId(), name);
+    const newUser = currentConnection()?.settings.users.find(
+      (x) => x.id === newUserId,
+    );
+    if (newUser) {
+      peer.broadcast({
+        type: "updated-user",
+        data: {
+          connectionId: connectionId(),
+          user: newUser,
+        },
+      });
+    }
+    return newUserId;
+  };
 
   createEffect(() => {
     const conn = currentConnection();
@@ -88,9 +130,12 @@ function SettingsPage() {
     }
   });
 
-  const [selectedUser, setSelectedUser] = createSignal<
-    StorageSchemaType["settings"]["users"][0] | undefined
-  >(currentConnection()?.settings.users[0]);
+  // Current user for rating (the logged in user)
+  const currentUser = createMemo(() => {
+    const userId = currentUserId();
+    if (!userId) return undefined;
+    return activeUsers().find((u) => u.id === userId);
+  });
 
   const addEatery = () => {
     if (!newEateryName().trim()) return;
@@ -180,7 +225,6 @@ function SettingsPage() {
     const newUser = currentConnection()?.settings.users.find(
       (x) => x.id === newUserId,
     );
-    setSelectedUser(newUser);
     if (newUser) {
       peer.broadcast({
         type: "updated-user",
@@ -194,9 +238,9 @@ function SettingsPage() {
 
   const removeUser = (id: string) => {
     settingsStorage.removeUser(connectionId(), id);
-    const users = currentConnection()?.settings.users;
-    if (selectedUser()?.id === id && users && users.length !== 0) {
-      setSelectedUser(users[0]);
+    // If removing the current user, clear their selection
+    if (currentUserId() === id) {
+      currentUserCtx.clearCurrentUser(connectionId());
     }
     peer.broadcast({
       type: "removed-user",
@@ -249,9 +293,9 @@ function SettingsPage() {
     });
   };
 
-  const selectedUserScores = createMemo(() =>
+  const currentUserScores = createMemo(() =>
     currentConnection()?.settings.eateryScores.filter(
-      (x) => x.userId === selectedUser()?.id,
+      (x) => x.userId === currentUser()?.id,
     ),
   );
 
@@ -300,14 +344,21 @@ function SettingsPage() {
 
   return (
     <Show when={currentConnection()} fallback={null}>
+      {/* User selection dialog - shown when no current user is set */}
+      <UserSelectionDialog
+        open={showUserSelection()}
+        onSelect={handleSelectCurrentUser}
+        onAddNew={handleAddNewUser}
+        users={currentConnection()?.settings.users ?? []}
+        connectionName={currentConnection()?.settings.connection.name}
+      />
+
       <div class="py-6 px-4">
         <div class="max-w-4xl mx-auto space-y-6">
           {/* Page Header */}
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 page-section">
             <div>
-              <h1 class="text-2xl font-bold">
-                Settings
-              </h1>
+              <h1 class="text-2xl font-bold">Settings</h1>
               <p class="text-sm text-muted-foreground mt-1">
                 Manage restaurants, users, and preferences
               </p>
@@ -323,7 +374,12 @@ function SettingsPage() {
                 </Button>
               </Link>
               <Link to="/">
-                <Button variant="ghost" size="icon" class="w-9 h-9" data-testid="home-button">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="w-9 h-9"
+                  data-testid="home-button"
+                >
                   <Home class="w-4 h-4" />
                 </Button>
               </Link>
@@ -333,9 +389,7 @@ function SettingsPage() {
           {/* Connection Name Card */}
           <Card class="food-card page-section">
             <CardHeader class="pb-3">
-              <CardTitle class="text-base">
-                Session Name
-              </CardTitle>
+              <CardTitle class="text-base">Session Name</CardTitle>
             </CardHeader>
             <CardContent>
               <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
@@ -371,9 +425,7 @@ function SettingsPage() {
             <Card class="food-card">
               <CardHeader class="pb-3">
                 <CardTitle class="flex items-center justify-between text-base">
-                  <span>
-                    Restaurants ({activeEateries().length})
-                  </span>
+                  <span>Restaurants ({activeEateries().length})</span>
                   <Dialog
                     open={showAddEatery()}
                     onOpenChange={setShowAddEatery}
@@ -386,9 +438,7 @@ function SettingsPage() {
                     </DialogTrigger>
                     <DialogContent class="sm:max-w-md">
                       <DialogHeader>
-                        <DialogTitle>
-                          Add Restaurant
-                        </DialogTitle>
+                        <DialogTitle>Add Restaurant</DialogTitle>
                         <DialogDescription>
                           Add a new restaurant to the session
                         </DialogDescription>
@@ -398,7 +448,10 @@ function SettingsPage() {
                           value={newEateryName()}
                           onChange={(e) => setNewEateryName(e)}
                         >
-                          <TextFieldLabel for="eatery-name" class="text-sm font-medium">
+                          <TextFieldLabel
+                            for="eatery-name"
+                            class="text-sm font-medium"
+                          >
                             Restaurant Name *
                           </TextFieldLabel>
                           <TextFieldInput
@@ -413,7 +466,10 @@ function SettingsPage() {
                           value={newEateryCuisine()}
                           onChange={(e) => setNewEateryCuisine(e)}
                         >
-                          <TextFieldLabel for="eatery-cuisine" class="text-sm font-medium">
+                          <TextFieldLabel
+                            for="eatery-cuisine"
+                            class="text-sm font-medium"
+                          >
                             Cuisine Type (Optional)
                           </TextFieldLabel>
                           <TextFieldInput
@@ -443,7 +499,9 @@ function SettingsPage() {
                     fallback={
                       <div class="text-center py-8 text-muted-foreground">
                         <p class="font-medium">No restaurants yet</p>
-                        <p class="text-sm">Add your first restaurant to get started</p>
+                        <p class="text-sm">
+                          Add your first restaurant to get started
+                        </p>
                       </div>
                     }
                   >
@@ -459,7 +517,9 @@ function SettingsPage() {
                               {eatery.name.charAt(0).toUpperCase()}
                             </div>
                             <div class="min-w-0">
-                              <h3 class="font-medium truncate">{eatery.name}</h3>
+                              <h3 class="font-medium truncate">
+                                {eatery.name}
+                              </h3>
                             </div>
                           </div>
                           <div class="flex gap-1">
@@ -494,9 +554,7 @@ function SettingsPage() {
             <Card class="food-card">
               <CardHeader class="pb-3">
                 <CardTitle class="flex items-center justify-between text-base">
-                  <span>
-                    People ({activeUsers().length})
-                  </span>
+                  <span>People ({activeUsers().length})</span>
                   <Dialog open={showAddUser()} onOpenChange={setShowAddUser}>
                     <DialogTrigger>
                       <Button size="sm" data-testid="add-user-open">
@@ -506,9 +564,7 @@ function SettingsPage() {
                     </DialogTrigger>
                     <DialogContent class="sm:max-w-md">
                       <DialogHeader>
-                        <DialogTitle>
-                          Add Person
-                        </DialogTitle>
+                        <DialogTitle>Add Person</DialogTitle>
                         <DialogDescription>
                           Add someone to rate and vote on restaurants
                         </DialogDescription>
@@ -518,7 +574,10 @@ function SettingsPage() {
                           value={newUserName()}
                           onChange={(e) => setNewUserName(e)}
                         >
-                          <TextFieldLabel for="user-name" class="text-sm font-medium">
+                          <TextFieldLabel
+                            for="user-name"
+                            class="text-sm font-medium"
+                          >
                             Name *
                           </TextFieldLabel>
                           <TextFieldInput
@@ -554,33 +613,30 @@ function SettingsPage() {
                     }
                   >
                     <For each={activeUsers()}>
-                      {(user, index) => (
-                        <div
-                          class="food-list-item flex items-center justify-between animate-slide-up"
-                          style={`animation-delay: ${index() * 0.03}s`}
-                          data-user-name={user.name}
-                        >
-                          <div class="flex items-center gap-3 flex-1 min-w-0">
-                            <div class="w-8 h-8 rounded-full bg-secondary/50 flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                              {user.name.charAt(0).toUpperCase()}
+                      {(user, index) => {
+                        const userScoreCount = () =>
+                          currentConnection()?.settings.eateryScores.filter(
+                            (x) => x.userId === user.id && !x._deleted,
+                          ).length ?? 0;
+                        return (
+                          <div
+                            class="food-list-item flex items-center justify-between animate-slide-up"
+                            style={`animation-delay: ${index() * 0.03}s`}
+                            data-user-name={user.name}
+                          >
+                            <div class="flex items-center gap-3 flex-1 min-w-0">
+                              <div class="w-8 h-8 rounded-full bg-secondary/50 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                                {user.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div class="min-w-0">
+                                <h3 class="font-medium truncate">
+                                  {user.name}
+                                </h3>
+                                <p class="text-xs text-muted-foreground">
+                                  {userScoreCount()} ratings
+                                </p>
+                              </div>
                             </div>
-                            <div class="min-w-0">
-                              <h3 class="font-medium truncate">{user.name}</h3>
-                              <p class="text-xs text-muted-foreground">
-                                {selectedUserScores()?.length ?? 0} ratings
-                              </p>
-                            </div>
-                          </div>
-                          <div class="flex gap-1">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => openEditUser(user)}
-                              data-testid="edit-user"
-                              class="text-muted-foreground hover:text-primary hover:bg-primary/10 flex-shrink-0 w-8 h-8"
-                            >
-                              <Pencil class="w-4 h-4" />
-                            </Button>
                             <Button
                               size="icon"
                               variant="ghost"
@@ -591,8 +647,8 @@ function SettingsPage() {
                               <Trash2 class="w-4 h-4" />
                             </Button>
                           </div>
-                        </div>
-                      )}
+                        );
+                      }}
                     </For>
                   </Show>
                 </div>
@@ -601,48 +657,29 @@ function SettingsPage() {
           </div>
 
           {/* Ratings Section */}
-          <Show when={activeUsers().length > 0 && activeEateries().length > 0}>
+          <Show when={currentUser() && activeEateries().length > 0}>
             <Card class="food-card page-section">
               <CardHeader class="pb-3">
-                <CardTitle class="text-base">
-                  Rate Restaurants
-                </CardTitle>
+                <CardTitle class="text-base">Your Ratings</CardTitle>
               </CardHeader>
               <CardContent>
                 <div class="space-y-6">
-                  {/* User Selector */}
-                  <div class="space-y-3">
-                    <p class="text-sm text-muted-foreground">Select a person to rate for:</p>
-                    <ToggleGroup
-                      multiple={false}
-                      value={selectedUser()?.id ?? null}
-                      onChange={(userId) =>
-                        setSelectedUser(
-                          activeUsers().find((x) => x.id === userId),
-                        )
-                      }
-                      data-testid="user-selector"
-                      class="flex flex-wrap gap-2"
-                    >
-                      <For each={activeUsers()}>
-                        {(user) => (
-                          <ToggleGroupItem
-                            value={user.id}
-                            class="px-3 py-1.5 rounded-md border data-[pressed]:bg-primary data-[pressed]:text-primary-foreground data-[pressed]:border-primary transition-colors text-sm"
-                          >
-                            {user.name}
-                          </ToggleGroupItem>
-                        )}
-                      </For>
-                    </ToggleGroup>
+                  {/* Current user indicator */}
+                  <div class="flex items-center gap-3 p-3 rounded-md bg-muted/50 border border-border">
+                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                      {currentUser()!.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p class="font-medium">{currentUser()!.name}</p>
+                      <p class="text-xs text-muted-foreground">
+                        Rating as yourself
+                      </p>
+                    </div>
                   </div>
 
-                  <Show when={selectedUser()}>
+                  <Show when={currentUser()}>
                     {(user) => (
                       <div class="space-y-4">
-                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span class="font-medium text-foreground">Rating as {user().name}</span>
-                        </div>
                         <div class="grid gap-3">
                           <For each={activeEateries()}>
                             {(eatery, index) => {
@@ -664,7 +701,9 @@ function SettingsPage() {
                                         {eatery.name.charAt(0).toUpperCase()}
                                       </div>
                                       <div>
-                                        <h4 class="font-medium">{eatery.name}</h4>
+                                        <h4 class="font-medium">
+                                          {eatery.name}
+                                        </h4>
                                         <Show when={vetoed()}>
                                           <span class="text-xs text-destructive font-medium flex items-center gap-1">
                                             <Ban class="w-3 h-3" /> Never pick
@@ -693,7 +732,7 @@ function SettingsPage() {
                                       </Button>
                                       <Show when={!vetoed()}>
                                         <div class="text-lg font-bold text-primary min-w-[3ch] text-right">
-                                          {selectedUserScores()?.find(
+                                          {currentUserScores()?.find(
                                             (x) => x.eateryId === eatery.id,
                                           )?.score ?? 0}
                                         </div>
@@ -718,7 +757,7 @@ function SettingsPage() {
                                         min="0"
                                         max="100"
                                         value={
-                                          selectedUserScores()?.find(
+                                          currentUserScores()?.find(
                                             (x) => x.eateryId === eatery.id,
                                           )?.score ?? 0
                                         }

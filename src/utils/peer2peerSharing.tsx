@@ -151,6 +151,12 @@ export function Peer2PeerSharing(props: ParentProps) {
   const [openConnections, setOpenConnections] = createSignal<Set<string>>(
     new Set(),
   );
+  // Track peers we've already exchanged connection-ids with (to avoid infinite loops)
+  const [syncedPeers, setSyncedPeers] = createSignal<Set<string>>(new Set(), {
+    equals(prev, next) {
+      return prev.symmetricDifference(next).size === 0;
+    },
+  });
 
   // Peer count (synchronized across all tabs via BroadcastChannel)
   const [peerCount, setPeerCount] = createSignal(0);
@@ -451,10 +457,7 @@ export function Peer2PeerSharing(props: ParentProps) {
     direction: "incoming" | "outgoing",
   ) {
     conn.on("open", () => {
-      logger.log(
-        `P2P [Leader]: ${direction} connection opened to:`,
-        conn.peer,
-      );
+      logger.log(`P2P [Leader]: ${direction} connection opened to:`, conn.peer);
       setOpenConnections((prev) => {
         const next = new Set(prev).add(conn.peer);
         // Broadcast open connections to followers (use the new value)
@@ -482,10 +485,7 @@ export function Peer2PeerSharing(props: ParentProps) {
     });
 
     conn.on("close", () => {
-      logger.log(
-        `P2P [Leader]: ${direction} connection closed to:`,
-        conn.peer,
-      );
+      logger.log(`P2P [Leader]: ${direction} connection closed to:`, conn.peer);
       setOpenConnections((prev) => {
         const next = new Set(prev);
         next.delete(conn.peer);
@@ -494,6 +494,12 @@ export function Peer2PeerSharing(props: ParentProps) {
           type: "open-connections",
           peerIds: Array.from(next),
         } satisfies LeaderMessage);
+        return next;
+      });
+      // Clear synced state so we'll re-sync if peer reconnects (e.g., after leader change)
+      setSyncedPeers((prev) => {
+        const next = new Set(prev);
+        next.delete(conn.peer);
         return next;
       });
       if (direction === "incoming") {
@@ -595,6 +601,16 @@ export function Peer2PeerSharing(props: ParentProps) {
               peerConnectionSend(conn, { type: "storage", data });
             }
           }
+        }
+        // Also respond with our own connection IDs so the remote peer sends us their state
+        // This ensures bidirectional sync even after leader changes
+        // Only do this once per peer to avoid infinite loops
+        if (!syncedPeers().has(conn.peer)) {
+          setSyncedPeers((prev) => new Set(prev).add(conn.peer));
+          peerConnectionSend(conn, {
+            type: "connection-ids",
+            data: localConnections.map((c) => c.id),
+          });
         }
         return;
       }

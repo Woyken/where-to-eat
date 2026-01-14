@@ -5,17 +5,16 @@ import {
   useLinkProps,
   useRouter,
 } from "@tanstack/solid-router";
-import Home from "lucide-solid/icons/home";
+import Check from "lucide-solid/icons/check";
 import Copy from "lucide-solid/icons/copy";
+import Home from "lucide-solid/icons/home";
 import Play from "lucide-solid/icons/play";
 import QrCode from "lucide-solid/icons/qr-code";
 import RotateCcw from "lucide-solid/icons/rotate-ccw";
 import Settings from "lucide-solid/icons/settings";
 import Share2 from "lucide-solid/icons/share-2";
-import Users from "lucide-solid/icons/users";
 import Sparkles from "lucide-solid/icons/sparkles";
-import Check from "lucide-solid/icons/check";
-import { logger } from "~/utils/logger";
+import Users from "lucide-solid/icons/users";
 import {
   createEffect,
   createMemo,
@@ -24,7 +23,9 @@ import {
   onCleanup,
   Show,
 } from "solid-js";
+import { useCurrentUser } from "~/components/CurrentUserProvider";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
+import { UserSelectionDialog } from "~/components/UserSelectionDialog";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -36,6 +37,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
+import { logger } from "~/utils/logger";
 import { usePeer2Peer, usePeer2PeerId } from "~/utils/peer2peerSharing";
 
 export const Route = createFileRoute("/wheel/$connectionId")({
@@ -117,10 +119,64 @@ function WheelPage() {
 
   const settingsStorage = useSettingsStorage();
   const peer = usePeer2Peer();
+  const currentUserCtx = useCurrentUser();
 
   const currentConnection = createMemo(() =>
     settingsStorage.store.connections.find((x) => x.id === connectionId()),
   );
+
+  // Current user for this connection
+  const currentUserId = createMemo(() =>
+    currentUserCtx.getCurrentUser(connectionId()),
+  );
+
+  // Check if current user is still valid (not deleted)
+  const currentUserIsValid = createMemo(() => {
+    const userId = currentUserId();
+    if (!userId) return false;
+    const users = currentConnection()?.settings.users ?? [];
+    const user = users.find((u) => u.id === userId);
+    return user && !user._deleted;
+  });
+
+  // Show selection dialog if no valid current user
+  const showUserSelection = createMemo(() => {
+    if (!currentConnection()) return false;
+    return !currentUserIsValid();
+  });
+
+  const handleSelectCurrentUser = (userId: string) => {
+    currentUserCtx.setCurrentUser(connectionId(), userId);
+    // Auto-select this user for the wheel
+    if (!selectedUsers().includes(userId)) {
+      setSelectedUsers([...selectedUsers(), userId]);
+    }
+  };
+
+  const handleAddNewUser = (name: string): string => {
+    const newUserId = settingsStorage.addUser(connectionId(), name);
+    const newUser = currentConnection()?.settings.users.find(
+      (x) => x.id === newUserId,
+    );
+    if (newUser) {
+      peer.broadcast({
+        type: "updated-user",
+        data: {
+          connectionId: connectionId(),
+          user: newUser,
+        },
+      });
+    }
+    return newUserId;
+  };
+
+  // Initialize selectedUsers to include current user when they're set
+  createEffect(() => {
+    const userId = currentUserId();
+    if (userId && currentUserIsValid() && !selectedUsers().includes(userId)) {
+      setSelectedUsers([...selectedUsers(), userId]);
+    }
+  });
 
   const activeEateries = createMemo(
     () =>
@@ -302,8 +358,7 @@ function WheelPage() {
   const myPeerId = usePeer2PeerId();
 
   const canNativeShare = () =>
-    typeof navigator !== "undefined" &&
-    typeof navigator.share === "function";
+    typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   const selectShareUrlText = () => {
     if (typeof window === "undefined") return;
@@ -386,6 +441,15 @@ function WheelPage() {
 
   return (
     <Show when={currentConnection()} fallback={null}>
+      {/* User selection dialog - shown when no current user is set */}
+      <UserSelectionDialog
+        open={showUserSelection()}
+        onSelect={handleSelectCurrentUser}
+        onAddNew={handleAddNewUser}
+        users={currentConnection()?.settings.users ?? []}
+        connectionName={currentConnection()?.settings.connection.name}
+      />
+
       <Show
         when={activeEateries().length > 0}
         fallback={
@@ -432,10 +496,12 @@ function WheelPage() {
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 page-section">
               <div>
                 <h1 class="text-2xl font-bold">
-                  {currentConnection()?.settings.connection.name || "Spin Wheel"}
+                  {currentConnection()?.settings.connection.name ||
+                    "Spin Wheel"}
                 </h1>
                 <p class="text-sm text-muted-foreground mt-1">
-                  {activeEateries().length} restaurants • {activeUsers().length} people
+                  {activeEateries().length} restaurants • {activeUsers().length}{" "}
+                  people
                 </p>
               </div>
               <div class="flex flex-wrap gap-2">
@@ -461,9 +527,7 @@ function WheelPage() {
                   </DialogTrigger>
                   <DialogContent class="sm:max-w-md">
                     <DialogHeader>
-                      <DialogTitle>
-                        Invite Others
-                      </DialogTitle>
+                      <DialogTitle>Invite Others</DialogTitle>
                       <DialogDescription>
                         Share this link so others can join and vote
                       </DialogDescription>
@@ -502,8 +566,10 @@ function WheelPage() {
                         </div>
                         <Show when={manualCopyHint()}>
                           <div class="text-xs text-muted-foreground">
-                            Clipboard access isn’t available here; select the link above and press
-                            <span class="font-medium"> Ctrl+C</span> (or <span class="font-medium">Cmd+C</span>).
+                            Clipboard access isn’t available here; select the
+                            link above and press
+                            <span class="font-medium"> Ctrl+C</span> (or{" "}
+                            <span class="font-medium">Cmd+C</span>).
                           </div>
                         </Show>
                         <div class="flex items-center justify-center gap-2">
@@ -782,13 +848,24 @@ function WheelPage() {
                               stroke-width="3"
                             />
                             <defs>
-                              <radialGradient id="centerGradient" cx="50%" cy="30%" r="70%">
+                              <radialGradient
+                                id="centerGradient"
+                                cx="50%"
+                                cy="30%"
+                                r="70%"
+                              >
                                 <stop offset="0%" stop-color="#6b7280" />
                                 <stop offset="100%" stop-color="#374151" />
                               </radialGradient>
                             </defs>
                             <circle cx="100" cy="100" r="8" fill="#9ca3af" />
-                            <circle cx="98" cy="98" r="3" fill="#d1d5db" opacity="0.6" />
+                            <circle
+                              cx="98"
+                              cy="98"
+                              r="3"
+                              fill="#d1d5db"
+                              opacity="0.6"
+                            />
                           </svg>
                         </div>
                       </div>
@@ -894,9 +971,7 @@ function WheelPage() {
                 <Card class="food-card">
                   <CardHeader class="pb-3">
                     <CardTitle class="flex items-center justify-between text-base">
-                      <span>
-                        On the Wheel
-                      </span>
+                      <span>On the Wheel</span>
                       <Show when={vetoedEateryCount() > 0}>
                         <Badge variant="error" class="text-xs">
                           {vetoedEateryCount()} vetoed
@@ -916,10 +991,14 @@ function WheelPage() {
                             style={`background-color: ${segment.color}`}
                           />
                           <div class="flex-1 min-w-0">
-                            <p class="font-medium text-sm truncate">{segment.eatery.name}</p>
+                            <p class="font-medium text-sm truncate">
+                              {segment.eatery.name}
+                            </p>
                           </div>
                           <div class="text-right flex-shrink-0">
-                            <p class="text-sm font-medium text-primary">{segment.percentage.toFixed(0)}%</p>
+                            <p class="text-sm font-medium text-primary">
+                              {segment.percentage.toFixed(0)}%
+                            </p>
                           </div>
                         </div>
                       ))}

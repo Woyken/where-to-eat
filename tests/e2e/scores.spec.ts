@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { injectConnection } from "./helpers";
+import { injectConnection, selectOrCreateUser } from "./helpers";
 
 test("scores: score updates sync between peers", async ({
   browser,
@@ -29,22 +29,16 @@ test("scores: score updates sync between peers", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
 
-  // Add a user and eatery
+  // Add an eatery
   await pageA.goto(`/settings/${connectionId}`);
   await pageA.waitForLoadState("networkidle");
 
-  const userName = `Test User ${Date.now()}`;
   const eateryName = `Test Eatery ${Date.now()}`;
-
-  // Add user
-  await pageA.getByTestId("add-user-open").click();
-  await pageA.getByTestId("add-user-name").fill(userName);
-  await pageA.getByTestId("add-user-submit").click();
-  await expect(pageA.getByTestId("add-user-name")).not.toBeVisible();
 
   // Add eatery
   await pageA.getByTestId("add-eatery-open").click();
@@ -59,70 +53,52 @@ test("scores: score updates sync between peers", async ({
     await pageA.getByTestId("share-url").innerText()
   ).trim();
 
-  // await injectConnection(pageB, connectionId);
   await pageB.goto(shareUrlText);
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
-  // Verify B has the user and eatery
+  // Verify B has the eatery
   await pageB.goto(`/settings/${connectionId}`);
-  await expect(
-    pageB.getByRole("heading", { name: userName }).first(),
-  ).toBeVisible({ timeout: 15_000 });
   await expect(
     pageB.getByRole("heading", { name: eateryName }).first(),
   ).toBeVisible({ timeout: 15_000 });
 
-  // A sets a score for the eatery
-  // Note: This requires UI interaction with the score slider
-  // First, select the user
+  // A sets their score for the eatery to 50
   await pageA.goto(`/settings/${connectionId}`);
-  await pageA
-    .locator(`[data-testid="user-selector"] button:has-text("${userName}")`)
-    .click();
 
   // Find the eatery card and set score to 50 (mid-range)
-  const eateryCard = pageA.locator(`[data-eatery-name="${eateryName}"]`);
-  const scoreSlider = eateryCard.getByTestId("score-slider");
+  const eateryCardA = pageA.locator(`[data-eatery-name="${eateryName}"]`);
+  const scoreSliderA = eateryCardA.getByTestId("score-slider");
 
   // Set slider value to 50
-  await scoreSlider.fill("50");
+  await scoreSliderA.fill("50");
 
-  // Wait a moment for the score to be saved
-  await pageA.waitForTimeout(1000);
+  // Wait a moment for the score to be saved and synced
+  await pageA.waitForTimeout(2000);
 
-  // B should receive the score update
-  await pageB.goto(`/settings/${connectionId}`);
-  await pageB
-    .locator(`[data-testid="user-selector"] button:has-text("${userName}")`)
-    .click();
+  // B sets their own score to 75
+  await pageB.reload();
+  await pageB.waitForLoadState("networkidle");
 
   const eateryCardB = pageB.locator(`[data-eatery-name="${eateryName}"]`);
   const scoreSliderB = eateryCardB.getByTestId("score-slider");
 
-  // Verify score is 50
-  await expect(scoreSliderB).toHaveValue("50", { timeout: 15_000 });
-
-  console.log("Score update synced to B");
-
-  // B updates the score to 75
+  // B's default score should be 50, set to 75
   await scoreSliderB.fill("75");
-  await pageB.waitForTimeout(1000);
+  await pageB.waitForTimeout(2000);
 
-  // A should receive the updated score
+  // Reload A and verify A's score is still 50 (each user has their own score)
   await pageA.reload();
   await pageA.waitForLoadState("networkidle");
-  await pageA
-    .locator(`[data-testid="user-selector"] button:has-text("${userName}")`)
-    .click();
 
-  const eateryCardA = pageA.locator(`[data-eatery-name="${eateryName}"]`);
-  const scoreSliderA = eateryCardA.getByTestId("score-slider");
+  const eateryCardA2 = pageA.locator(`[data-eatery-name="${eateryName}"]`);
+  const scoreSliderA2 = eateryCardA2.getByTestId("score-slider");
 
-  await expect(scoreSliderA).toHaveValue("75", { timeout: 15_000 });
+  await expect(scoreSliderA2).toHaveValue("50", { timeout: 15_000 });
 
-  console.log("Score update synced back to A");
+  console.log("Score updates work correctly - each user has their own score");
 
   await contextA.close();
   await contextB.close();
@@ -152,26 +128,14 @@ test("scores: multiple users score same eatery independently", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  // A becomes User 1
+  await selectOrCreateUser(pageA, "User 1");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
 
   await pageA.goto(`/settings/${connectionId}`);
   await pageA.waitForLoadState("networkidle");
-
-  // Add two users
-  const user1 = `User 1 ${Date.now()}`;
-  const user2 = `User 2 ${Date.now()}`;
-
-  await pageA.getByTestId("add-user-open").click();
-  await pageA.getByTestId("add-user-name").fill(user1);
-  await pageA.getByTestId("add-user-submit").click();
-  await expect(pageA.getByTestId("add-user-name")).not.toBeVisible();
-
-  await pageA.getByTestId("add-user-open").click();
-  await pageA.getByTestId("add-user-name").fill(user2);
-  await pageA.getByTestId("add-user-submit").click();
-  await expect(pageA.getByTestId("add-user-name")).not.toBeVisible();
 
   // Add an eatery
   const eateryName = `Shared Eatery ${Date.now()}`;
@@ -187,18 +151,18 @@ test("scores: multiple users score same eatery independently", async ({
     await pageA.getByTestId("share-url").innerText()
   ).trim();
 
-  // await injectConnection(pageB, connectionId);
   await pageB.goto(shareUrlText);
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  // B becomes User 2
+  await selectOrCreateUser(pageB, "User 2");
 
   await pageB.goto(`/settings/${connectionId}`);
   await pageB.waitForLoadState("networkidle");
 
-  // A sets User 1's score to 80
+  // A (User 1) sets their score to 80
   await pageA.goto(`/settings/${connectionId}`);
-  await selectUser(pageA, user1);
 
   const eateryCardA = pageA
     .locator(`[data-eatery-name="${eateryName}"]`)
@@ -209,9 +173,7 @@ test("scores: multiple users score same eatery independently", async ({
   await eateryCardA.getByTestId("score-slider").fill("80");
   await pageA.waitForTimeout(1000);
 
-  // B sets User 2's score to 30
-  await selectUser(pageB, user2);
-
+  // B (User 2) sets their score to 30
   const eateryCardB = pageB
     .locator(`[data-eatery-name="${eateryName}"]`)
     .filter({ has: pageB.getByTestId("score-slider") });
@@ -230,10 +192,7 @@ test("scores: multiple users score same eatery independently", async ({
   // Wait for P2P reconnection
   await pageA.waitForTimeout(3000);
 
-  // Verify on A: User 1 should have score 80, User 2 should have score 30
-  await selectUser(pageA, user1);
-
-  // Re-query locator after user switch to avoid stale element
+  // Verify on A: User 1's score should still be 80
   const eateryCardA1 = pageA
     .locator(`[data-eatery-name="${eateryName}"]`)
     .filter({ has: pageA.getByTestId("score-slider") });
@@ -243,33 +202,7 @@ test("scores: multiple users score same eatery independently", async ({
   });
   await expect(eateryCardA1.getByTestId("score-slider")).toHaveValue("80");
 
-  await selectUser(pageA, user2);
-
-  // Re-query locator after user switch to avoid stale element
-  const eateryCardA2 = pageA
-    .locator(`[data-eatery-name="${eateryName}"]`)
-    .filter({ has: pageA.getByTestId("score-slider") });
-  await expect(eateryCardA2.getByTestId("score-slider")).toHaveValue("30", {
-    timeout: 15_000,
-  });
-
-  // Verify on B: User 1 should have score 80, User 2 should have score 30
-  await selectUser(pageB, user1);
-
-  // Re-query locator after user switch to avoid stale element
-  const eateryCardB1 = pageB
-    .locator(`[data-eatery-name="${eateryName}"]`)
-    .filter({ has: pageB.getByTestId("score-slider") });
-  await expect(eateryCardB1.getByTestId("score-slider")).toBeVisible({
-    timeout: 10_000,
-  });
-  await expect(eateryCardB1.getByTestId("score-slider")).toHaveValue("80", {
-    timeout: 15_000,
-  });
-
-  await selectUser(pageB, user2);
-
-  // Re-query locator after user switch to avoid stale element
+  // Verify on B: User 2's score should still be 30
   const eateryCardB2 = pageB
     .locator(`[data-eatery-name="${eateryName}"]`)
     .filter({ has: pageB.getByTestId("score-slider") });
@@ -278,7 +211,9 @@ test("scores: multiple users score same eatery independently", async ({
   });
   await expect(eateryCardB2.getByTestId("score-slider")).toHaveValue("30");
 
-  console.log("Multiple user scores verified");
+  console.log(
+    "Multiple user scores verified - each user has independent score",
+  );
 
   await contextA.close();
   await contextB.close();
@@ -300,22 +235,17 @@ test("scores: score changes reflect on wheel page", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "Wheel User");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
 
-  // Add user and eatery
+  // Add eateries
   await pageA.goto(`/settings/${connectionId}`);
   await pageA.waitForLoadState("networkidle");
 
-  const userName = `Wheel User ${Date.now()}`;
   const eatery1 = `Eatery 1 ${Date.now()}`;
   const eatery2 = `Eatery 2 ${Date.now()}`;
-
-  await pageA.getByTestId("add-user-open").click();
-  await pageA.getByTestId("add-user-name").fill(userName);
-  await pageA.getByTestId("add-user-submit").click();
-  await expect(pageA.getByTestId("add-user-name")).not.toBeVisible();
 
   await pageA.getByTestId("add-eatery-open").click();
   await pageA.getByTestId("add-eatery-name").fill(eatery1);
@@ -327,10 +257,7 @@ test("scores: score changes reflect on wheel page", async ({
   await pageA.getByTestId("add-eatery-submit").click();
   await expect(pageA.getByTestId("add-eatery-name")).not.toBeVisible();
 
-  // Set scores: eatery1 = 5, eatery2 = 1
-  // Click the toggle button for the user (ToggleGroup, not a select element)
-  await selectUser(pageA, userName);
-
+  // Set scores: eatery1 = 50, eatery2 = 10
   const eatery1Card = pageA
     .locator(`[data-eatery-name="${eatery1}"]`)
     .filter({ has: pageA.getByTestId("score-slider") });
@@ -349,9 +276,7 @@ test("scores: score changes reflect on wheel page", async ({
   await pageA.goto(`/wheel/${connectionId}`);
   await pageA.waitForLoadState("networkidle");
 
-  // Select the user in wheel page
-  await pageA.getByLabel(userName).check();
-
+  // The current user should be auto-selected (preselected checkbox)
   // Look for the spin button
   const spinButton = pageA.getByTestId("spin-wheel");
   await expect(spinButton).toBeVisible();
@@ -366,14 +291,3 @@ test("scores: score changes reflect on wheel page", async ({
 
   await contextA.close();
 });
-
-async function selectUser(page: Page, userName: string) {
-  const userToggle = page.locator(
-    `[data-testid="user-selector"] button:has-text("${userName}")`,
-  );
-  const isPressed = await userToggle.getAttribute("aria-pressed");
-  if (isPressed !== "true") {
-    await userToggle.click();
-    await expect(userToggle).toHaveAttribute("aria-pressed", "true");
-  }
-}

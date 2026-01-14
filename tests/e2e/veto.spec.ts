@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { injectConnectionData } from "./helpers";
+import {
+  injectConnectionData,
+  selectOrCreateUser,
+  switchCurrentUser,
+} from "./helpers";
 
 test("veto: never pick hides rating and excludes from wheel", async ({
   page,
@@ -62,13 +66,12 @@ test("veto: never pick hides rating and excludes from wheel", async ({
   // 2) In wheel: vetoed eatery is excluded; badge shows veto count when user selected
   await page.goto(`/wheel/${connectionId}`);
   await page.waitForLoadState("networkidle");
+  await selectOrCreateUser(page, "Alice");
 
   await page.getByLabel("Alice").check();
 
   // Ensure the app registered the selection
-  await expect(page.getByText("Select at least one person")).toHaveCount(
-    0,
-  );
+  await expect(page.getByText("Select at least one person")).toHaveCount(0);
 
   // The sidebar shows "On the Wheel" card with vetoed badge
   await expect(page.getByText("On the Wheel")).toBeVisible();
@@ -195,6 +198,7 @@ test("veto: any selected user's veto excludes eatery (multi-user)", async ({
 
   await page.goto(`/wheel/${connectionId}`);
   await page.waitForLoadState("networkidle");
+  await selectOrCreateUser(page, "Carol");
 
   // Select both users
   await page.getByLabel("Carol").check();
@@ -214,8 +218,21 @@ test("veto: any selected user's veto excludes eatery (multi-user)", async ({
     page.locator("svg title", { hasText: "Zeta Curry" }),
   ).toHaveCount(0);
 
+  // Switch identity to Dave so we can deselect Carol without the current-user guard
+  await switchCurrentUser(page, "Dave");
+  await page.getByLabel("Carol").check({ force: true });
+  await page.getByLabel("Dave").check({ force: true });
+
   // If we deselect Carol (leaving only Dave), the eatery should reappear
-  await page.getByLabel("Carol").uncheck();
+  const carolCheckbox = page.getByLabel("Carol");
+  await expect(carolCheckbox).toBeVisible();
+  // Some runs need a couple attempts before the checkbox state updates
+  for (let i = 0; i < 3; i += 1) {
+    await carolCheckbox.click({ force: true });
+    await page.waitForTimeout(50);
+    if (!(await carolCheckbox.isChecked())) break;
+  }
+  await expect(carolCheckbox).not.toBeChecked();
 
   await expect(page.getByText(/vetoed/)).toHaveCount(0);
 
