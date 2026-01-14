@@ -1,0 +1,264 @@
+name: PR Preview (GitHub Pages)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: "pr-preview-${{ github.event.pull_request.number }}"
+  cancel-in-progress: false
+
+env:
+  COMMENT_MARKER: "<!-- pr-preview-bot -->"
+
+jobs:
+  deploy-preview:
+    # Deploy on open/sync/reopen, skip forks
+    if: |
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    environment:
+      name: pr-preview/pr-${{ github.event.pull_request.number }}
+      url: ${{ steps.meta.outputs.preview_url }}
+
+    steps:
+      - name: Compute preview URL
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          owner="${{ github.repository_owner }}"
+          repo="${{ github.event.repository.name }}"
+          pr="${{ github.event.pull_request.number }}"
+          echo "preview_path=/previews/pr-${pr}/" >> "$GITHUB_OUTPUT"
+          echo "preview_url=https://${owner}.github.io/${repo}/previews/pr-${pr}/" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Enable corepack (pnpm)
+        run: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build (PR preview base)
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}${{ steps.meta.outputs.preview_path }}
+        run: pnpm build:skip-check
+
+      - name: Publish preview to gh-pages
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          pr="${{ github.event.pull_request.number }}"
+          target_dir="../_gh-pages/previews/pr-${pr}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin gh-pages || true
+
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git worktree add -B gh-pages ../_gh-pages origin/gh-pages
+          else
+            mkdir -p ../_gh-pages
+            git worktree add ../_gh-pages
+            (
+              cd ../_gh-pages
+              git checkout --orphan gh-pages
+              git rm -rf . >/dev/null 2>&1 || true
+            )
+          fi
+
+          mkdir -p "${target_dir}"
+          rsync -av --delete "dist/" "${target_dir}/"
+
+          (
+            cd ../_gh-pages
+            touch .nojekyll
+            git add -A
+            git commit -m "PR preview #${pr} (${GITHUB_SHA})" || echo "No changes to commit"
+            git push origin gh-pages
+          )
+
+      - name: Sticky comment - deploy
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          api="https://api.github.com"
+          repo="${{ github.repository }}"
+          pr="${{ github.event.pull_request.number }}"
+          url="${{ steps.meta.outputs.preview_url }}"
+          marker="${{ env.COMMENT_MARKER }}"
+          sha="${{ github.event.pull_request.head.sha }}"
+
+          body="${marker}
+          🚀 **PR Preview deployed!**
+
+          | Preview | Commit |
+          |---------|--------|
+          | ${url} | \`${sha:0:7}\` |
+
+          _Updated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')_"
+
+          # Find existing bot comment
+          comment_id=$(curl -sS \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "${api}/repos/${repo}/issues/${pr}/comments?per_page=100" \
+            | jq -r ".[] | select(.body | startswith(\"${marker}\")) | .id" | head -n1)
+
+          if [ -n "${comment_id}" ]; then
+            # Update existing comment
+            curl -sS -X PATCH \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Content-Type: application/json" \
+              --data "$(jq -n --arg b "${body}" '{body:$b}')" \
+              "${api}/repos/${repo}/issues/comments/${comment_id}" >/dev/null
+          else
+            # Create new comment
+            curl -sS -X POST \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Content-Type: application/json" \
+              --data "$(jq -n --arg b "${body}" '{body:$b}')" \
+              "${api}/repos/${repo}/issues/${pr}/comments" >/dev/null
+          fi
+
+  cleanup-preview:
+    # Cleanup on close (merged or not), skip forks
+    if: |
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove preview folder from gh-pages
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          pr="${{ github.event.pull_request.number }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin gh-pages || true
+
+          if ! git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            echo "gh-pages branch does not exist; nothing to clean."
+            exit 0
+          fi
+
+          git worktree add -B gh-pages ../_gh-pages origin/gh-pages
+
+          if [ -d "../_gh-pages/previews/pr-${pr}" ]; then
+            rm -rf "../_gh-pages/previews/pr-${pr}"
+          else
+            echo "No preview folder found for PR #${pr}."
+          fi
+
+          (
+            cd ../_gh-pages
+            git add -A
+            git commit -m "Remove PR preview #${pr}" || echo "No changes to commit"
+            git push origin gh-pages
+          )
+
+      - name: Sticky comment - cleanup
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          api="https://api.github.com"
+          repo="${{ github.repository }}"
+          pr="${{ github.event.pull_request.number }}"
+          marker="${{ env.COMMENT_MARKER }}"
+          merged="${{ github.event.pull_request.merged }}"
+
+          if [ "${merged}" = "true" ]; then
+            status="✅ PR merged"
+          else
+            status="❌ PR closed"
+          fi
+
+          body="${marker}
+          🧹 **PR Preview removed** (${status})
+
+          _Cleaned up: $(date -u '+%Y-%m-%d %H:%M:%S UTC')_"
+
+          # Find existing bot comment
+          comment_id=$(curl -sS \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "${api}/repos/${repo}/issues/${pr}/comments?per_page=100" \
+            | jq -r ".[] | select(.body | startswith(\"${marker}\")) | .id" | head -n1)
+
+          if [ -n "${comment_id}" ]; then
+            # Update existing comment
+            curl -sS -X PATCH \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Content-Type: application/json" \
+              --data "$(jq -n --arg b "${body}" '{body:$b}')" \
+              "${api}/repos/${repo}/issues/comments/${comment_id}" >/dev/null
+          else
+            # Create new comment
+            curl -sS -X POST \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Content-Type: application/json" \
+              --data "$(jq -n --arg b "${body}" '{body:$b}')" \
+              "${api}/repos/${repo}/issues/${pr}/comments" >/dev/null
+          fi
+
+  skip-fork:
+    if: github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain why preview is skipped
+        run: |
+          echo "Skipping PR preview for fork PRs (write token disabled)."

@@ -1,13 +1,15 @@
 import tailwindcss from "@tailwindcss/vite";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
-import basicSsl from "@vitejs/plugin-basic-ssl";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import viteSolid from "vite-plugin-solid";
 import tsConfigPaths from "vite-tsconfig-paths";
 
-// For GitHub Pages, set base to repo name. For custom domain or local, use '/'
-const base = process.env.GITHUB_PAGES === "true" ? "/where-to-eat/" : "/";
+// Vite base path for correct asset + router paths.
+// - Local dev: '/' (default)
+// - GitHub Pages prod: '/where-to-eat/' (set via VITE_BASE in CI)
+// - PR previews: '/where-to-eat/previews/pr-<num>/' (set via VITE_BASE in CI)
+const base = process.env.VITE_BASE ?? "/";
 
 export default defineConfig({
   base,
@@ -41,6 +43,8 @@ export default defineConfig({
         short_name: "EateryWheel",
         description:
           "Collaboratively choose where to eat with a spinning wheel",
+        start_url: base,
+        scope: base,
         theme_color: "#000000",
         background_color: "#ffffff",
         display: "standalone",
