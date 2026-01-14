@@ -65,59 +65,39 @@ function HomePage() {
   const connections = () => settingsStorage.store.connections;
 
   return (
-    <div class="min-h-[calc(100vh-theme(spacing.32))] py-8 px-4">
-      <div class="max-w-4xl mx-auto space-y-8">
+    <div class="min-h-[calc(100vh-theme(spacing.28))] py-12 px-4">
+      <div class="max-w-3xl mx-auto space-y-8">
         {/* Hero Section */}
-        <div class="text-center space-y-6 page-section">
-          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-            <Sparkles class="w-4 h-4" />
-            <span>Collaborative Decision Making</span>
-          </div>
-          
-          <h1 class="text-5xl md:text-6xl font-display text-primary leading-tight">
-            Can't Decide<br />Where to Eat?
+        <div class="text-center space-y-4 page-section">
+          <h1 class="text-4xl md:text-5xl font-bold text-foreground leading-tight">
+            Decide Where to Eat
           </h1>
-          
-          <p class="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Spin the wheel with friends and let fate decide! Add your favorite restaurants, 
-            rate them, and watch the wheel pick your next delicious adventure.
-          </p>
 
-          {/* Floating Food Emojis */}
-          <div class="flex justify-center gap-4 text-4xl py-4">
-            <span class="animate-float" style="animation-delay: 0s;">🍕</span>
-            <span class="animate-float" style="animation-delay: 0.2s;">🍔</span>
-            <span class="animate-float" style="animation-delay: 0.4s;">🌮</span>
-            <span class="animate-float" style="animation-delay: 0.6s;">🍜</span>
-            <span class="animate-float" style="animation-delay: 0.8s;">🍣</span>
-            <span class="animate-float" style="animation-delay: 1s;">🥗</span>
-          </div>
+          <p class="text-lg text-muted-foreground max-w-xl mx-auto">
+            Spin the wheel with your team. Add restaurants, set preferences, and let the wheel pick for you.
+          </p>
         </div>
 
-        <div class="space-y-6">
+        <div class="space-y-4">
           {/* Main Action Card */}
-          <Card class="food-card border-2 border-primary/10 overflow-visible page-section">
-            <CardHeader class="text-center pb-2">
+          <Card class="food-card page-section">
+            <CardHeader class="pb-3">
               <Show
                 when={connections().length > 0}
                 fallback={
                   <>
-                    <div class="mx-auto w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mb-4 shadow-food">
-                      <span class="text-3xl">🎡</span>
-                    </div>
-                    <CardTitle class="text-2xl">Create Your First Wheel!</CardTitle>
-                    <CardDescription class="text-base">
-                      Start a new wheel and invite friends to join the fun
+                    <CardTitle class="text-xl">Get Started</CardTitle>
+                    <CardDescription>
+                      Create a new session to start making decisions together
                     </CardDescription>
                   </>
                 }
               >
-                <CardTitle class="text-2xl flex items-center justify-center gap-2">
-                  <span class="text-2xl">🎯</span>
-                  Your Wheels
+                <CardTitle class="text-xl">
+                  Your Sessions
                 </CardTitle>
-                <CardDescription class="text-base">
-                  {connections().length} {connections().length === 1 ? 'wheel' : 'wheels'} ready to spin
+                <CardDescription>
+                  {connections().length} {connections().length === 1 ? 'session' : 'sessions'} available
                 </CardDescription>
               </Show>
             </CardHeader>
@@ -126,85 +106,83 @@ function HomePage() {
               when={connections().length > 0}
               fallback={
                 <>
-                  <CardContent class="space-y-4 pt-4">
+                  <CardContent class="space-y-4">
                     <TextField
                       id="connection-name-field"
                       value={connectionName()}
                       onChange={(e) => setConnectionName(e)}
                     >
-                      <TextFieldLabel for="connection-name" class="text-base font-medium">
-                        Give your wheel a name
+                      <TextFieldLabel for="connection-name" class="text-sm font-medium">
+                        Session name
                       </TextFieldLabel>
                       <TextFieldInput
                         type="text"
                         id="connection-name"
-                        placeholder="e.g., Friday Lunch Gang 🍕"
-                        class="h-12 text-base rounded-xl"
+                        placeholder="e.g., Friday Lunch"
+                        class="h-10"
                       />
                     </TextField>
                   </CardContent>
-                  <CardFooter class="pt-2 pb-6">
+                  <CardFooter>
                     <Button
                       onClick={createFreshConnection}
-                      class="w-full h-14 text-lg btn-glow"
+                      class="w-full"
                       data-testid="start-fresh"
                     >
-                      <Plus class="w-5 h-5" />
-                      Create New Wheel
-                      <ArrowRight class="w-5 h-5 ml-auto" />
+                      <Plus class="w-4 h-4" />
+                      Create Session
                     </Button>
                   </CardFooter>
                 </>
               }
             >
-              <CardContent class="space-y-3 pt-2">
+              <CardContent class="space-y-2">
                 <For each={connections()}>
                   {(connection, index) => (
-                    <div 
-                      class="food-list-item flex items-center justify-between animate-slide-up"
-                      style={`animation-delay: ${index() * 0.05}s`}
+                    <div
+                      class="food-list-item flex items-center justify-between"
                     >
-                      <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-2xl">
-                          🎡
+                      <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <span class="text-primary font-semibold text-sm">
+                            {connection.settings.connection.name.charAt(0).toUpperCase()}
+                          </span>
                         </div>
-                        <div>
-                          <h3 class="font-semibold text-lg">
+                        <div class="min-w-0">
+                          <h3 class="font-medium truncate">
                             {connection.settings.connection.name}
                           </h3>
-                          <p class="text-sm text-muted-foreground flex items-center gap-1">
-                            <Calendar class="w-3 h-3" />
+                          <p class="text-xs text-muted-foreground flex items-center gap-1">
+                            {connection.settings.eateries.filter(e => !e._deleted).length} restaurants
+                            <span class="mx-1">·</span>
                             {new Date(
                               connection.settings.connection.updatedAt,
                             ).toLocaleDateString()}
-                            <span class="mx-1">•</span>
-                            {connection.settings.eateries.filter(e => !e._deleted).length} places
                           </p>
                         </div>
                       </div>
-                      <div class="flex gap-2">
+                      <div class="flex gap-1 flex-shrink-0">
                         <Link
                           to="/wheel/$connectionId"
                           params={{ connectionId: connection.id }}
                         >
                           <Button
+                            size="sm"
                             onclick={() => {
                               localStorage.setItem(
                                 "lastUsedConnectionId",
                                 connection.id,
                               );
                             }}
-                            class="gap-2"
                           >
-                            <span>Spin</span>
-                            <ArrowRight class="w-4 h-4" />
+                            Open
                           </Button>
                         </Link>
                         <Button
                           size="icon"
                           variant="ghost"
                           onClick={() => deleteConnection(connection.id)}
-                          class="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          class="text-muted-foreground hover:text-destructive"
                         >
                           <Trash2 class="w-4 h-4" />
                         </Button>
@@ -218,14 +196,8 @@ function HomePage() {
 
           {/* Create New Wheel Card (shown when connections exist) */}
           <Show when={connections().length > 0}>
-            <Card class="food-card border-2 border-dashed border-primary/20 bg-primary/5 page-section">
-              <CardHeader class="pb-2">
-                <CardTitle class="text-lg flex items-center gap-2">
-                  <Plus class="w-5 h-5 text-primary" />
-                  Create Another Wheel
-                </CardTitle>
-              </CardHeader>
-              <CardContent class="pt-0">
+            <Card class="border border-dashed page-section">
+              <CardContent class="pt-4">
                 <div class="flex flex-col sm:flex-row gap-3">
                   <div class="flex-1">
                     <TextField
@@ -235,15 +207,14 @@ function HomePage() {
                       <TextFieldInput
                         type="text"
                         id="new-connection-name"
-                        placeholder="Wheel name (optional)"
-                        class="h-11 rounded-xl"
+                        placeholder="New session name"
+                        class="h-10"
                       />
                     </TextField>
                   </div>
                   <Button
                     onClick={createFreshConnection}
                     data-testid="start-fresh"
-                    class="h-11"
                   >
                     <Plus class="w-4 h-4" />
                     Create
@@ -254,21 +225,18 @@ function HomePage() {
           </Show>
 
           {/* Features Section */}
-          <div class="grid sm:grid-cols-3 gap-4 pt-4 page-section">
-            <div class="text-center p-6 rounded-2xl bg-card border border-border shadow-card">
-              <div class="text-4xl mb-3">🎲</div>
-              <h3 class="font-semibold mb-1">Fair & Random</h3>
-              <p class="text-sm text-muted-foreground">Weighted by everyone's preferences</p>
+          <div class="grid sm:grid-cols-3 gap-3 pt-4 page-section">
+            <div class="p-4 rounded-lg bg-muted/50 border border-border">
+              <h3 class="font-medium text-sm mb-1">Weighted Random</h3>
+              <p class="text-xs text-muted-foreground">Selection based on group preferences</p>
             </div>
-            <div class="text-center p-6 rounded-2xl bg-card border border-border shadow-card">
-              <div class="text-4xl mb-3">👥</div>
-              <h3 class="font-semibold mb-1">Real-time Sync</h3>
-              <p class="text-sm text-muted-foreground">Collaborate with friends instantly</p>
+            <div class="p-4 rounded-lg bg-muted/50 border border-border">
+              <h3 class="font-medium text-sm mb-1">Real-time Sync</h3>
+              <p class="text-xs text-muted-foreground">Collaborate with your team instantly</p>
             </div>
-            <div class="text-center p-6 rounded-2xl bg-card border border-border shadow-card">
-              <div class="text-4xl mb-3">🚫</div>
-              <h3 class="font-semibold mb-1">Veto Power</h3>
-              <p class="text-sm text-muted-foreground">Block places you can't stand</p>
+            <div class="p-4 rounded-lg bg-muted/50 border border-border">
+              <h3 class="font-medium text-sm mb-1">Veto Option</h3>
+              <p class="text-xs text-muted-foreground">Block restaurants you want to avoid</p>
             </div>
           </div>
         </div>

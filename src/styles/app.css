@@ -5,135 +5,135 @@
 @custom-variant dark (&:where(.dark, .dark *, [data-kb-theme=dark], [data-kb-theme=dark] *));
 
 /* ==========================================================================
-   🍽️ WHERE TO EAT - Playful Food-Themed Design System
-   A warm, appetizing palette with vibrant accents inspired by restaurant culture
+   WHERE TO EAT - Professional Restaurant Decision Platform
+   A refined palette with warm burnt orange accents and clean typography
    ========================================================================== */
 
 :root {
-  /* Typography */
-  --font-display: "Lobster", cursive;
-  --font-body: "Nunito", sans-serif;
-  
-  /* Core palette - Warm cream base with rich food-inspired colors */
-  --background: oklch(0.98 0.008 85);  /* Warm cream */
-  --foreground: oklch(0.25 0.04 35);   /* Deep espresso brown */
-  
-  /* Card - Soft ivory with subtle warmth */
-  --card: oklch(0.995 0.005 85);
-  --card-foreground: oklch(0.25 0.04 35);
-  
+  /* Typography - Professional, clean font stack */
+  --font-display: "DM Sans", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Core palette - Clean white base with warm undertones */
+  --background: oklch(0.985 0.003 90);  /* Nearly white with slight warmth */
+  --foreground: oklch(0.2 0.02 250);    /* Slate charcoal */
+
+  /* Card - Pure white for contrast */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.02 250);
+
   /* Popover */
-  --popover: oklch(0.995 0.005 85);
-  --popover-foreground: oklch(0.25 0.04 35);
-  
-  /* Primary - Appetizing tomato red */
-  --primary: oklch(0.58 0.22 28);
-  --primary-foreground: oklch(0.99 0.005 85);
-  
-  /* Secondary - Fresh herb green */
-  --secondary: oklch(0.92 0.04 145);
-  --secondary-foreground: oklch(0.35 0.12 145);
-  
-  /* Muted - Soft linen */
-  --muted: oklch(0.94 0.012 85);
-  --muted-foreground: oklch(0.5 0.03 35);
-  
-  /* Accent - Sunny golden yellow */
-  --accent: oklch(0.88 0.15 85);
-  --accent-foreground: oklch(0.3 0.08 55);
-  
-  /* Destructive - Chili pepper red */
-  --destructive: oklch(0.55 0.25 27);
-  --destructive-foreground: oklch(0.98 0.01 27);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.02 250);
 
-  /* Semantic colors */
-  --info: oklch(0.92 0.06 230);
-  --info-foreground: oklch(0.45 0.15 230);
-  --success: oklch(0.88 0.12 145);
-  --success-foreground: oklch(0.35 0.15 145);
-  --warning: oklch(0.90 0.14 75);
-  --warning-foreground: oklch(0.4 0.12 55);
-  --error: oklch(0.92 0.08 25);
-  --error-foreground: oklch(0.5 0.2 25);
+  /* Primary - Burnt orange / terracotta */
+  --primary: oklch(0.55 0.16 45);
+  --primary-foreground: oklch(0.99 0.005 90);
 
-  /* Borders and inputs - Warm terracotta tints */
-  --border: oklch(0.88 0.025 55);
-  --input: oklch(0.92 0.015 55);
-  --ring: oklch(0.58 0.22 28);
+  /* Secondary - Warm stone gray */
+  --secondary: oklch(0.95 0.008 70);
+  --secondary-foreground: oklch(0.35 0.02 250);
 
-  /* Sidebar - Soft paprika tint */
-  --sidebar: oklch(0.96 0.025 35);
-  --sidebar-foreground: oklch(0.25 0.04 35);
-  --sidebar-primary: oklch(0.58 0.22 28);
-  --sidebar-primary-foreground: oklch(0.99 0.005 85);
-  --sidebar-accent: oklch(0.92 0.04 55);
-  --sidebar-accent-foreground: oklch(0.3 0.06 35);
-  --sidebar-border: oklch(0.88 0.025 55);
-  --sidebar-ring: oklch(0.58 0.22 28);
-  
-  /* Custom gradients for food theme */
-  --gradient-primary: linear-gradient(135deg, oklch(0.58 0.22 28) 0%, oklch(0.65 0.2 45) 100%);
-  --gradient-sunset: linear-gradient(135deg, oklch(0.7 0.2 35) 0%, oklch(0.8 0.18 65) 50%, oklch(0.85 0.12 85) 100%);
-  --gradient-fresh: linear-gradient(135deg, oklch(0.7 0.15 145) 0%, oklch(0.8 0.1 180) 100%);
-  --gradient-warm: linear-gradient(180deg, oklch(0.98 0.008 85) 0%, oklch(0.95 0.02 55) 100%);
+  /* Muted - Light warm gray */
+  --muted: oklch(0.96 0.005 70);
+  --muted-foreground: oklch(0.45 0.015 250);
+
+  /* Accent - Soft amber highlight */
+  --accent: oklch(0.92 0.05 70);
+  --accent-foreground: oklch(0.3 0.04 45);
+
+  /* Destructive - Muted red */
+  --destructive: oklch(0.5 0.18 25);
+  --destructive-foreground: oklch(0.98 0.01 25);
+
+  /* Semantic colors - Muted, professional */
+  --info: oklch(0.94 0.04 230);
+  --info-foreground: oklch(0.4 0.1 230);
+  --success: oklch(0.92 0.08 155);
+  --success-foreground: oklch(0.35 0.1 155);
+  --warning: oklch(0.92 0.1 75);
+  --warning-foreground: oklch(0.4 0.1 55);
+  --error: oklch(0.94 0.06 25);
+  --error-foreground: oklch(0.45 0.15 25);
+
+  /* Borders and inputs - Neutral with subtle warmth */
+  --border: oklch(0.9 0.01 70);
+  --input: oklch(0.95 0.005 70);
+  --ring: oklch(0.55 0.16 45);
+
+  /* Sidebar - Light warm gray */
+  --sidebar: oklch(0.97 0.008 70);
+  --sidebar-foreground: oklch(0.2 0.02 250);
+  --sidebar-primary: oklch(0.55 0.16 45);
+  --sidebar-primary-foreground: oklch(0.99 0.005 90);
+  --sidebar-accent: oklch(0.94 0.02 70);
+  --sidebar-accent-foreground: oklch(0.3 0.02 250);
+  --sidebar-border: oklch(0.9 0.01 70);
+  --sidebar-ring: oklch(0.55 0.16 45);
+
+  /* Refined gradients - Subtle, professional */
+  --gradient-primary: linear-gradient(135deg, oklch(0.55 0.16 45) 0%, oklch(0.6 0.14 55) 100%);
+  --gradient-sunset: linear-gradient(135deg, oklch(0.55 0.12 45) 0%, oklch(0.65 0.1 60) 100%);
+  --gradient-fresh: linear-gradient(135deg, oklch(0.5 0.08 155) 0%, oklch(0.55 0.06 170) 100%);
+  --gradient-warm: linear-gradient(180deg, oklch(0.985 0.003 90) 0%, oklch(0.97 0.01 70) 100%);
 }
 
 .dark,
 [data-kb-theme="dark"] {
-  /* Dark mode - Rich bistro ambiance */
-  --background: oklch(0.18 0.025 35);  /* Deep espresso */
-  --foreground: oklch(0.94 0.015 75);  /* Warm ivory text */
-  
-  --card: oklch(0.22 0.02 35);
-  --card-foreground: oklch(0.94 0.015 75);
-  
-  --popover: oklch(0.22 0.02 35);
-  --popover-foreground: oklch(0.94 0.015 75);
-  
-  /* Primary - Brighter tomato for dark mode */
-  --primary: oklch(0.68 0.2 28);
-  --primary-foreground: oklch(0.15 0.02 35);
-  
-  /* Secondary - Muted sage */
-  --secondary: oklch(0.32 0.04 145);
-  --secondary-foreground: oklch(0.85 0.08 145);
-  
-  --muted: oklch(0.28 0.02 35);
-  --muted-foreground: oklch(0.65 0.03 75);
-  
-  /* Accent - Rich gold */
-  --accent: oklch(0.45 0.12 75);
-  --accent-foreground: oklch(0.9 0.08 75);
-  
-  --destructive: oklch(0.5 0.2 25);
-  --destructive-foreground: oklch(0.95 0.02 25);
+  /* Dark mode - Professional slate with warm accents */
+  --background: oklch(0.14 0.01 250);  /* Deep slate */
+  --foreground: oklch(0.95 0.005 90);  /* Clean white text */
 
-  --info: oklch(0.35 0.08 230);
-  --info-foreground: oklch(0.75 0.1 230);
-  --success: oklch(0.35 0.1 145);
-  --success-foreground: oklch(0.8 0.12 145);
-  --warning: oklch(0.4 0.12 75);
-  --warning-foreground: oklch(0.85 0.1 75);
-  --error: oklch(0.35 0.12 25);
-  --error-foreground: oklch(0.8 0.15 25);
+  --card: oklch(0.18 0.01 250);
+  --card-foreground: oklch(0.95 0.005 90);
 
-  --border: oklch(0.32 0.02 35);
-  --input: oklch(0.28 0.02 35);
-  --ring: oklch(0.68 0.2 28);
+  --popover: oklch(0.18 0.01 250);
+  --popover-foreground: oklch(0.95 0.005 90);
 
-  --sidebar: oklch(0.15 0.02 35);
-  --sidebar-foreground: oklch(0.94 0.015 75);
-  --sidebar-primary: oklch(0.68 0.2 28);
-  --sidebar-primary-foreground: oklch(0.15 0.02 35);
-  --sidebar-accent: oklch(0.28 0.03 35);
-  --sidebar-accent-foreground: oklch(0.9 0.02 75);
-  --sidebar-border: oklch(0.32 0.02 35);
-  --sidebar-ring: oklch(0.68 0.2 28);
-  
-  --gradient-primary: linear-gradient(135deg, oklch(0.68 0.2 28) 0%, oklch(0.72 0.18 45) 100%);
-  --gradient-sunset: linear-gradient(135deg, oklch(0.5 0.15 35) 0%, oklch(0.55 0.12 55) 50%, oklch(0.6 0.08 75) 100%);
-  --gradient-fresh: linear-gradient(135deg, oklch(0.4 0.1 145) 0%, oklch(0.45 0.08 180) 100%);
-  --gradient-warm: linear-gradient(180deg, oklch(0.18 0.025 35) 0%, oklch(0.22 0.03 45) 100%);
+  /* Primary - Warmer orange for dark mode visibility */
+  --primary: oklch(0.65 0.15 45);
+  --primary-foreground: oklch(0.12 0.01 250);
+
+  /* Secondary - Dark slate */
+  --secondary: oklch(0.25 0.01 250);
+  --secondary-foreground: oklch(0.9 0.005 90);
+
+  --muted: oklch(0.22 0.01 250);
+  --muted-foreground: oklch(0.65 0.01 90);
+
+  /* Accent - Muted amber */
+  --accent: oklch(0.35 0.08 60);
+  --accent-foreground: oklch(0.9 0.04 60);
+
+  --destructive: oklch(0.45 0.15 25);
+  --destructive-foreground: oklch(0.95 0.01 25);
+
+  --info: oklch(0.3 0.06 230);
+  --info-foreground: oklch(0.75 0.08 230);
+  --success: oklch(0.35 0.08 155);
+  --success-foreground: oklch(0.8 0.08 155);
+  --warning: oklch(0.4 0.1 60);
+  --warning-foreground: oklch(0.85 0.08 60);
+  --error: oklch(0.35 0.1 25);
+  --error-foreground: oklch(0.8 0.12 25);
+
+  --border: oklch(0.28 0.01 250);
+  --input: oklch(0.22 0.01 250);
+  --ring: oklch(0.65 0.15 45);
+
+  --sidebar: oklch(0.12 0.01 250);
+  --sidebar-foreground: oklch(0.95 0.005 90);
+  --sidebar-primary: oklch(0.65 0.15 45);
+  --sidebar-primary-foreground: oklch(0.12 0.01 250);
+  --sidebar-accent: oklch(0.22 0.01 250);
+  --sidebar-accent-foreground: oklch(0.9 0.005 90);
+  --sidebar-border: oklch(0.28 0.01 250);
+  --sidebar-ring: oklch(0.65 0.15 45);
+
+  --gradient-primary: linear-gradient(135deg, oklch(0.65 0.15 45) 0%, oklch(0.68 0.12 55) 100%);
+  --gradient-sunset: linear-gradient(135deg, oklch(0.45 0.1 45) 0%, oklch(0.5 0.08 55) 100%);
+  --gradient-fresh: linear-gradient(135deg, oklch(0.35 0.06 155) 0%, oklch(0.4 0.05 170) 100%);
+  --gradient-warm: linear-gradient(180deg, oklch(0.14 0.01 250) 0%, oklch(0.18 0.015 250) 100%);
 }
 
 @theme {
@@ -176,16 +176,16 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --radius: 0.75rem;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --radius: 0.5rem;
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
   --radius-xl: calc(var(--radius) + 8px);
 
-  /* Custom shadows for depth */
-  --shadow-food: 0 4px 20px -4px oklch(0.58 0.12 35 / 0.15);
-  --shadow-card: 0 2px 12px -2px oklch(0.58 0.08 35 / 0.1);
-  --shadow-elevated: 0 8px 30px -8px oklch(0.3 0.05 35 / 0.25);
+  /* Professional shadows - subtle depth */
+  --shadow-food: 0 1px 3px 0 oklch(0.2 0.01 250 / 0.1), 0 1px 2px -1px oklch(0.2 0.01 250 / 0.1);
+  --shadow-card: 0 4px 6px -1px oklch(0.2 0.01 250 / 0.08), 0 2px 4px -2px oklch(0.2 0.01 250 / 0.06);
+  --shadow-elevated: 0 10px 15px -3px oklch(0.2 0.01 250 / 0.1), 0 4px 6px -4px oklch(0.2 0.01 250 / 0.08);
 
   @keyframes accordion-down {
     from {
@@ -243,8 +243,8 @@
   }
 
   @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 0 0 oklch(0.58 0.22 28 / 0.4); }
-    50% { box-shadow: 0 0 20px 4px oklch(0.58 0.22 28 / 0.2); }
+    0%, 100% { box-shadow: 0 0 0 0 oklch(0.55 0.16 45 / 0.3); }
+    50% { box-shadow: 0 0 12px 2px oklch(0.55 0.16 45 / 0.15); }
   }
 
   @keyframes shimmer {
@@ -384,25 +384,25 @@
     font-weight: 700;
   }
 
-  /* Food-themed scrollbar */
+  /* Professional scrollbar */
   ::-webkit-scrollbar {
-    width: 14px;
+    width: 12px;
   }
 
   ::-webkit-scrollbar-track {
     background: var(--muted);
-    border-radius: 10px;
+    border-radius: 6px;
   }
 
   ::-webkit-scrollbar-thumb {
-    border-radius: 10px;
+    border-radius: 6px;
     border: 3px solid transparent;
     background-clip: content-box;
-    background: var(--primary);
+    background: oklch(0.7 0.03 250);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.5 0.2 28);
+    background: oklch(0.55 0.16 45);
     background-clip: content-box;
   }
 
@@ -412,21 +412,21 @@
 
   /* Selection styling */
   ::selection {
-    background: oklch(0.58 0.22 28 / 0.3);
+    background: oklch(0.55 0.16 45 / 0.2);
     color: var(--foreground);
   }
 }
 
-/* Custom component overrides for food theme */
+/* Professional component styles */
 @layer components {
-  /* Playful card hover effects */
+  /* Clean card with subtle hover */
   .food-card {
-    @apply relative overflow-hidden transition-all duration-300;
+    @apply relative overflow-hidden transition-all duration-200;
     box-shadow: var(--shadow-card);
   }
 
   .food-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: var(--shadow-elevated);
   }
 
@@ -436,77 +436,55 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
+    height: 3px;
     background: var(--gradient-primary);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
   }
 
   .food-card:hover::before {
     opacity: 1;
   }
 
-  /* Playful badge styling */
+  /* Professional badge */
   .food-badge {
-    @apply px-3 py-1 rounded-full text-sm font-semibold;
-    background: var(--gradient-primary);
+    @apply px-3 py-1 rounded-md text-sm font-medium;
+    background: var(--primary);
     color: var(--primary-foreground);
-    box-shadow: 0 2px 8px -2px oklch(0.58 0.22 28 / 0.3);
   }
 
-  /* Wheel-specific styles */
+  /* Wheel styles */
   .wheel-container {
     @apply relative;
-    filter: drop-shadow(0 10px 25px oklch(0.3 0.05 35 / 0.3));
+    filter: drop-shadow(0 8px 20px oklch(0.2 0.01 250 / 0.15));
   }
 
   .wheel-pointer {
-    filter: drop-shadow(0 4px 6px oklch(0.3 0.1 25 / 0.4));
+    filter: drop-shadow(0 2px 4px oklch(0.2 0.01 250 / 0.3));
   }
 
-  /* Winner celebration */
+  /* Winner announcement */
   .winner-card {
     @apply relative overflow-hidden;
-    background: linear-gradient(135deg, oklch(0.85 0.12 145) 0%, oklch(0.9 0.08 145) 100%);
-    border: 3px solid oklch(0.6 0.15 145);
-    animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    background: linear-gradient(135deg, oklch(0.55 0.16 45) 0%, oklch(0.6 0.14 55) 100%);
+    border: 2px solid oklch(0.5 0.14 45);
+    animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .winner-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: conic-gradient(
-      from 0deg,
-      transparent 0deg 60deg,
-      oklch(1 0 0 / 0.1) 60deg 90deg,
-      transparent 90deg 180deg,
-      oklch(1 0 0 / 0.1) 180deg 210deg,
-      transparent 210deg 360deg
-    );
-    animation: spin-slow 4s linear infinite;
-  }
-
-  /* Food emoji decorations */
-  .food-emoji {
-    @apply text-2xl;
-    filter: drop-shadow(0 2px 4px oklch(0 0 0 / 0.2));
+    display: none;
   }
 
   /* Interactive list items */
   .food-list-item {
-    @apply p-4 rounded-xl border-2 border-border bg-card transition-all duration-200;
+    @apply p-4 rounded-lg border border-border bg-card transition-all duration-150;
   }
 
   .food-list-item:hover {
-    @apply border-primary/30 bg-primary/5;
-    transform: translateX(4px);
+    @apply border-primary/40 bg-primary/5;
   }
 
-  /* Primary button glow effect */
+  /* Primary button highlight */
   .btn-glow {
     @apply relative;
   }
@@ -514,17 +492,17 @@
   .btn-glow::after {
     content: '';
     position: absolute;
-    inset: -2px;
-    background: var(--gradient-primary);
+    inset: 0;
+    background: var(--primary);
     border-radius: inherit;
     z-index: -1;
     opacity: 0;
-    filter: blur(8px);
-    transition: opacity 0.3s ease;
+    filter: blur(12px);
+    transition: opacity 0.2s ease;
   }
 
   .btn-glow:hover::after {
-    opacity: 0.5;
+    opacity: 0.3;
   }
 
   /* Page section styling */
@@ -533,13 +511,13 @@
     animation-fill-mode: both;
   }
 
-  .page-section:nth-child(1) { animation-delay: 0.1s; }
-  .page-section:nth-child(2) { animation-delay: 0.2s; }
-  .page-section:nth-child(3) { animation-delay: 0.3s; }
-  .page-section:nth-child(4) { animation-delay: 0.4s; }
+  .page-section:nth-child(1) { animation-delay: 0.05s; }
+  .page-section:nth-child(2) { animation-delay: 0.1s; }
+  .page-section:nth-child(3) { animation-delay: 0.15s; }
+  .page-section:nth-child(4) { animation-delay: 0.2s; }
 
-  /* Decorative food pattern background */
+  /* Clean minimal background */
   .food-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e07c4a' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    background: transparent;
   }
 }

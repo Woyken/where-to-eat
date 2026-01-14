@@ -4,7 +4,7 @@ test("can name a new connection and rename it", async ({ page }) => {
   await page.goto("/");
 
   await page
-    .getByLabel("Connection Name (Optional)")
+    .getByLabel("Session name")
     .fill("My Test Connection");
   await page.getByTestId("start-fresh").click();
 
@@ -16,7 +16,7 @@ test("can name a new connection and rename it", async ({ page }) => {
   await page.getByTestId("connection-name-input").fill("Renamed Connection");
   await page.getByTestId("connection-name-save").click();
 
-  await page.getByRole("button", { name: "Home" }).click();
+  await page.getByTestId("home-button").click();
 
   await expect(page.getByText("Renamed Connection")).toBeVisible();
 });
@@ -34,7 +34,7 @@ test("connection name syncs to another peer", async ({ browser }) => {
   const renamed = `Renamed ${Date.now()}`;
 
   await pageA.goto("/");
-  await pageA.getByLabel("Connection Name (Optional)").fill(originalName);
+  await pageA.getByLabel("Session name").fill(originalName);
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
 

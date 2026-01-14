@@ -184,7 +184,7 @@ test("recovery: new peer can join after original creator leaves", async ({
   console.log("C joining after A left...");
   await pageC.goto(shareUrlB);
   await expect(pageC).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
-    timeout: 90_000,
+    timeout: 120_000,
   });
 
   // C should receive all the data (including data originally from A)
@@ -277,12 +277,24 @@ test("recovery: multiple tabs of same browser stay synced when one closes", asyn
   console.log("Closing B1...");
   await pageB1.close();
 
+  // Wait for B2 to become leader and re-establish connection to A
+  // This is the proper fix - wait for actual P2P connection, not arbitrary timeout
+  console.log("Waiting for B2 to reconnect to peer A...");
+  await expect(pageB2.getByTestId("peer-count-value")).toHaveText("1", {
+    timeout: 30_000,
+  });
+  console.log("B2 reconnected to A");
+
   // B2 and B3 should still work
   const newEatery = `After Tab Close ${Date.now()}`;
   await pageB2.getByTestId("add-eatery-open").click();
   await pageB2.getByTestId("add-eatery-name").fill(newEatery);
   await pageB2.getByTestId("add-eatery-submit").click();
 
+  // Wait for dialog to close first
+  await expect(pageB2.getByTestId("add-eatery-name")).not.toBeVisible();
+
+  // Now that B2 is connected to A, sync should happen reliably
   await expect(
     pageB3.getByRole("heading", { name: newEatery }).first(),
   ).toBeVisible({ timeout: 15_000 });

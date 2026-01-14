@@ -389,21 +389,18 @@ function WheelPage() {
         when={activeEateries().length > 0}
         fallback={
           <div class="py-12 px-4">
-            <div class="max-w-lg mx-auto text-center space-y-8">
-              {/* Empty State Illustration */}
-              <div class="relative">
-                <div class="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-accent/30 flex items-center justify-center">
-                  <span class="text-6xl animate-float">🍽️</span>
-                </div>
-                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-4 bg-black/5 rounded-full blur-md" />
+            <div class="max-w-lg mx-auto text-center space-y-6">
+              {/* Empty State */}
+              <div class="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <Settings class="w-10 h-10 text-primary/60" />
               </div>
 
-              <div class="space-y-3">
-                <h2 class="text-3xl font-bold text-foreground">
-                  Your Wheel is Empty!
+              <div class="space-y-2">
+                <h2 class="text-2xl font-bold text-foreground">
+                  No Restaurants Yet
                 </h2>
-                <p class="text-lg text-muted-foreground max-w-md mx-auto">
-                  Add some restaurants and cafes to get the wheel spinning. The more options, the more fun! 🎉
+                <p class="text-muted-foreground max-w-md mx-auto">
+                  Add restaurants to start spinning the wheel
                 </p>
               </div>
 
@@ -412,42 +409,32 @@ function WheelPage() {
                   to="/settings/$connectionId"
                   params={{ connectionId: connectionId() }}
                 >
-                  <Button size="lg" class="gap-2 btn-glow">
+                  <Button size="lg">
                     <Settings class="w-5 h-5" />
                     Add Restaurants
                   </Button>
                 </Link>
                 <Link to="/">
-                  <Button variant="outline" size="lg" class="gap-2">
+                  <Button variant="outline" size="lg">
                     <Home class="w-5 h-5" />
                     Back Home
                   </Button>
                 </Link>
-              </div>
-
-              {/* Decorative food emojis */}
-              <div class="flex justify-center gap-3 text-2xl opacity-50">
-                <span>🍕</span>
-                <span>🍔</span>
-                <span>🌮</span>
-                <span>🍜</span>
-                <span>🍣</span>
               </div>
             </div>
           </div>
         }
       >
         <div class="py-6 px-4">
-          <div class="max-w-6xl mx-auto space-y-6">
+          <div class="max-w-5xl mx-auto space-y-6">
             {/* Page Header */}
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 page-section">
               <div>
-                <h1 class="text-3xl font-bold flex items-center gap-3">
-                  <span class="text-3xl">🎡</span>
-                  {currentConnection()?.settings.connection.name || "Eatery Wheel"}
+                <h1 class="text-2xl font-bold">
+                  {currentConnection()?.settings.connection.name || "Spin Wheel"}
                 </h1>
-                <p class="text-muted-foreground mt-1">
-                  {activeEateries().length} restaurants • {activeUsers().length} users
+                <p class="text-sm text-muted-foreground mt-1">
+                  {activeEateries().length} restaurants • {activeUsers().length} people
                 </p>
               </div>
               <div class="flex flex-wrap gap-2">
@@ -466,7 +453,6 @@ function WheelPage() {
                       variant="outline"
                       size="sm"
                       data-testid="share-button"
-                      class="gap-2"
                     >
                       <QrCode class="w-4 h-4" />
                       Share
@@ -474,18 +460,17 @@ function WheelPage() {
                   </DialogTrigger>
                   <DialogContent class="sm:max-w-md">
                     <DialogHeader>
-                      <DialogTitle class="flex items-center gap-2">
-                        <Share2 class="w-5 h-5 text-primary" />
-                        Invite Friends
+                      <DialogTitle>
+                        Invite Others
                       </DialogTitle>
                       <DialogDescription>
-                        Share this link so friends can join and vote!
+                        Share this link so others can join and vote
                       </DialogDescription>
                     </DialogHeader>
                     <div class="space-y-6 pt-2">
                       {/* QR Code */}
                       <div class="flex justify-center">
-                        <div class="p-4 bg-white rounded-2xl shadow-card">
+                        <div class="p-4 bg-white rounded-lg shadow-sm">
                           <img
                             src={generateQRCode() || "/placeholder.svg"}
                             alt="QR Code"
@@ -496,7 +481,7 @@ function WheelPage() {
                       {/* Share URL */}
                       <div class="space-y-3">
                         <div
-                          class="p-2 bg-secondary rounded text-sm font-mono break-all cursor-pointer select-all"
+                          class="p-2 bg-muted rounded text-sm font-mono break-all cursor-pointer select-all"
                           data-testid="share-url"
                           title="Click to copy"
                           ref={(el) => {
@@ -550,25 +535,25 @@ function WheelPage() {
                   to="/settings/$connectionId"
                   params={{ connectionId: connectionId() }}
                 >
-                  <Button variant="outline" size="sm" class="gap-2">
+                  <Button variant="outline" size="sm">
                     <Settings class="w-4 h-4" />
                     Settings
                   </Button>
                 </Link>
                 <Link to="/">
-                  <Button variant="ghost" size="sm" class="gap-2">
+                  <Button variant="ghost" size="icon" class="w-9 h-9">
                     <Home class="w-4 h-4" />
                   </Button>
                 </Link>
               </div>
             </div>
 
-            <div class="grid lg:grid-cols-3 gap-6 page-section">
-              <div class="lg:col-span-2 space-y-6">
+            <div class="grid lg:grid-cols-3 gap-4 page-section">
+              <div class="lg:col-span-2 space-y-4">
                 {/* Wheel Card */}
-                <Card class="food-card border-2 overflow-visible">
-                  <CardContent class="p-8">
-                    <div class="relative w-80 h-80 mx-auto wheel-container">
+                <Card class="food-card overflow-visible">
+                  <CardContent class="p-6">
+                    <div class="relative w-72 h-72 mx-auto wheel-container sm:w-80 sm:h-80">
                       {/* Pointer at top */}
                       <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 z-10 wheel-pointer">
                         <div class="w-0 h-0 border-l-[14px] border-r-[14px] border-t-[24px] border-l-transparent border-r-transparent border-t-primary" />
@@ -584,18 +569,18 @@ function WheelPage() {
                         <Show when={pinnedTooltip() ?? hoverTooltip()}>
                           {(tooltip) => (
                             <Card
-                              class="absolute z-20 pointer-events-none px-3 py-2 text-sm bg-card/98 backdrop-blur-md shadow-elevated rounded-xl border-2 w-max max-w-[220px]"
+                              class="absolute z-20 pointer-events-none px-3 py-2 text-sm bg-card/98 backdrop-blur-md shadow-lg rounded-md border w-max max-w-[220px]"
                               style={{
                                 left: `${tooltip().x}px`,
                                 top: `${tooltip().y}px`,
                                 transform: "translate(-50%, -130%)",
                               }}
                             >
-                              <div class="font-semibold break-words text-foreground">
+                              <div class="font-medium break-words text-foreground">
                                 {tooltip().name}
                               </div>
                               <div class="text-xs text-muted-foreground">
-                                Tap to pin • Tap outside to close
+                                Tap to pin
                               </div>
                             </Card>
                           )}
@@ -811,73 +796,66 @@ function WheelPage() {
                 </Card>
 
                 {/* Spin Controls */}
-                <div class="flex justify-center gap-4">
+                <div class="flex justify-center gap-3">
                   <Button
                     onClick={spinWheel}
                     disabled={isSpinning() || segments().length === 0}
                     size="lg"
-                    class={`px-10 text-lg btn-glow ${isSpinning() ? "animate-pulse" : ""}`}
+                    class={`px-8 ${isSpinning() ? "animate-pulse" : ""}`}
                     data-testid="spin-wheel"
                   >
                     <Play class="w-5 h-5" />
-                    {isSpinning() ? "Spinning..." : "Spin the Wheel!"}
+                    {isSpinning() ? "Spinning..." : "Spin"}
                   </Button>
                   <Button
                     onClick={resetWheel}
                     variant="outline"
                     size="lg"
                     disabled={isSpinning()}
-                    class="gap-2"
                   >
                     <RotateCcw class="w-5 h-5" />
                     Reset
                   </Button>
                 </div>
 
-                {/* Winner Card - Animated celebration */}
+                {/* Winner Card */}
                 {selectedEatery() && (
-                  <Card class="winner-card border-0 shadow-elevated animate-bounce-in">
-                    <CardContent class="relative p-6 text-center z-10">
-                      <div class="text-5xl mb-3 animate-wiggle">🎉</div>
+                  <Card class="winner-card border-0 shadow-lg animate-bounce-in">
+                    <CardContent class="relative p-5 text-center z-10">
                       <p class="text-sm font-medium text-success-foreground/80 uppercase tracking-wide mb-1">
-                        The Winner Is...
+                        Selected
                       </p>
-                      <h2 class="text-3xl font-bold text-success-foreground mb-3">
+                      <h2 class="text-2xl font-bold text-success-foreground">
                         {selectedEatery()!.name}
                       </h2>
                       {selectedEatery()!.cuisine && (
-                        <Badge class="bg-white/20 text-success-foreground border-0">
+                        <Badge class="bg-white/20 text-success-foreground border-0 mt-2">
                           {selectedEatery()!.cuisine}
                         </Badge>
                       )}
-                      <div class="flex justify-center gap-2 mt-4 text-2xl">
-                        <span>🍴</span>
-                        <span>🎊</span>
-                        <span>🍴</span>
-                      </div>
                     </CardContent>
                   </Card>
                 )}
               </div>
 
               {/* Sidebar */}
-              <div class="space-y-6 page-section">
+              <div class="space-y-4 page-section">
                 {/* Participating Users */}
-                <Card class="food-card border-2">
+                <Card class="food-card">
                   <CardHeader class="pb-3">
-                    <CardTitle class="flex items-center gap-2 text-lg">
-                      <Users class="w-5 h-5 text-primary" />
-                      Who's Eating?
+                    <CardTitle class="flex items-center gap-2 text-base">
+                      <Users class="w-4 h-4 text-primary" />
+                      Participants
                     </CardTitle>
                   </CardHeader>
-                  <CardContent class="space-y-2">
+                  <CardContent class="space-y-1">
                     {activeUsers().map((user) => (
                       <label
                         for={`user-${user.id}`}
-                        class={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border-2 ${
+                        class={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
                           selectedUsers().includes(user.id)
-                            ? "bg-primary/10 border-primary/30"
-                            : "bg-transparent border-transparent hover:bg-muted/50"
+                            ? "bg-primary/10"
+                            : "hover:bg-muted/50"
                         }`}
                       >
                         <input
@@ -893,30 +871,29 @@ function WheelPage() {
                               );
                             }
                           }}
-                          class="w-5 h-5 rounded-md border-2 border-primary/30 text-primary accent-primary cursor-pointer"
+                          class="w-4 h-4 rounded border-2 border-primary/30 text-primary accent-primary cursor-pointer"
                         />
                         <span class="text-sm font-medium flex-1">
                           {user.name}
                         </span>
                         {selectedUsers().includes(user.id) && (
-                          <span class="text-primary text-sm">✓</span>
+                          <Check class="w-4 h-4 text-primary" />
                         )}
                       </label>
                     ))}
                     {selectedUsers().length === 0 && (
-                      <div class="text-center py-4 text-destructive bg-destructive/5 rounded-xl border border-destructive/20">
-                        <p class="text-sm font-medium">👆 Select at least one person</p>
+                      <div class="text-center py-3 text-destructive bg-destructive/5 rounded-md border border-destructive/20">
+                        <p class="text-sm">Select at least one person</p>
                       </div>
                     )}
                   </CardContent>
                 </Card>
 
                 {/* Eateries List */}
-                <Card class="food-card border-2">
+                <Card class="food-card">
                   <CardHeader class="pb-3">
-                    <CardTitle class="flex items-center justify-between text-lg">
-                      <span class="flex items-center gap-2">
-                        <span class="text-xl">🍽️</span>
+                    <CardTitle class="flex items-center justify-between text-base">
+                      <span>
                         On the Wheel
                       </span>
                       <Show when={vetoedEateryCount() > 0}>
@@ -927,25 +904,21 @@ function WheelPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    <div class="space-y-1 max-h-72 overflow-y-auto pr-1">
                       {getWheelSegments().map((segment, index) => (
-                        <div 
-                          class="flex items-center gap-3 p-3 rounded-xl border-2 border-border hover:border-primary/20 transition-colors"
+                        <div
+                          class="flex items-center gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors"
                           style={`animation-delay: ${index * 0.05}s`}
                         >
-                          <div 
-                            class="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
+                          <div
+                            class="w-3 h-3 rounded-full flex-shrink-0"
                             style={`background-color: ${segment.color}`}
                           />
                           <div class="flex-1 min-w-0">
                             <p class="font-medium text-sm truncate">{segment.eatery.name}</p>
-                            {segment.eatery.cuisine && (
-                              <p class="text-xs text-muted-foreground">{segment.eatery.cuisine}</p>
-                            )}
                           </div>
                           <div class="text-right flex-shrink-0">
-                            <p class="text-sm font-semibold text-primary">{segment.percentage.toFixed(0)}%</p>
-                            <p class="text-xs text-muted-foreground">Score: {segment.combinedScore}</p>
+                            <p class="text-sm font-medium text-primary">{segment.percentage.toFixed(0)}%</p>
                           </div>
                         </div>
                       ))}

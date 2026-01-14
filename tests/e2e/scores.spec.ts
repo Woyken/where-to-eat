@@ -358,7 +358,7 @@ test("scores: score changes reflect on wheel page", async ({
 
   // The wheel should be rendered with segments
   // Verify that both eateries appear in the eatery list panel (SVG may truncate names)
-  const eateryList = pageA.locator('[class*="max-h-60"]');
+  const eateryList = pageA.locator('[class*="max-h-72"]');
   await expect(eateryList.getByText(eatery1)).toBeVisible();
   await expect(eateryList.getByText(eatery2)).toBeVisible();
 

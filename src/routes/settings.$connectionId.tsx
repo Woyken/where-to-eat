@@ -241,15 +241,14 @@ function SettingsPage() {
   return (
     <Show when={currentConnection()} fallback={null}>
       <div class="py-6 px-4">
-        <div class="max-w-5xl mx-auto space-y-6">
+        <div class="max-w-4xl mx-auto space-y-6">
           {/* Page Header */}
           <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 page-section">
             <div>
-              <h1 class="text-3xl font-bold flex items-center gap-3">
-                <span class="text-3xl">⚙️</span>
+              <h1 class="text-2xl font-bold">
                 Settings
               </h1>
-              <p class="text-muted-foreground mt-1">
+              <p class="text-sm text-muted-foreground mt-1">
                 Manage restaurants, users, and preferences
               </p>
             </div>
@@ -258,13 +257,13 @@ function SettingsPage() {
                 to="/wheel/$connectionId"
                 params={{ connectionId: connectionId() }}
               >
-                <Button variant="outline" size="sm" class="gap-2">
+                <Button variant="outline" size="sm">
                   <ArrowLeft class="w-4 h-4" />
-                  Back to Wheel
+                  Back
                 </Button>
               </Link>
               <Link to="/">
-                <Button variant="ghost" size="sm" class="gap-2">
+                <Button variant="ghost" size="icon" class="w-9 h-9" data-testid="home-button">
                   <Home class="w-4 h-4" />
                 </Button>
               </Link>
@@ -272,11 +271,10 @@ function SettingsPage() {
           </div>
 
           {/* Connection Name Card */}
-          <Card class="food-card border-2 page-section">
+          <Card class="food-card page-section">
             <CardHeader class="pb-3">
-              <CardTitle class="flex items-center gap-2 text-lg">
-                <span class="text-xl">📝</span>
-                Wheel Name
+              <CardTitle class="text-base">
+                Session Name
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -286,12 +284,11 @@ function SettingsPage() {
                     value={connectionName()}
                     onChange={(e) => setConnectionName(e)}
                   >
-                    <TextFieldLabel for="connection-name" class="text-sm font-medium">Name</TextFieldLabel>
                     <TextFieldInput
                       type="text"
                       id="connection-name"
-                      placeholder="Friday Lunch Gang 🍕"
-                      class="h-11 rounded-xl"
+                      placeholder="Session name"
+                      class="h-10"
                       data-testid="connection-name-input"
                     />
                   </TextField>
@@ -299,7 +296,7 @@ function SettingsPage() {
                 <Button
                   onClick={saveConnectionName}
                   data-testid="connection-name-save"
-                  class="gap-2"
+                  size="sm"
                 >
                   <Save class="w-4 h-4" />
                   Save
@@ -309,13 +306,12 @@ function SettingsPage() {
           </Card>
 
           {/* Eateries & Users Grid */}
-          <div class="grid md:grid-cols-2 gap-6 page-section">
+          <div class="grid md:grid-cols-2 gap-4 page-section">
             {/* Eateries Card */}
-            <Card class="food-card border-2">
+            <Card class="food-card">
               <CardHeader class="pb-3">
-                <CardTitle class="flex items-center justify-between">
-                  <span class="flex items-center gap-2 text-lg">
-                    <span class="text-xl">🍽️</span>
+                <CardTitle class="flex items-center justify-between text-base">
+                  <span>
                     Restaurants ({activeEateries().length})
                   </span>
                   <Dialog
@@ -323,19 +319,18 @@ function SettingsPage() {
                     onOpenChange={setShowAddEatery}
                   >
                     <DialogTrigger>
-                      <Button size="sm" data-testid="add-eatery-open" class="gap-2">
+                      <Button size="sm" data-testid="add-eatery-open">
                         <Plus class="w-4 h-4" />
                         Add
                       </Button>
                     </DialogTrigger>
                     <DialogContent class="sm:max-w-md">
                       <DialogHeader>
-                        <DialogTitle class="flex items-center gap-2">
-                          <span class="text-xl">🍕</span>
+                        <DialogTitle>
                           Add Restaurant
                         </DialogTitle>
                         <DialogDescription>
-                          Add a new restaurant or food place to the wheel
+                          Add a new restaurant to the session
                         </DialogDescription>
                       </DialogHeader>
                       <div class="space-y-4 pt-2">
@@ -350,7 +345,7 @@ function SettingsPage() {
                             type="text"
                             id="eatery-name"
                             placeholder="e.g., Pizza Palace"
-                            class="h-11 rounded-xl"
+                            class="h-10"
                             data-testid="add-eatery-name"
                           />
                         </TextField>
@@ -365,12 +360,12 @@ function SettingsPage() {
                             type="text"
                             id="eatery-cuisine"
                             placeholder="e.g., Italian, Chinese, Mexican"
-                            class="h-11 rounded-xl"
+                            class="h-10"
                           />
                         </TextField>
                         <Button
                           onClick={addEatery}
-                          class="w-full gap-2"
+                          class="w-full"
                           data-testid="add-eatery-submit"
                         >
                           <Plus class="w-4 h-4" />
@@ -386,10 +381,9 @@ function SettingsPage() {
                   <Show
                     when={activeEateries().length > 0}
                     fallback={
-                      <div class="text-center py-10 text-muted-foreground">
-                        <span class="text-4xl block mb-3">🍽️</span>
+                      <div class="text-center py-8 text-muted-foreground">
                         <p class="font-medium">No restaurants yet</p>
-                        <p class="text-sm">Add your favorite places to get started!</p>
+                        <p class="text-sm">Add your first restaurant to get started</p>
                       </div>
                     }
                   >
@@ -401,11 +395,11 @@ function SettingsPage() {
                           data-eatery-name={eatery.name}
                         >
                           <div class="flex items-center gap-3 flex-1 min-w-0">
-                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg flex-shrink-0">
-                              🍴
+                            <div class="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold flex-shrink-0">
+                              {eatery.name.charAt(0).toUpperCase()}
                             </div>
                             <div class="min-w-0">
-                              <h3 class="font-semibold truncate">{eatery.name}</h3>
+                              <h3 class="font-medium truncate">{eatery.name}</h3>
                             </div>
                           </div>
                           <Button
@@ -413,7 +407,7 @@ function SettingsPage() {
                             variant="ghost"
                             onClick={() => removeEatery(eatery.id)}
                             data-testid="delete-eatery"
-                            class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                            class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0 w-8 h-8"
                           >
                             <Trash2 class="w-4 h-4" />
                           </Button>
@@ -426,28 +420,26 @@ function SettingsPage() {
             </Card>
 
             {/* Users Card */}
-            <Card class="food-card border-2">
+            <Card class="food-card">
               <CardHeader class="pb-3">
-                <CardTitle class="flex items-center justify-between">
-                  <span class="flex items-center gap-2 text-lg">
-                    <span class="text-xl">👥</span>
+                <CardTitle class="flex items-center justify-between text-base">
+                  <span>
                     People ({activeUsers().length})
                   </span>
                   <Dialog open={showAddUser()} onOpenChange={setShowAddUser}>
                     <DialogTrigger>
-                      <Button size="sm" data-testid="add-user-open" class="gap-2">
+                      <Button size="sm" data-testid="add-user-open">
                         <Plus class="w-4 h-4" />
                         Add
                       </Button>
                     </DialogTrigger>
                     <DialogContent class="sm:max-w-md">
                       <DialogHeader>
-                        <DialogTitle class="flex items-center gap-2">
-                          <span class="text-xl">👤</span>
+                        <DialogTitle>
                           Add Person
                         </DialogTitle>
                         <DialogDescription>
-                          Add someone who will rate and vote on restaurants
+                          Add someone to rate and vote on restaurants
                         </DialogDescription>
                       </DialogHeader>
                       <div class="space-y-4 pt-2">
@@ -462,13 +454,13 @@ function SettingsPage() {
                             type="text"
                             id="user-name"
                             placeholder="e.g., Alex"
-                            class="h-11 rounded-xl"
+                            class="h-10"
                             data-testid="add-user-name"
                           />
                         </TextField>
                         <Button
                           onClick={addUser}
-                          class="w-full gap-2"
+                          class="w-full"
                           data-testid="add-user-submit"
                         >
                           <Plus class="w-4 h-4" />
@@ -484,10 +476,9 @@ function SettingsPage() {
                   <Show
                     when={activeUsers().length > 0}
                     fallback={
-                      <div class="text-center py-10 text-muted-foreground">
-                        <span class="text-4xl block mb-3">👥</span>
+                      <div class="text-center py-8 text-muted-foreground">
                         <p class="font-medium">No people yet</p>
-                        <p class="text-sm">Add your hungry friends!</p>
+                        <p class="text-sm">Add participants to start rating</p>
                       </div>
                     }
                   >
@@ -499,11 +490,11 @@ function SettingsPage() {
                           data-user-name={user.name}
                         >
                           <div class="flex items-center gap-3 flex-1 min-w-0">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-accent/30 flex items-center justify-center text-lg flex-shrink-0">
-                              👤
+                            <div class="w-8 h-8 rounded-full bg-secondary/50 flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                              {user.name.charAt(0).toUpperCase()}
                             </div>
                             <div class="min-w-0">
-                              <h3 class="font-semibold truncate">{user.name}</h3>
+                              <h3 class="font-medium truncate">{user.name}</h3>
                               <p class="text-xs text-muted-foreground">
                                 {selectedUserScores()?.length ?? 0} ratings
                               </p>
@@ -514,7 +505,7 @@ function SettingsPage() {
                             variant="ghost"
                             onClick={() => removeUser(user.id)}
                             data-testid="delete-user"
-                            class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                            class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0 w-8 h-8"
                           >
                             <Trash2 class="w-4 h-4" />
                           </Button>
@@ -529,10 +520,9 @@ function SettingsPage() {
 
           {/* Ratings Section */}
           <Show when={activeUsers().length > 0 && activeEateries().length > 0}>
-            <Card class="food-card border-2 page-section">
+            <Card class="food-card page-section">
               <CardHeader class="pb-3">
-                <CardTitle class="flex items-center gap-2 text-lg">
-                  <span class="text-xl">⭐</span>
+                <CardTitle class="text-base">
                   Rate Restaurants
                 </CardTitle>
               </CardHeader>
@@ -540,7 +530,7 @@ function SettingsPage() {
                 <div class="space-y-6">
                   {/* User Selector */}
                   <div class="space-y-3">
-                    <p class="text-sm font-medium text-muted-foreground">Select a person to rate for:</p>
+                    <p class="text-sm text-muted-foreground">Select a person to rate for:</p>
                     <ToggleGroup
                       multiple={false}
                       value={selectedUser()?.id ?? null}
@@ -554,11 +544,11 @@ function SettingsPage() {
                     >
                       <For each={activeUsers()}>
                         {(user) => (
-                          <ToggleGroupItem 
+                          <ToggleGroupItem
                             value={user.id}
-                            class="px-4 py-2 rounded-full border-2 data-[pressed]:bg-primary data-[pressed]:text-primary-foreground data-[pressed]:border-primary transition-all"
+                            class="px-3 py-1.5 rounded-md border data-[pressed]:bg-primary data-[pressed]:text-primary-foreground data-[pressed]:border-primary transition-colors text-sm"
                           >
-                            <span class="mr-1">👤</span> {user.name}
+                            {user.name}
                           </ToggleGroupItem>
                         )}
                       </For>
@@ -568,11 +558,8 @@ function SettingsPage() {
                   <Show when={selectedUser()}>
                     {(user) => (
                       <div class="space-y-4">
-                        <div class="flex items-center gap-2">
-                          <span class="text-lg">📝</span>
-                          <h3 class="font-semibold">
-                            Rating as {user().name}
-                          </h3>
+                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span class="font-medium text-foreground">Rating as {user().name}</span>
                         </div>
                         <div class="grid gap-3">
                           <For each={activeEateries()}>
@@ -591,11 +578,11 @@ function SettingsPage() {
                                 >
                                   <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
-                                      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg flex-shrink-0">
-                                        🍽️
+                                      <div class="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold flex-shrink-0">
+                                        {eatery.name.charAt(0).toUpperCase()}
                                       </div>
                                       <div>
-                                        <h4 class="font-semibold">{eatery.name}</h4>
+                                        <h4 class="font-medium">{eatery.name}</h4>
                                         <Show when={vetoed()}>
                                           <span class="text-xs text-destructive font-medium flex items-center gap-1">
                                             <Ban class="w-3 h-3" /> Never pick
@@ -618,12 +605,12 @@ function SettingsPage() {
                                             : "Never pick this place"
                                         }
                                         data-testid="veto-toggle"
-                                        class="rounded-full"
+                                        class="w-8 h-8"
                                       >
                                         <Ban class="w-4 h-4" />
                                       </Button>
                                       <Show when={!vetoed()}>
-                                        <div class="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent min-w-[3ch] text-right">
+                                        <div class="text-lg font-bold text-primary min-w-[3ch] text-right">
                                           {selectedUserScores()?.find(
                                             (x) => x.eateryId === eatery.id,
                                           )?.score ?? 0}
@@ -634,15 +621,15 @@ function SettingsPage() {
                                   <Show
                                     when={!vetoed()}
                                     fallback={
-                                      <div class="text-sm text-muted-foreground italic flex items-center gap-2 mt-2">
-                                        <span>🚫</span> This restaurant won't appear in wheel spins
+                                      <div class="text-sm text-muted-foreground italic mt-2">
+                                        This restaurant won't appear in spins
                                       </div>
                                     }
                                   >
                                     <div class="space-y-2 mt-3 pt-3 border-t border-border/50">
-                                      <div class="flex justify-between text-xs font-medium text-muted-foreground">
-                                        <span>🤮 Nope</span>
-                                        <span>😍 Love it!</span>
+                                      <div class="flex justify-between text-xs text-muted-foreground">
+                                        <span>Never</span>
+                                        <span>Favorite</span>
                                       </div>
                                       <input
                                         type="range"
@@ -660,9 +647,9 @@ function SettingsPage() {
                                             Number.parseInt(e.target.value),
                                           )
                                         }
-                                        class="w-full h-3 rounded-full appearance-none cursor-pointer accent-primary"
+                                        class="w-full h-2 rounded-full appearance-none cursor-pointer accent-primary"
                                         style={{
-                                          background: `linear-gradient(to right, oklch(65% 0.2 25) 0%, oklch(75% 0.15 60) 50%, oklch(70% 0.18 145) 100%)`,
+                                          background: `linear-gradient(to right, oklch(0.85 0.04 250) 0%, oklch(0.6 0.12 45) 50%, oklch(0.55 0.16 45) 100%)`,
                                         }}
                                         data-testid="score-slider"
                                       />
