@@ -34,7 +34,15 @@ test("connection name syncs to another peer", async ({ browser }) => {
   const renamed = `Renamed ${Date.now()}`;
 
   await pageA.goto("/");
-  await pageA.getByLabel("Session name").fill(originalName);
+  // Wait for page to fully hydrate before interacting
+  await pageA.waitForLoadState("networkidle");
+
+  // Fill session name and verify it was captured
+  const nameInput = pageA.getByLabel("Session name");
+  await nameInput.click();
+  await nameInput.fill(originalName);
+  await expect(nameInput).toHaveValue(originalName);
+
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
 
@@ -60,14 +68,19 @@ test("connection name syncs to another peer", async ({ browser }) => {
     timeout: 30_000,
   });
 
-  await pageA.goto(`/settings/${connectionId}`);
+  // Navigate B to settings
   await pageB.goto(`/settings/${connectionId}`);
+  await pageB.waitForLoadState("networkidle");
 
   // B should show the initial connection name
   await expect(pageB.getByTestId("connection-name-input")).toHaveValue(
     originalName,
     { timeout: 30_000 },
   );
+
+  // Now navigate A to settings
+  await pageA.goto(`/settings/${connectionId}`);
+  await pageA.waitForLoadState("networkidle");
 
   // Rename in A
   await pageA.getByTestId("connection-name-input").fill(renamed);

@@ -43,8 +43,14 @@ test("edge cases: connecting to same connection multiple times doesn't cause iss
   console.log("B connected (first time)");
 
   // B "reconnects" by navigating to the share URL again
+  // Since B already has the connection, it may immediately redirect to /wheel
+  // which interrupts the navigation - this is expected behavior
   console.log("B reconnecting...");
-  await pageB.goto(shareUrl);
+  try {
+    await pageB.goto(shareUrl);
+  } catch {
+    // Navigation interrupted by redirect is expected
+  }
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });

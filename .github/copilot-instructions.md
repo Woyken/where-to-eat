@@ -93,6 +93,7 @@ Add new components via CLI: `pnpx solid-ui-cli@latest add <component-name>`
 - E2E tests in `tests/e2e/` using Playwright
 - Helper: `injectConnection(page, connectionId)` seeds localStorage before test
 - Run specific test: `pnpm test:e2e tests/e2e/scores.spec.ts`
+- **AVOID RELOADS:** Prefer UI navigation (clicking buttons/links) over `page.reload()` or `page.goto()`. Full reloads trigger full data redownloads/syncs, which defeats the purpose of testing real-time incremental P2P sync. Only use reloads when explicitly testing offline recovery or persistence.
 
 ## Common Tasks
 
@@ -119,6 +120,7 @@ Add new components via CLI: `pnpx solid-ui-cli@latest add <component-name>`
 - **Broadcast after mutations:** Always call `peer.broadcast()` after local state changes
 - **Active items filter:** Use `.filter(x => !x._deleted)` when displaying lists
 - **Service worker routing:** All P2P messages go through SW for offline reliability
+- **Test Navigation:** Do not use `page.reload()` to test sync; it hides race conditions and tests cold start instead of live updates.
 
 ---
 

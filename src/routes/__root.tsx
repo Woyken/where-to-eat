@@ -12,6 +12,7 @@ import IconMoon from "lucide-solid/icons/moon";
 import IconSun from "lucide-solid/icons/sun";
 import IconUsers from "lucide-solid/icons/users";
 import UtensilsCrossed from "lucide-solid/icons/utensils-crossed";
+import { createSignal, onCleanup, onMount, Show } from "solid-js";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { NotFound } from "~/components/NotFound";
 import { SettingsStorageProvider } from "~/components/SettingsStorageProvider";
@@ -34,6 +35,10 @@ import {
   Peer2PeerSharing,
   usePeer2PeerOptional,
 } from "~/utils/peer2peerSharing";
+import {
+  subscribeToSwUpdate,
+  updateServiceWorker,
+} from "~/utils/serviceWorkerComm";
 
 export const Route = createRootRoute({
   errorComponent: DefaultCatchBoundary,
@@ -80,6 +85,8 @@ function RootComponent() {
                 </div>
               </header>
 
+              <UpdateNotification />
+
               {/* Main Content */}
               <main class="flex-1">
                 <Outlet />
@@ -100,6 +107,39 @@ function RootComponent() {
       </ColorModeProvider>
     </>
   );
+function UpdateNotification() {
+  const [showUpdate, setShowUpdate] = createSignal(false);
+
+  onMount(() => {
+    const unsub = subscribeToSwUpdate(() => {
+      setShowUpdate(true);
+    });
+    onCleanup(unsub);
+  });
+
+  return (
+    <Show when={showUpdate()}>
+      <div class="fixed bottom-4 right-4 z-50 animate-in fade-in slide-in-from-bottom-5">
+        <div class="bg-card text-card-foreground border border-border shadow-lg rounded-lg p-4 max-w-sm flex items-start gap-4">
+          <div class="flex-1">
+            <h4 class="text-sm font-semibold">Update Available</h4>
+            <p class="text-xs text-muted-foreground mt-1">
+              A new version of the app is available. Refresh to update.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => updateServiceWorker()}
+            class="shrink-0"
+          >
+            Update
+          </Button>
+        </div>
+      </div>
+    </Show>
+  );
+}
+
 }
 
 export function ModeToggle() {

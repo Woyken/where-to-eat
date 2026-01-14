@@ -26,12 +26,17 @@ function getWorkbox(): Workbox | null {
     wb.register();
 
     // On activation, request status from service worker
-    wb.addEventListener("activated", () => {
+    wb.addEventListener("activated", (event) => {
+      // Notify listeners if this is an update (not first install)
+      // Note: With skipWaiting removed, this runs after the user accepts the update
+      // and the page reloads (or if the new SW activates automatically for other reasons)
+
       logger.log("SW activated, requesting P2P status");
       // Request current status from service worker
       p2pRequestStatus();
 
       // Send known peers from localStorage to service worker
+
       const knownPeersStr = localStorage.getItem("knownPeers");
       const knownPeers = knownPeersStr
         ? (JSON.parse(knownPeersStr) as string[])
@@ -44,8 +49,26 @@ function getWorkbox(): Workbox | null {
         });
       }
     });
+
+    // Handle updates found (waiting state)
+    wb.addEventListener("waiting", () => {
+      logger.log("New SW waiting");
+      notifySwUpdateListeners();
+    });
+
+    // Reload when the new SW takes control
+    wb.addEventListener("controlling", () => {
+      window.location.reload();
+    });
   }
   return wb;
+}
+
+// Trigger the update (called by UI)
+export function updateServiceWorker() {
+  if (wb) {
+    wb.messageSkipWaiting();
+  }
 }
 
 // Helper to send messages to the service worker using Workbox
@@ -148,3 +171,19 @@ if (typeof window !== "undefined") {
 
 // Re-export message listener for backwards compatibility
 export { addSwToClientMessageListener } from "./serviceWorkerMessages";
+
+// SW Update listeners
+const swUpdateListeners = new Set<() => void>();
+
+function notifySwUpdateListeners() {
+  for (const listener of swUpdateListeners) {
+    listener();
+  }
+}
+
+export function subscribeToSwUpdate(callback: () => void): () => void {
+  swUpdateListeners.add(callback);
+  return () => {
+    swUpdateListeners.delete(callback);
+  };
+}

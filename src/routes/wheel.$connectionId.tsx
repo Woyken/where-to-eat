@@ -898,7 +898,7 @@ function WheelPage() {
                         On the Wheel
                       </span>
                       <Show when={vetoedEateryCount() > 0}>
-                        <Badge variant="destructive" class="text-xs">
+                        <Badge variant="error" class="text-xs">
                           {vetoedEateryCount()} vetoed
                         </Badge>
                       </Show>

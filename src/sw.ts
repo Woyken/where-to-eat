@@ -5,7 +5,11 @@
 import * as v from "valibot";
 import { clientsClaim, skipWaiting } from "workbox-core";
 import { ExpirationPlugin } from "workbox-expiration";
-import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching";
+import {
+  cleanupOutdatedCaches,
+  createHandlerBoundToURL,
+  precacheAndRoute,
+} from "workbox-precaching";
 import { NavigationRoute, registerRoute } from "workbox-routing";
 import { CacheFirst, NetworkFirst } from "workbox-strategies";
 import { logger } from "./utils/logger";
@@ -16,29 +20,25 @@ import {
 
 declare let self: ServiceWorkerGlobalScope;
 
-// Take control immediately on install and activate
-skipWaiting();
+// handle "skipWaiting" message from client to activate new SW
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
+// Clients claim allows the SW to take control of uncontrolled clients
+// This should remain, but it only takes effect after activation
 clientsClaim();
 
 // Precache static assets (injected by workbox-build)
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
-// Navigation requests: NetworkFirst with offline fallback
-registerRoute(
-  new NavigationRoute(
-    new NetworkFirst({
-      cacheName: "pages-cache",
-      networkTimeoutSeconds: 3,
-      plugins: [
-        new ExpirationPlugin({
-          maxEntries: 50,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
-        }),
-      ],
-    }),
-  ),
-);
+// Navigation requests: Serve index.html (SPA)
+// Check to ensure index.html is in the precache manifest
+// This allows the app to work offline on any route
+registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html")));
 
 // Static assets: CacheFirst for performance
 registerRoute(
