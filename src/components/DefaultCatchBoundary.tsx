@@ -6,6 +6,8 @@ import {
   useRouter,
 } from "@tanstack/solid-router";
 import type { ErrorComponentProps } from "@tanstack/solid-router";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
 export function DefaultCatchBoundary(props: ErrorComponentProps) {
   const router = useRouter();
@@ -17,37 +19,45 @@ export function DefaultCatchBoundary(props: ErrorComponentProps) {
   console.error("DefaultCatchBoundary Error:", props.error);
 
   return (
-    <div class="min-w-0 flex-1 p-4 flex flex-col items-center justify-center gap-6">
-      <ErrorComponent error={props.error} />
-      <div class="flex gap-2 items-center flex-wrap">
-        <button
-          type="button"
-          onClick={() => {
-            router.invalidate();
-          }}
-          class={`px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded text-white uppercase font-extrabold`}
-        >
-          Try Again
-        </button>
-        {isRoot() ? (
-          <Link
-            to="/"
-            class={`px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded text-white uppercase font-extrabold`}
-          >
-            Home
-          </Link>
-        ) : (
-          <Link
-            to="/"
-            class={`px-2 py-1 bg-gray-600 dark:bg-gray-700 rounded text-white uppercase font-extrabold`}
-            onClick={(e) => {
-              e.preventDefault();
-              window.history.back();
-            }}
-          >
-            Go Back
-          </Link>
-        )}
+    <div class="py-10 sm:py-14">
+      <div class="mx-auto max-w-2xl">
+        <Card class="animate-paper-rise">
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2">
+              <span aria-hidden="true">⚠️</span>
+              Something went wrong
+            </CardTitle>
+          </CardHeader>
+          <CardContent class="space-y-4">
+            <div class="rounded-2xl border border-border bg-card/40 p-4 text-sm">
+              <ErrorComponent error={props.error} />
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <Button
+                onClick={() => {
+                  router.invalidate();
+                }}
+                class="ink-glow"
+              >
+                Try Again
+              </Button>
+              {isRoot() ? (
+                <Link to="/">
+                  <Button variant="outline">Home</Button>
+                </Link>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    window.history.back();
+                  }}
+                >
+                  Go Back
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

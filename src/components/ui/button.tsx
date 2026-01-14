@@ -9,21 +9,25 @@ import { cva } from "class-variance-authority"
 import { cn } from "~/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-[transform,box-shadow,background-color,border-color,color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:translate-y-px [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+        default:
+          "bg-primary text-primary-foreground shadow-[0_1px_0_rgba(0,0,0,0.05),0_18px_50px_-40px_rgba(0,0,0,0.6)] hover:-translate-y-0.5 hover:bg-primary/92 hover:shadow-[0_1px_0_rgba(0,0,0,0.05),0_22px_60px_-42px_rgba(0,0,0,0.62)]",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-[0_1px_0_rgba(0,0,0,0.05),0_18px_50px_-40px_rgba(0,0,0,0.6)] hover:-translate-y-0.5 hover:bg-destructive/92",
+        outline:
+          "border border-border bg-card/70 text-foreground shadow-[0_1px_0_rgba(0,0,0,0.04),0_16px_40px_-38px_rgba(0,0,0,0.55)] hover:-translate-y-0.5 hover:bg-accent/25 hover:text-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-[0_1px_0_rgba(0,0,0,0.05),0_18px_50px_-40px_rgba(0,0,0,0.6)] hover:-translate-y-0.5 hover:bg-secondary/88",
+        ghost: "bg-transparent hover:bg-accent/20 hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline"
       },
       size: {
-        default: "h-10 px-4 py-2",
+        default: "h-10 px-4",
         sm: "h-9 px-3 text-xs",
-        lg: "h-11 px-8",
+        lg: "h-11 px-8 text-base",
         icon: "size-10"
       }
     },

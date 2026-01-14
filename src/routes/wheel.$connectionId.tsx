@@ -1,8 +1,6 @@
 import {
   createFileRoute,
   Link,
-  Navigate,
-  useLinkProps,
   useRouter,
 } from "@tanstack/solid-router";
 import Home from "lucide-solid/icons/home";
@@ -33,7 +31,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import { usePeer2Peer, usePeer2PeerId } from "~/utils/peer2peerSharing";
+import { usePeer2PeerId } from "~/utils/peer2peerSharing";
 
 export const Route = createFileRoute("/wheel/$connectionId")({
   component: WheelPage,
@@ -43,18 +41,6 @@ interface Eatery {
   id: string;
   name: string;
   cuisine?: string;
-}
-
-interface User {
-  id: string;
-  name: string;
-  scores: { [eateryId: string]: number };
-}
-
-interface WheelSettings {
-  eateries: Eatery[];
-  users: User[];
-  currentUser: string | null;
 }
 
 interface WheelSegment {
@@ -74,7 +60,6 @@ function WheelPage() {
   const [showQR, setShowQR] = createSignal(false);
   const [copiedShareLink, setCopiedShareLink] = createSignal(false);
   const [manualCopyHint, setManualCopyHint] = createSignal(false);
-  const [showUsers, setShowUsers] = createSignal(false);
   const [rotation, setRotation] = createSignal(0);
   const [selectedUsers, setSelectedUsers] = createSignal<string[]>([]);
 
@@ -84,7 +69,7 @@ function WheelPage() {
   const [pinnedTooltip, setPinnedTooltip] =
     createSignal<WheelTooltipState | null>(null);
   let wheelContainerEl: HTMLDivElement | undefined;
-  let shareUrlEl: HTMLDivElement | undefined;
+  let shareUrlEl: HTMLButtonElement | undefined;
 
   const setTooltipFromPointerEvent = (
     name: string,
@@ -113,7 +98,6 @@ function WheelPage() {
   });
 
   const settingsStorage = useSettingsStorage();
-  const peer = usePeer2Peer();
 
   const currentConnection = createMemo(() =>
     settingsStorage.store.connections.find((x) => x.id === connectionId()),
@@ -383,10 +367,15 @@ function WheelPage() {
       <Show
         when={activeEateries().length > 0}
         fallback={
-          <div class="min-h-screen p-4">
-            <div class="max-w-2xl mx-auto space-y-6">
+          <div class="py-8 sm:py-10">
+            <div class="mx-auto max-w-3xl space-y-6">
               <div class="flex items-center justify-between">
-                <h1 class="text-3xl font-bold">Eatery Wheel</h1>
+                <div class="space-y-1">
+                  <h1 class="text-4xl font-bold tracking-tight">Eatery Wheel</h1>
+                  <div class="text-sm text-muted-foreground">
+                    Add a few options first, then spin.
+                  </div>
+                </div>
                 <Link to="/">
                   <Button variant="outline" size="sm">
                     <Home class="w-4 h-4 mr-2" />
@@ -407,7 +396,7 @@ function WheelPage() {
                     to="/settings/$connectionId"
                     params={{ connectionId: connectionId() }}
                   >
-                    <Button>
+                    <Button class="ink-glow">
                       <Settings class="w-4 h-4 mr-2" />
                       Go to Settings
                     </Button>
@@ -418,10 +407,22 @@ function WheelPage() {
           </div>
         }
       >
-        <div class="min-h-screen">
-          <div class="max-w-4xl mx-auto space-y-6">
+        <div class="py-8 sm:py-10">
+          <div class="mx-auto max-w-5xl space-y-6">
             <div class="flex items-center justify-between">
-              <h1 class="text-3xl font-bold">Eatery Wheel</h1>
+              <div class="space-y-1">
+                <h1 class="text-4xl font-bold tracking-tight">Eatery Wheel</h1>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-semibold text-foreground/80 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+                    {currentConnection()?.settings.connection.name ?? "Connection"}
+                  </span>
+                  <Show when={vetoedEateryCount() > 0}>
+                    <span class="rounded-full border border-border bg-accent/70 px-3 py-1 text-xs font-semibold text-accent-foreground shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+                      {vetoedEateryCount()} vetoed
+                    </span>
+                  </Show>
+                </div>
+              </div>
               <div class="flex gap-2">
                 <Dialog
                   open={showQR()}
@@ -454,28 +455,22 @@ function WheelPage() {
                       <img
                         src={generateQRCode() || "/placeholder.svg"}
                         alt="QR Code"
-                        class="mx-auto"
+                        class="mx-auto rounded-2xl border border-border bg-card/60 p-2 paper-soft"
                       />
                       <div class="space-y-2">
-                        <div
-                          class="p-2 bg-secondary rounded text-sm font-mono break-all cursor-pointer select-all"
+                        <button
+                          type="button"
+                          class="rounded-2xl border border-border bg-card/55 p-3 text-left text-sm font-mono break-all cursor-pointer shadow-[0_1px_0_rgba(0,0,0,0.04)]"
                           data-testid="share-url"
                           title="Click to copy"
                           ref={(el) => {
                             shareUrlEl = el;
                           }}
                           onClick={() => void copyShareUrl()}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              void copyShareUrl();
-                            }
-                          }}
-                          role="button"
-                          tabIndex={0}
+                          aria-label="Copy share link"
                         >
                           {shareUrl().href}
-                        </div>
+                        </button>
                         <Show when={manualCopyHint()}>
                           <div class="text-xs text-muted-foreground">
                             Clipboard access isn’t available here; select the link above and press
@@ -533,7 +528,7 @@ function WheelPage() {
                     <div class="relative w-80 h-80 mx-auto">
                       {/* Pointer at top */}
                       <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
-                        <div class="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent border-t-red-600 drop-shadow-lg" />
+                        <div class="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent border-t-primary drop-shadow-lg" />
                       </div>
 
                       {/* Wheel container */}
@@ -546,7 +541,7 @@ function WheelPage() {
                         <Show when={pinnedTooltip() ?? hoverTooltip()}>
                           {(tooltip) => (
                             <Card
-                              class="absolute z-20 pointer-events-none px-2 py-1 text-sm bg-background/95 backdrop-blur shadow-lg w-max max-w-[220px]"
+                              class="absolute z-20 pointer-events-none px-2 py-1 text-sm bg-card/85 backdrop-blur shadow-[0_1px_0_rgba(0,0,0,0.05),0_18px_50px_-42px_rgba(0,0,0,0.55)] w-max max-w-[220px]"
                               style={{
                                 left: `${tooltip().x}px`,
                                 top: `${tooltip().y}px`,
@@ -572,7 +567,13 @@ function WheelPage() {
                               : "none",
                           }}
                         >
-                          <svg class="w-full h-full" viewBox="0 0 200 200">
+                          <svg
+                            class="w-full h-full"
+                            viewBox="0 0 200 200"
+                            role="img"
+                            aria-label="Eatery wheel"
+                          >
+                            <title>Eatery wheel</title>
                             <defs>
                               <filter
                                 id="shadow"
@@ -770,7 +771,7 @@ function WheelPage() {
                     onClick={spinWheel}
                     disabled={isSpinning() || segments().length === 0}
                     size="lg"
-                    class="px-8"
+                    class="px-8 ink-glow"
                     data-testid="spin-wheel"
                   >
                     <Play class="w-5 h-5 mr-2" />
@@ -787,25 +788,29 @@ function WheelPage() {
                   </Button>
                 </div>
 
-                {selectedEatery() && (
-                  <Card class="border-warning bg-success">
-                    <CardHeader>
-                      <CardTitle class="text-success-foreground">
-                        🎉 Winner!
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div class="text-2xl font-bold text-success-foreground">
-                        {selectedEatery()!.name}
-                      </div>
-                      {selectedEatery()!.cuisine && (
-                        <Badge variant="secondary" class="mt-2">
-                          {selectedEatery()!.cuisine}
-                        </Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
+                <Show when={selectedEatery()}>
+                  {(winner) => (
+                    <Card class="border border-success-foreground/30 bg-success/70 animate-paper-rise">
+                      <CardHeader>
+                        <CardTitle class="text-success-foreground">
+                          🎉 Winner!
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div class="text-2xl font-bold text-success-foreground">
+                          {winner().name}
+                        </div>
+                        <Show when={winner().cuisine}>
+                          {(cuisine) => (
+                            <Badge variant="secondary" class="mt-2">
+                              {cuisine()}
+                            </Badge>
+                          )}
+                        </Show>
+                      </CardContent>
+                    </Card>
+                  )}
+                </Show>
               </div>
 
               <div class="space-y-6">
@@ -832,11 +837,11 @@ function WheelPage() {
                               );
                             }
                           }}
-                          class="rounded border-secondary"
+                          class="size-4 rounded-md border border-border accent-primary"
                         />
                         <label
                           for={`user-${user.id}`}
-                          class={`text-sm font-medium`}
+                          class={`text-sm font-semibold`}
                         >
                           {user.name}
                         </label>

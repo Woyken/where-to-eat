@@ -47,31 +47,71 @@ function RootComponent() {
       <ColorModeProvider>
         <SettingsStorageProvider>
           <Peer2PeerSharing>
-            <div class="p-2 flex gap-2 text-lg items-center">
-              <Link
-                to="/"
-                activeProps={{
-                  class: "font-bold",
-                }}
-                activeOptions={{ exact: true }}
-              >
-                Home
-              </Link>{" "}
-              <Link
-                // @ts-expect-error
-                to="/this-route-does-not-exist"
-                activeProps={{
-                  class: "font-bold",
-                }}
-              >
-                This Route Does Not Exist
-              </Link>
-              <div class="flex-1" />
-              <ConnectedPeerCount />
-              <ModeToggle />
+            <div class="min-h-screen">
+              <header class="sticky top-0 z-40 p-3 sm:p-4">
+                <div class="container mx-auto">
+                  <div class="rounded-2xl border border-border bg-background/55 backdrop-blur-md paper-soft">
+                    <div class="flex items-center gap-3 px-4 py-3">
+                      <Link
+                        to="/"
+                        activeOptions={{ exact: true }}
+                        class="group flex items-center gap-2"
+                      >
+                        <div class="grid size-9 place-items-center rounded-xl border border-border bg-card/60 shadow-[0_1px_0_rgba(0,0,0,0.04)] transition-transform group-hover:-translate-y-0.5">
+                          <span class="text-lg leading-none" aria-hidden="true">
+                            🍽️
+                          </span>
+                        </div>
+                        <div class="leading-tight">
+                          <div class="font-display text-base sm:text-lg tracking-tight">
+                            Where to Eat
+                          </div>
+                          <div class="text-xs text-muted-foreground">
+                            spin • sync • decide
+                          </div>
+                        </div>
+                      </Link>
+
+                      <div class="flex-1" />
+
+                      <nav class="hidden sm:flex items-center gap-2">
+                        <Link
+                          to="/"
+                          activeOptions={{ exact: true }}
+                          activeProps={{
+                            class:
+                              "bg-accent text-accent-foreground border-accent/60",
+                          }}
+                          class="rounded-xl border border-border bg-card/40 px-3 py-2 text-sm font-semibold text-foreground/85 shadow-[0_1px_0_rgba(0,0,0,0.04)] transition hover:-translate-y-0.5 hover:bg-card/65"
+                        >
+                          Home
+                        </Link>
+                      </nav>
+
+                      <ConnectedPeerCount />
+                      <ModeToggle />
+                    </div>
+                  </div>
+                </div>
+              </header>
+
+              <main class="container mx-auto px-4 pb-10">
+                <Outlet />
+              </main>
+
+              <footer class="container mx-auto px-4 pb-10">
+                <div class="rounded-2xl border border-border bg-card/45 px-4 py-3 text-sm text-muted-foreground paper-soft">
+                  <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      Built for indecisive groups. Works offline.
+                    </div>
+                    <div class="font-mono text-xs">
+                      tip: open multiple tabs to test sync
+                    </div>
+                  </div>
+                </div>
+              </footer>
             </div>
-            <hr />
-            <Outlet />
           </Peer2PeerSharing>
         </SettingsStorageProvider>
         <TanStackRouterDevtools position="bottom-right" />

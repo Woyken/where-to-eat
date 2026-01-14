@@ -238,10 +238,15 @@ function SettingsPage() {
 
   return (
     <Show when={currentConnection()} fallback={null}>
-      <div class="min-h-screen p-4">
-        <div class="max-w-4xl mx-auto space-y-6">
+      <div class="py-8 sm:py-10">
+        <div class="mx-auto max-w-5xl space-y-6">
           <div class="flex items-center justify-between">
-            <h1 class="text-3xl font-bold">Settings</h1>
+            <div class="space-y-1">
+              <h1 class="text-4xl font-bold tracking-tight">Settings</h1>
+              <div class="text-sm text-muted-foreground">
+                Tune the wheel, manage people, and set preferences.
+              </div>
+            </div>
             <div class="flex gap-2">
               <Link
                 to="/wheel/$connectionId"
@@ -283,6 +288,7 @@ function SettingsPage() {
                 <Button
                   onClick={saveConnectionName}
                   data-testid="connection-name-save"
+                  class="ink-glow"
                 >
                   Save
                 </Button>
@@ -369,11 +375,13 @@ function SettingsPage() {
                     <For each={activeEateries()}>
                       {(eatery) => (
                         <div
-                          class="flex items-center justify-between p-3 border-[3px] rounded-lg"
+                          class="group flex items-center justify-between gap-3 rounded-2xl border border-border bg-card/40 p-4 shadow-[0_1px_0_rgba(0,0,0,0.04)] transition hover:-translate-y-0.5 hover:bg-card/60"
                           data-eatery-name={eatery.name}
                         >
                           <div>
-                            <h3 class="font-medium">{eatery.name}</h3>
+                            <h3 class="font-display text-lg font-semibold tracking-tight">
+                              {eatery.name}
+                            </h3>
                             {/* {eatery.cuisine && (
                             <p class="text-sm text-muted-foreground">
                               {eatery.cuisine}
@@ -385,6 +393,7 @@ function SettingsPage() {
                             variant="outline"
                             onClick={() => removeEatery(eatery.id)}
                             data-testid="delete-eatery"
+                            class="!px-3"
                           >
                             <Trash2 class="w-4 h-4" />
                           </Button>
@@ -456,11 +465,13 @@ function SettingsPage() {
                     <For each={activeUsers()}>
                       {(user) => (
                         <div
-                          class="flex items-center justify-between p-3 border-[3px] rounded-lg"
+                          class="group flex items-center justify-between gap-3 rounded-2xl border border-border bg-card/40 p-4 shadow-[0_1px_0_rgba(0,0,0,0.04)] transition hover:-translate-y-0.5 hover:bg-card/60"
                           data-user-name={user.name}
                         >
                           <div>
-                            <h3 class="font-medium">{user.name}</h3>
+                            <h3 class="font-display text-lg font-semibold tracking-tight">
+                              {user.name}
+                            </h3>
                             <p class="text-sm text-muted-foreground">
                               {selectedUserScores()?.length ?? 0} ratings
                             </p>
@@ -470,6 +481,7 @@ function SettingsPage() {
                             variant="outline"
                             onClick={() => removeUser(user.id)}
                             data-testid="delete-user"
+                            class="!px-3"
                           >
                             <Trash2 class="w-4 h-4" />
                           </Button>
@@ -513,7 +525,7 @@ function SettingsPage() {
                   <Show when={selectedUser()}>
                     {(user) => (
                       <div class="space-y-3">
-                        <h3 class="font-medium">
+                        <h3 class="font-display text-xl font-semibold tracking-tight">
                           Rate Eateries for {user().name}
                         </h3>
                         <div class="grid gap-4">
@@ -523,18 +535,19 @@ function SettingsPage() {
                                 isEateryVetoed(user().id, eatery.id);
                               return (
                                 <div
-                                  class="p-4 border-[3px] rounded-lg space-y-3"
+                                  class="space-y-3 rounded-2xl border border-border bg-card/40 p-4 shadow-[0_1px_0_rgba(0,0,0,0.04)]"
                                   classList={{
-                                    "border-red-300 bg-red-50 dark:bg-red-950/20":
-                                      vetoed(),
+                                    "border-error-foreground/35 bg-error/35": vetoed(),
                                   }}
                                   data-eatery-name={eatery.name}
                                 >
                                   <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
-                                      <h4 class="font-medium">{eatery.name}</h4>
+                                      <h4 class="font-display text-lg font-semibold tracking-tight">
+                                        {eatery.name}
+                                      </h4>
                                       <Show when={vetoed()}>
-                                        <span class="text-xs text-red-600 font-medium">
+                                        <span class="text-xs font-semibold text-error-foreground">
                                           (Never pick)
                                         </span>
                                       </Show>
@@ -558,7 +571,7 @@ function SettingsPage() {
                                         <Ban class="w-4 h-4" />
                                       </Button>
                                       <Show when={!vetoed()}>
-                                        <div class="text-lg font-bold text-blue-600">
+                                        <div class="font-display text-2xl font-bold text-primary">
                                           {selectedUserScores()?.find(
                                             (x) => x.eateryId === eatery.id,
                                           )?.score ?? 0}
@@ -571,7 +584,7 @@ function SettingsPage() {
                                     fallback={
                                       <div class="text-sm text-muted-foreground">
                                         Rating hidden while{" "}
-                                        <span class="text-red-600 font-medium">
+                                        <span class="text-error-foreground font-semibold">
                                           Never pick
                                         </span>{" "}
                                         is enabled.
@@ -599,9 +612,9 @@ function SettingsPage() {
                                             Number.parseInt(e.target.value),
                                           )
                                         }
-                                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                                        class="w-full h-2 rounded-full appearance-none cursor-pointer slider"
                                         style={{
-                                          background: `linear-gradient(to right, #ef4444 0%, #f97316 25%, #eab308 50%, #22c55e 75%, #16a34a 100%)`,
+                                          background: `linear-gradient(to right, #fb7185 0%, #fb923c 25%, #fbbf24 50%, #34d399 75%, #22c55e 100%)`,
                                         }}
                                         data-testid="score-slider"
                                       />

@@ -56,7 +56,7 @@ const TextFieldInput = <T extends ValidComponent = "input">(
     <TextFieldPrimitive.Input
       type={local.type}
       class={cn(
-        "flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[invalid]:border-error-foreground data-[invalid]:text-error-foreground",
+        "flex h-11 w-full rounded-xl border border-input bg-card/55 px-3.5 py-2 text-sm shadow-[0_1px_0_rgba(0,0,0,0.04)] ring-offset-background placeholder:text-muted-foreground/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[invalid]:border-error-foreground data-[invalid]:text-error-foreground",
         local.class
       )}
       {...others}
@@ -74,7 +74,7 @@ const TextFieldTextArea = <T extends ValidComponent = "textarea">(
   return (
     <TextFieldPrimitive.TextArea
       class={cn(
-        "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex min-h-[96px] w-full rounded-xl border border-input bg-card/55 px-3.5 py-2 text-sm shadow-[0_1px_0_rgba(0,0,0,0.04)] ring-offset-background placeholder:text-muted-foreground/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
         local.class
       )}
       {...others}
@@ -83,7 +83,7 @@ const TextFieldTextArea = <T extends ValidComponent = "textarea">(
 }
 
 const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+  "text-sm font-semibold leading-none text-foreground/90 peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
   {
     variants: {
       variant: {

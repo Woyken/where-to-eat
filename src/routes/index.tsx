@@ -93,12 +93,18 @@ function HomePage() {
   const connections = () => settingsStorage.store.connections;
 
   return (
-    <div class="min-h-screen p-4">
-      <div class="max-w-2xl mx-auto space-y-6">
-        <div class="text-center space-y-2">
-          <h1 class="text-4xl font-bold">Eatery Wheel</h1>
-          <p class="text-muted-foreground">
-            Spin the wheel to decide where to eat!
+    <div class="py-8 sm:py-12">
+      <div class="mx-auto max-w-3xl space-y-8">
+        <div class="text-center space-y-3 animate-paper-rise">
+          <div class="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs font-semibold text-foreground/80 shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+            <span aria-hidden="true">✳︎</span>
+            collaborative roulette for restaurants
+          </div>
+          <h1 class="text-5xl sm:text-6xl font-bold tracking-tight">
+            Eatery Wheel
+          </h1>
+          <p class="text-muted-foreground max-w-xl mx-auto">
+            Spin with friends, sync instantly, and stop debating where to eat.
           </p>
         </div>
 
@@ -128,7 +134,7 @@ function HomePage() {
               fallback={
                 <>
                   <CardContent class="space-y-4">
-                    <div class="space-y-2">
+                    <div class="rounded-2xl border border-border bg-card/40 p-4 paper-soft">
                       <TextField
                         id="connection-name-field"
                         value={connectionName()}
@@ -145,7 +151,7 @@ function HomePage() {
                       </TextField>
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter class="gap-2">
                     <AddConnectionOrConnectToExisting
                       connectId={connectId()}
                       // connectToExisting={connectToExisting}
@@ -164,9 +170,9 @@ function HomePage() {
               <CardContent class="space-y-3">
                 <For each={connections()}>
                   {(connection) => (
-                    <div class="flex items-center justify-between p-3 border-[3px] rounded-lg">
+                    <div class="group flex items-center justify-between gap-3 rounded-2xl border border-border bg-card/40 p-4 shadow-[0_1px_0_rgba(0,0,0,0.04)] transition hover:-translate-y-0.5 hover:bg-card/60">
                       <div>
-                        <h3 class="font-medium">
+                        <h3 class="font-display text-lg font-semibold tracking-tight">
                           {connection.settings.connection.name}
                         </h3>
                         <p class="text-sm text-muted-foreground">
@@ -197,6 +203,7 @@ function HomePage() {
                           size="sm"
                           variant="outline"
                           onClick={() => deleteConnection(connection.id)}
+                          class="!px-3"
                         >
                           <Trash2 class="w-4 h-4" />
                         </Button>
@@ -232,7 +239,7 @@ function HomePage() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter class="gap-2">
                 <AddConnectionOrConnectToExisting
                   connectId={connectId()}
                   // connectToExisting={connectToExisting}

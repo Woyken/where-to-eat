@@ -1,0 +1,52 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "pnpm: build",
+			"type": "shell",
+			"command": "pnpm",
+			"args": [
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "pnpm: build (cmd)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"pnpm",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git: status",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"status",
+				"--porcelain=v1"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "git: branch",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"rev-parse",
+				"--abbrev-ref",
+				"HEAD"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
