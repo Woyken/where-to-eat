@@ -468,6 +468,13 @@ export function Peer2PeerSharing(props: ParentProps) {
       // Request which connection IDs the remote peer has
       // We only share connections that both peers have in common
       peerConnectionSend(conn, { type: "request-connection-ids" });
+
+      // Also proactively send our connection IDs so the remote peer can send us their state
+      // This ensures bidirectional state sync on every connection (re)establishment
+      peerConnectionSend(conn, {
+        type: "connection-ids",
+        data: settingsStorage.store.connections.map((c) => c.id),
+      });
     });
 
     conn.on("data", (rawData) => {

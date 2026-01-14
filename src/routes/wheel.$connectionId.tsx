@@ -13,6 +13,8 @@ import RotateCcw from "lucide-solid/icons/rotate-ccw";
 import Settings from "lucide-solid/icons/settings";
 import Share2 from "lucide-solid/icons/share-2";
 import Users from "lucide-solid/icons/users";
+import Sparkles from "lucide-solid/icons/sparkles";
+import Check from "lucide-solid/icons/check";
 import { logger } from "~/utils/logger";
 import {
   createEffect,
@@ -214,17 +216,20 @@ function WheelPage() {
         0,
       ) ?? 0;
 
+    // Vibrant food-inspired color palette
     const colors = [
-      "#FF6B6B",
-      "#4ECDC4",
-      "#45B7D1",
-      "#96CEB4",
-      "#FFEAA7",
-      "#DDA0DD",
-      "#98D8C8",
-      "#F7DC6F",
-      "#BB8FCE",
-      "#85C1E9",
+      "#E07C4A", // Appetizing orange (tomato sauce)
+      "#2ECC71", // Fresh herb green
+      "#F39C12", // Golden cheese yellow
+      "#E74C3C", // Chili pepper red
+      "#9B59B6", // Eggplant purple
+      "#1ABC9C", // Mint green
+      "#3498DB", // Blueberry blue
+      "#E91E63", // Raspberry pink
+      "#FF9800", // Mango orange
+      "#8BC34A", // Avocado green
+      "#00BCD4", // Tropical cyan
+      "#FF5722", // Paprika red-orange
     ];
 
     let currentAngle = 0;
@@ -384,46 +389,56 @@ function WheelPage() {
       <Show
         when={activeEateries().length > 0}
         fallback={
-          <div class="min-h-screen p-4">
-            <div class="max-w-2xl mx-auto space-y-6">
-              <div class="flex items-center justify-between">
-                <h1 class="text-3xl font-bold">Eatery Wheel</h1>
+          <div class="py-12 px-4">
+            <div class="max-w-lg mx-auto text-center space-y-6">
+              {/* Empty State */}
+              <div class="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <Settings class="w-10 h-10 text-primary/60" />
+              </div>
+
+              <div class="space-y-2">
+                <h2 class="text-2xl font-bold text-foreground">
+                  No Restaurants Yet
+                </h2>
+                <p class="text-muted-foreground max-w-md mx-auto">
+                  Add restaurants to start spinning the wheel
+                </p>
+              </div>
+
+              <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  to="/settings/$connectionId"
+                  params={{ connectionId: connectionId() }}
+                >
+                  <Button size="lg">
+                    <Settings class="w-5 h-5" />
+                    Add Restaurants
+                  </Button>
+                </Link>
                 <Link to="/">
-                  <Button variant="outline" size="sm">
-                    <Home class="w-4 h-4 mr-2" />
-                    Home
+                  <Button variant="outline" size="lg">
+                    <Home class="w-5 h-5" />
+                    Back Home
                   </Button>
                 </Link>
               </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Setup Required</CardTitle>
-                </CardHeader>
-                <CardContent class="space-y-4">
-                  <p class="text-muted-foreground">
-                    You need to add some eateries before you can spin the wheel.
-                  </p>
-                  <Link
-                    to="/settings/$connectionId"
-                    params={{ connectionId: connectionId() }}
-                  >
-                    <Button>
-                      <Settings class="w-4 h-4 mr-2" />
-                      Go to Settings
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
             </div>
           </div>
         }
       >
-        <div class="min-h-screen">
-          <div class="max-w-4xl mx-auto space-y-6">
-            <div class="flex items-center justify-between">
-              <h1 class="text-3xl font-bold">Eatery Wheel</h1>
-              <div class="flex gap-2">
+        <div class="py-6 px-4">
+          <div class="max-w-5xl mx-auto space-y-6">
+            {/* Page Header */}
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 page-section">
+              <div>
+                <h1 class="text-2xl font-bold">
+                  {currentConnection()?.settings.connection.name || "Spin Wheel"}
+                </h1>
+                <p class="text-sm text-muted-foreground mt-1">
+                  {activeEateries().length} restaurants • {activeUsers().length} people
+                </p>
+              </div>
+              <div class="flex flex-wrap gap-2">
                 <Dialog
                   open={showQR()}
                   onOpenChange={(open) => {
@@ -440,26 +455,34 @@ function WheelPage() {
                       size="sm"
                       data-testid="share-button"
                     >
-                      <QrCode class="w-4 h-4 mr-2" />
+                      <QrCode class="w-4 h-4" />
                       Share
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent class="sm:max-w-md">
                     <DialogHeader>
-                      <DialogTitle>Share Connection</DialogTitle>
+                      <DialogTitle>
+                        Invite Others
+                      </DialogTitle>
                       <DialogDescription>
-                        Scan the QR code, or copy/share the link
+                        Share this link so others can join and vote
                       </DialogDescription>
                     </DialogHeader>
-                    <div class="text-center space-y-4">
-                      <img
-                        src={generateQRCode() || "/placeholder.svg"}
-                        alt="QR Code"
-                        class="mx-auto"
-                      />
-                      <div class="space-y-2">
+                    <div class="space-y-6 pt-2">
+                      {/* QR Code */}
+                      <div class="flex justify-center">
+                        <div class="p-4 bg-white rounded-lg shadow-sm">
+                          <img
+                            src={generateQRCode() || "/placeholder.svg"}
+                            alt="QR Code"
+                            class="w-48 h-48"
+                          />
+                        </div>
+                      </div>
+                      {/* Share URL */}
+                      <div class="space-y-3">
                         <div
-                          class="p-2 bg-secondary rounded text-sm font-mono break-all cursor-pointer select-all"
+                          class="p-2 bg-muted rounded text-sm font-mono break-all cursor-pointer select-all"
                           data-testid="share-url"
                           title="Click to copy"
                           ref={(el) => {
@@ -514,27 +537,27 @@ function WheelPage() {
                   params={{ connectionId: connectionId() }}
                 >
                   <Button variant="outline" size="sm">
-                    <Settings class="w-4 h-4 mr-2" />
+                    <Settings class="w-4 h-4" />
                     Settings
                   </Button>
                 </Link>
                 <Link to="/">
-                  <Button variant="outline" size="sm">
-                    <Home class="w-4 h-4 mr-2" />
-                    Home
+                  <Button variant="ghost" size="icon" class="w-9 h-9">
+                    <Home class="w-4 h-4" />
                   </Button>
                 </Link>
               </div>
             </div>
 
-            <div class="grid lg:grid-cols-3 gap-6">
-              <div class="lg:col-span-2 space-y-6">
-                <Card>
+            <div class="grid lg:grid-cols-3 gap-4 page-section">
+              <div class="lg:col-span-2 space-y-4">
+                {/* Wheel Card */}
+                <Card class="food-card overflow-visible">
                   <CardContent class="p-6">
-                    <div class="relative w-80 h-80 mx-auto">
+                    <div class="relative w-72 h-72 mx-auto wheel-container sm:w-80 sm:h-80">
                       {/* Pointer at top */}
-                      <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
-                        <div class="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent border-t-red-600 drop-shadow-lg" />
+                      <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 z-10 wheel-pointer">
+                        <div class="w-0 h-0 border-l-[14px] border-r-[14px] border-t-[24px] border-l-transparent border-r-transparent border-t-primary" />
                       </div>
 
                       {/* Wheel container */}
@@ -547,25 +570,25 @@ function WheelPage() {
                         <Show when={pinnedTooltip() ?? hoverTooltip()}>
                           {(tooltip) => (
                             <Card
-                              class="absolute z-20 pointer-events-none px-2 py-1 text-sm bg-background/95 backdrop-blur shadow-lg w-max max-w-[220px]"
+                              class="absolute z-20 pointer-events-none px-3 py-2 text-sm bg-card/98 backdrop-blur-md shadow-lg rounded-md border w-max max-w-[220px]"
                               style={{
                                 left: `${tooltip().x}px`,
                                 top: `${tooltip().y}px`,
                                 transform: "translate(-50%, -130%)",
                               }}
                             >
-                              <div class="font-medium break-words">
+                              <div class="font-medium break-words text-foreground">
                                 {tooltip().name}
                               </div>
                               <div class="text-xs text-muted-foreground">
-                                Tap to pin • Tap outside to close
+                                Tap to pin
                               </div>
                             </Card>
                           )}
                         </Show>
 
                         <div
-                          class="w-full h-full rounded-full border-8 border-gray-800 shadow-2xl relative overflow-hidden"
+                          class="w-full h-full rounded-full border-[10px] border-foreground/90 dark:border-foreground/80 shadow-elevated relative overflow-hidden"
                           style={{
                             transform: `rotate(${rotation()}deg)`,
                             transition: isSpinning()
@@ -749,16 +772,23 @@ function WheelPage() {
                                 );
                               }}
                             </For>
-                            {/* Center circle */}
+                            {/* Center circle - food themed */}
                             <circle
                               cx="100"
                               cy="100"
-                              r="18"
-                              fill="#374151"
+                              r="20"
+                              fill="url(#centerGradient)"
                               stroke="#1f2937"
                               stroke-width="3"
                             />
-                            <circle cx="100" cy="100" r="8" fill="#6b7280" />
+                            <defs>
+                              <radialGradient id="centerGradient" cx="50%" cy="30%" r="70%">
+                                <stop offset="0%" stop-color="#6b7280" />
+                                <stop offset="100%" stop-color="#374151" />
+                              </radialGradient>
+                            </defs>
+                            <circle cx="100" cy="100" r="8" fill="#9ca3af" />
+                            <circle cx="98" cy="98" r="3" fill="#d1d5db" opacity="0.6" />
                           </svg>
                         </div>
                       </div>
@@ -766,16 +796,17 @@ function WheelPage() {
                   </CardContent>
                 </Card>
 
-                <div class="flex justify-center gap-4">
+                {/* Spin Controls */}
+                <div class="flex justify-center gap-3">
                   <Button
                     onClick={spinWheel}
                     disabled={isSpinning() || segments().length === 0}
                     size="lg"
-                    class="px-8"
+                    class={`px-8 ${isSpinning() ? "animate-pulse" : ""}`}
                     data-testid="spin-wheel"
                   >
-                    <Play class="w-5 h-5 mr-2" />
-                    {isSpinning() ? "Spinning..." : "Spin Wheel"}
+                    <Play class="w-5 h-5" />
+                    {isSpinning() ? "Spinning..." : "Spin"}
                   </Button>
                   <Button
                     onClick={resetWheel}
@@ -783,24 +814,23 @@ function WheelPage() {
                     size="lg"
                     disabled={isSpinning()}
                   >
-                    <RotateCcw class="w-5 h-5 mr-2" />
+                    <RotateCcw class="w-5 h-5" />
                     Reset
                   </Button>
                 </div>
 
+                {/* Winner Card */}
                 {selectedEatery() && (
-                  <Card class="border-warning bg-success">
-                    <CardHeader>
-                      <CardTitle class="text-success-foreground">
-                        🎉 Winner!
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div class="text-2xl font-bold text-success-foreground">
+                  <Card class="winner-card border-0 shadow-lg animate-bounce-in">
+                    <CardContent class="relative p-5 text-center z-10">
+                      <p class="text-sm font-medium text-success-foreground/80 uppercase tracking-wide mb-1">
+                        Selected
+                      </p>
+                      <h2 class="text-2xl font-bold text-success-foreground">
                         {selectedEatery()!.name}
-                      </div>
+                      </h2>
                       {selectedEatery()!.cuisine && (
-                        <Badge variant="secondary" class="mt-2">
+                        <Badge class="bg-white/20 text-success-foreground border-0 mt-2">
                           {selectedEatery()!.cuisine}
                         </Badge>
                       )}
@@ -809,17 +839,26 @@ function WheelPage() {
                 )}
               </div>
 
-              <div class="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle class="flex items-center gap-2">
-                      <Users class="w-5 h-5" />
-                      Participating Users
+              {/* Sidebar */}
+              <div class="space-y-4 page-section">
+                {/* Participating Users */}
+                <Card class="food-card">
+                  <CardHeader class="pb-3">
+                    <CardTitle class="flex items-center gap-2 text-base">
+                      <Users class="w-4 h-4 text-primary" />
+                      Participants
                     </CardTitle>
                   </CardHeader>
-                  <CardContent class="space-y-3">
+                  <CardContent class="space-y-1">
                     {activeUsers().map((user) => (
-                      <div class="flex items-center space-x-2">
+                      <label
+                        for={`user-${user.id}`}
+                        class={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                          selectedUsers().includes(user.id)
+                            ? "bg-primary/10"
+                            : "hover:bg-muted/50"
+                        }`}
+                      >
                         <input
                           type="checkbox"
                           id={`user-${user.id}`}
@@ -833,54 +872,54 @@ function WheelPage() {
                               );
                             }
                           }}
-                          class="rounded border-secondary"
+                          class="w-4 h-4 rounded border-2 border-primary/30 text-primary accent-primary cursor-pointer"
                         />
-                        <label
-                          for={`user-${user.id}`}
-                          class={`text-sm font-medium`}
-                        >
+                        <span class="text-sm font-medium flex-1">
                           {user.name}
-                        </label>
-                      </div>
+                        </span>
+                        {selectedUsers().includes(user.id) && (
+                          <Check class="w-4 h-4 text-primary" />
+                        )}
+                      </label>
                     ))}
                     {selectedUsers().length === 0 && (
-                      <p class="text-sm text-destructive">
-                        Select at least one user to spin
-                      </p>
+                      <div class="text-center py-3 text-destructive bg-destructive/5 rounded-md border border-destructive/20">
+                        <p class="text-sm">Select at least one person</p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle class="flex items-center gap-2">
-                      Eateries ({activeEateries().length})
+                {/* Eateries List */}
+                <Card class="food-card">
+                  <CardHeader class="pb-3">
+                    <CardTitle class="flex items-center justify-between text-base">
+                      <span>
+                        On the Wheel
+                      </span>
                       <Show when={vetoedEateryCount() > 0}>
-                        <Badge variant="secondary">
+                        <Badge variant="destructive" class="text-xs">
                           {vetoedEateryCount()} vetoed
                         </Badge>
                       </Show>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div class="space-y-2 max-h-60 overflow-y-auto">
-                      {getWheelSegments().map((segment) => (
-                        <div class="flex items-center justify-between p-2 border-[3px] rounded">
-                          <div>
-                            <div class="font-medium">{segment.eatery.name}</div>
-                            {segment.eatery.cuisine && (
-                              <div class="text-sm text-muted-foreground">
-                                {segment.eatery.cuisine}
-                              </div>
-                            )}
+                    <div class="space-y-1 max-h-72 overflow-y-auto pr-1">
+                      {getWheelSegments().map((segment, index) => (
+                        <div
+                          class="flex items-center gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors"
+                          style={`animation-delay: ${index * 0.05}s`}
+                        >
+                          <div
+                            class="w-3 h-3 rounded-full flex-shrink-0"
+                            style={`background-color: ${segment.color}`}
+                          />
+                          <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm truncate">{segment.eatery.name}</p>
                           </div>
-                          <div class="text-right">
-                            <div class="text-sm font-medium">
-                              Score: {segment.combinedScore}
-                            </div>
-                            <div class="text-xs text-muted-foreground">
-                              {segment.percentage.toFixed(1)}% of wheel
-                            </div>
+                          <div class="text-right flex-shrink-0">
+                            <p class="text-sm font-medium text-primary">{segment.percentage.toFixed(0)}%</p>
                           </div>
                         </div>
                       ))}

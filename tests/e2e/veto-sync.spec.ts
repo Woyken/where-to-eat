@@ -100,7 +100,7 @@ test("veto: never pick syncs between peers", async ({ browser }, testInfo) => {
   await expect(ratingCardB.getByTestId("score-slider")).toHaveCount(0);
 
   // On B wheel: selecting the user excludes the vetoed eatery and shows badge
-  await pageB.getByRole("link", { name: "Back to Wheel" }).click();
+  await pageB.getByRole("link", { name: "Back" }).click();
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`));
   await pageB.getByLabel(userName).check();
 

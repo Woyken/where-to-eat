@@ -164,6 +164,12 @@ test("tombstone: deleted user doesn't reappear after sync", async ({
 
   // Delete from A
   await pageA.goto(`/settings/${connectionId}`);
+
+  // Wait for A to reconnect to B after navigation before deleting
+  await expect(pageA.getByTestId("peer-count-value")).toHaveText("1", {
+    timeout: 30_000,
+  });
+
   await pageA
     .locator(`[data-user-name="${userToDelete}"]`)
     .getByTestId("delete-user")

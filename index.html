@@ -8,6 +8,14 @@
       name="description"
       content="Collaboratively choose where to eat with a spinning wheel"
     />
+    <!-- Preconnect for faster font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Professional typography: DM Sans for headings, Inter for body -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
@@ -16,20 +24,29 @@
     <!-- Handle SPA redirects from 404.html for GitHub Pages -->
     <script>
       (function() {
-        var redirect = sessionStorage.redirect;
-        delete sessionStorage.redirect;
-        if (redirect && redirect !== location.href) {
-          history.replaceState(null, null, redirect);
-        } else {
-          // Check for redirect query parameter from 404.html
-          var params = new URLSearchParams(location.search);
-          var redirectPath = params.get('redirect');
-          if (redirectPath) {
-            params.delete('redirect');
+        // Check for redirect query parameter from 404.html
+        var params = new URLSearchParams(location.search);
+        var redirectPath = params.get("redirect");
+
+        if (redirectPath) {
+          // Use DOM URL parsing to validate the redirect path
+          var dest = new URL(redirectPath, location.origin);
+          if (dest.origin === location.origin) {
+            params.delete("redirect");
             var newSearch = params.toString();
-            // Get base path from current location (e.g., /where-to-eat)
-            var basePath = location.pathname.replace(/\/$/, '');
-            var newUrl = basePath + redirectPath + (newSearch ? '?' + newSearch : '');
+
+            // Derive the current base path from where index.html is served.
+            // Examples:
+            // - /where-to-eat/
+            // - /where-to-eat/previews/pr-4/
+            var basePath = location.pathname;
+            if (basePath.endsWith("/index.html")) {
+              basePath = basePath.slice(0, -"/index.html".length);
+            }
+            basePath = basePath.replace(/\/$/, "");
+
+            var newUrl =
+              basePath + redirectPath + (newSearch ? "?" + newSearch : "");
             history.replaceState(null, null, newUrl);
           }
         }

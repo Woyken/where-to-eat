@@ -54,33 +54,46 @@ test("multi-tab sync: changes propagate to all tabs in the same browser context"
 
   // Ensure all tabs are ready
   // Note: Heading might be differnt on settings page VS wheel page.
-  // Settings page heading: 'Users', 'Eateries' etc.
-  // Wheel page heading: 'Eatery Wheel'
-  // Let's check for 'Eateries' section
+  // Settings page heading: 'Users', 'Restaurants' etc.
+  // Wheel page heading: 'Spin Wheel'
+  // Let's check for 'Restaurants' section
   await expect(
-    pageB1.getByRole("heading", { name: /^Eateries/ }),
+    pageB1.getByText(/Restaurants \(/),
   ).toBeVisible();
   await expect(
-    pageB2.getByRole("heading", { name: /^Eateries/ }),
+    pageB2.getByText(/Restaurants \(/),
   ).toBeVisible();
   await expect(
-    pageB3.getByRole("heading", { name: /^Eateries/ }),
+    pageB3.getByText(/Restaurants \(/),
   ).toBeVisible();
 
-  // 6. Make a change in A (Add a unique eatery)
+  // 6. Wait for P2P connection to be established first (on B1 side since B is the joiner)
+  // B1 needs to wait for connection to A before we proceed
+  console.log("B1: Waiting for P2P connection to A...");
+  await expect(pageB1.getByTestId("peer-count-value")).toHaveText("1", {
+    timeout: 30_000,
+  });
+  console.log("B1: Connected to 1 peer");
+
   // Navigate A to settings to add eatery easily
   await pageA.goto(`/settings/${connectionId}`);
+
+  // Wait for A to reconnect to B after navigation
+  console.log("A: Waiting for P2P connection after navigation...");
+  await expect(pageA.getByTestId("peer-count-value")).toHaveText("1", {
+    timeout: 30_000,
+  });
+  console.log("A: Reconnected to 1 peer");
 
   const timestamp = Date.now();
   const newEateryName = `TabSync Eatery ${timestamp}`;
 
   // Open the Add Eatery dialog
   console.log("A: Opening Add Eatery Dialog");
-  await pageA.waitForTimeout(2000);
   await pageA.getByTestId("add-eatery-open").click();
 
   // Wait for dialog content
-  await expect(pageA.getByText("Add New Eatery")).toBeVisible({
+  await expect(pageA.getByRole("heading", { name: "Add Restaurant" })).toBeVisible({
     timeout: 15_000,
   });
   await expect(pageA.getByTestId("add-eatery-name")).toBeVisible({
@@ -101,20 +114,19 @@ test("multi-tab sync: changes propagate to all tabs in the same browser context"
     pageA.getByRole("heading", { name: newEateryName }).first(),
   ).toBeVisible();
 
+  // B tabs should receive the update via P2P (A is connected)
   console.log("Verifying in B1 (Original Tab)...");
   await expect(
     pageB1.getByRole("heading", { name: newEateryName }).first(),
-  ).toBeVisible({ timeout: 15000 });
+  ).toBeVisible({ timeout: 15_000 });
 
   console.log("Verifying in B2 (2nd Tab)...");
-  // CRITICAL: We do NOT reload. It should appear via storage event sync.
   await expect(
     pageB2.getByRole("heading", { name: newEateryName }).first(),
-  ).toBeVisible({ timeout: 15000 });
+  ).toBeVisible({ timeout: 15_000 });
 
   console.log("Verifying in B3 (3rd Tab)...");
-  // CRITICAL: We do NOT reload. It should appear via storage event sync.
   await expect(
     pageB3.getByRole("heading", { name: newEateryName }).first(),
-  ).toBeVisible({ timeout: 15000 });
+  ).toBeVisible({ timeout: 15_000 });
 });
