@@ -13,6 +13,8 @@ import RotateCcw from "lucide-solid/icons/rotate-ccw";
 import Settings from "lucide-solid/icons/settings";
 import Share2 from "lucide-solid/icons/share-2";
 import Users from "lucide-solid/icons/users";
+import Sparkles from "lucide-solid/icons/sparkles";
+import Check from "lucide-solid/icons/check";
 import {
   createEffect,
   createMemo,
@@ -213,17 +215,20 @@ function WheelPage() {
         0,
       ) ?? 0;
 
+    // Vibrant food-inspired color palette
     const colors = [
-      "#FF6B6B",
-      "#4ECDC4",
-      "#45B7D1",
-      "#96CEB4",
-      "#FFEAA7",
-      "#DDA0DD",
-      "#98D8C8",
-      "#F7DC6F",
-      "#BB8FCE",
-      "#85C1E9",
+      "#E07C4A", // Appetizing orange (tomato sauce)
+      "#2ECC71", // Fresh herb green
+      "#F39C12", // Golden cheese yellow
+      "#E74C3C", // Chili pepper red
+      "#9B59B6", // Eggplant purple
+      "#1ABC9C", // Mint green
+      "#3498DB", // Blueberry blue
+      "#E91E63", // Raspberry pink
+      "#FF9800", // Mango orange
+      "#8BC34A", // Avocado green
+      "#00BCD4", // Tropical cyan
+      "#FF5722", // Paprika red-orange
     ];
 
     let currentAngle = 0;
@@ -383,46 +388,69 @@ function WheelPage() {
       <Show
         when={activeEateries().length > 0}
         fallback={
-          <div class="min-h-screen p-4">
-            <div class="max-w-2xl mx-auto space-y-6">
-              <div class="flex items-center justify-between">
-                <h1 class="text-3xl font-bold">Eatery Wheel</h1>
+          <div class="py-12 px-4">
+            <div class="max-w-lg mx-auto text-center space-y-8">
+              {/* Empty State Illustration */}
+              <div class="relative">
+                <div class="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-accent/30 flex items-center justify-center">
+                  <span class="text-6xl animate-float">🍽️</span>
+                </div>
+                <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-4 bg-black/5 rounded-full blur-md" />
+              </div>
+
+              <div class="space-y-3">
+                <h2 class="text-3xl font-bold text-foreground">
+                  Your Wheel is Empty!
+                </h2>
+                <p class="text-lg text-muted-foreground max-w-md mx-auto">
+                  Add some restaurants and cafes to get the wheel spinning. The more options, the more fun! 🎉
+                </p>
+              </div>
+
+              <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  to="/settings/$connectionId"
+                  params={{ connectionId: connectionId() }}
+                >
+                  <Button size="lg" class="gap-2 btn-glow">
+                    <Settings class="w-5 h-5" />
+                    Add Restaurants
+                  </Button>
+                </Link>
                 <Link to="/">
-                  <Button variant="outline" size="sm">
-                    <Home class="w-4 h-4 mr-2" />
-                    Home
+                  <Button variant="outline" size="lg" class="gap-2">
+                    <Home class="w-5 h-5" />
+                    Back Home
                   </Button>
                 </Link>
               </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Setup Required</CardTitle>
-                </CardHeader>
-                <CardContent class="space-y-4">
-                  <p class="text-muted-foreground">
-                    You need to add some eateries before you can spin the wheel.
-                  </p>
-                  <Link
-                    to="/settings/$connectionId"
-                    params={{ connectionId: connectionId() }}
-                  >
-                    <Button>
-                      <Settings class="w-4 h-4 mr-2" />
-                      Go to Settings
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+              {/* Decorative food emojis */}
+              <div class="flex justify-center gap-3 text-2xl opacity-50">
+                <span>🍕</span>
+                <span>🍔</span>
+                <span>🌮</span>
+                <span>🍜</span>
+                <span>🍣</span>
+              </div>
             </div>
           </div>
         }
       >
-        <div class="min-h-screen">
-          <div class="max-w-4xl mx-auto space-y-6">
-            <div class="flex items-center justify-between">
-              <h1 class="text-3xl font-bold">Eatery Wheel</h1>
-              <div class="flex gap-2">
+        <div class="py-6 px-4">
+          <div class="max-w-6xl mx-auto space-y-6">
+            {/* Page Header */}
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 page-section">
+              <div>
+                <h1 class="text-3xl font-bold flex items-center gap-3">
+                  <span class="text-3xl">🎡</span>
+                  {currentConnection()?.settings.connection.name || "Eatery Wheel"}
+                </h1>
+                <p class="text-muted-foreground mt-1">
+                  {activeEateries().length} restaurants • {activeUsers().length} users
+                </p>
+              </div>
+              <div class="flex flex-wrap gap-2">
                 <Dialog
                   open={showQR()}
                   onOpenChange={(open) => {
@@ -438,25 +466,35 @@ function WheelPage() {
                       variant="outline"
                       size="sm"
                       data-testid="share-button"
+                      class="gap-2"
                     >
-                      <QrCode class="w-4 h-4 mr-2" />
+                      <QrCode class="w-4 h-4" />
                       Share
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent class="sm:max-w-md">
                     <DialogHeader>
-                      <DialogTitle>Share Connection</DialogTitle>
+                      <DialogTitle class="flex items-center gap-2">
+                        <Share2 class="w-5 h-5 text-primary" />
+                        Invite Friends
+                      </DialogTitle>
                       <DialogDescription>
-                        Scan the QR code, or copy/share the link
+                        Share this link so friends can join and vote!
                       </DialogDescription>
                     </DialogHeader>
-                    <div class="text-center space-y-4">
-                      <img
-                        src={generateQRCode() || "/placeholder.svg"}
-                        alt="QR Code"
-                        class="mx-auto"
-                      />
-                      <div class="space-y-2">
+                    <div class="space-y-6 pt-2">
+                      {/* QR Code */}
+                      <div class="flex justify-center">
+                        <div class="p-4 bg-white rounded-2xl shadow-card">
+                          <img
+                            src={generateQRCode() || "/placeholder.svg"}
+                            alt="QR Code"
+                            class="w-48 h-48"
+                          />
+                        </div>
+                      </div>
+                      {/* Share URL */}
+                      <div class="space-y-3">
                         <div
                           class="p-2 bg-secondary rounded text-sm font-mono break-all cursor-pointer select-all"
                           data-testid="share-url"
@@ -512,28 +550,28 @@ function WheelPage() {
                   to="/settings/$connectionId"
                   params={{ connectionId: connectionId() }}
                 >
-                  <Button variant="outline" size="sm">
-                    <Settings class="w-4 h-4 mr-2" />
+                  <Button variant="outline" size="sm" class="gap-2">
+                    <Settings class="w-4 h-4" />
                     Settings
                   </Button>
                 </Link>
                 <Link to="/">
-                  <Button variant="outline" size="sm">
-                    <Home class="w-4 h-4 mr-2" />
-                    Home
+                  <Button variant="ghost" size="sm" class="gap-2">
+                    <Home class="w-4 h-4" />
                   </Button>
                 </Link>
               </div>
             </div>
 
-            <div class="grid lg:grid-cols-3 gap-6">
+            <div class="grid lg:grid-cols-3 gap-6 page-section">
               <div class="lg:col-span-2 space-y-6">
-                <Card>
-                  <CardContent class="p-6">
-                    <div class="relative w-80 h-80 mx-auto">
+                {/* Wheel Card */}
+                <Card class="food-card border-2 overflow-visible">
+                  <CardContent class="p-8">
+                    <div class="relative w-80 h-80 mx-auto wheel-container">
                       {/* Pointer at top */}
-                      <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
-                        <div class="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent border-t-red-600 drop-shadow-lg" />
+                      <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 z-10 wheel-pointer">
+                        <div class="w-0 h-0 border-l-[14px] border-r-[14px] border-t-[24px] border-l-transparent border-r-transparent border-t-primary" />
                       </div>
 
                       {/* Wheel container */}
@@ -546,14 +584,14 @@ function WheelPage() {
                         <Show when={pinnedTooltip() ?? hoverTooltip()}>
                           {(tooltip) => (
                             <Card
-                              class="absolute z-20 pointer-events-none px-2 py-1 text-sm bg-background/95 backdrop-blur shadow-lg w-max max-w-[220px]"
+                              class="absolute z-20 pointer-events-none px-3 py-2 text-sm bg-card/98 backdrop-blur-md shadow-elevated rounded-xl border-2 w-max max-w-[220px]"
                               style={{
                                 left: `${tooltip().x}px`,
                                 top: `${tooltip().y}px`,
                                 transform: "translate(-50%, -130%)",
                               }}
                             >
-                              <div class="font-medium break-words">
+                              <div class="font-semibold break-words text-foreground">
                                 {tooltip().name}
                               </div>
                               <div class="text-xs text-muted-foreground">
@@ -564,7 +602,7 @@ function WheelPage() {
                         </Show>
 
                         <div
-                          class="w-full h-full rounded-full border-8 border-gray-800 shadow-2xl relative overflow-hidden"
+                          class="w-full h-full rounded-full border-[10px] border-foreground/90 dark:border-foreground/80 shadow-elevated relative overflow-hidden"
                           style={{
                             transform: `rotate(${rotation()}deg)`,
                             transition: isSpinning()
@@ -748,16 +786,23 @@ function WheelPage() {
                                 );
                               }}
                             </For>
-                            {/* Center circle */}
+                            {/* Center circle - food themed */}
                             <circle
                               cx="100"
                               cy="100"
-                              r="18"
-                              fill="#374151"
+                              r="20"
+                              fill="url(#centerGradient)"
                               stroke="#1f2937"
                               stroke-width="3"
                             />
-                            <circle cx="100" cy="100" r="8" fill="#6b7280" />
+                            <defs>
+                              <radialGradient id="centerGradient" cx="50%" cy="30%" r="70%">
+                                <stop offset="0%" stop-color="#6b7280" />
+                                <stop offset="100%" stop-color="#374151" />
+                              </radialGradient>
+                            </defs>
+                            <circle cx="100" cy="100" r="8" fill="#9ca3af" />
+                            <circle cx="98" cy="98" r="3" fill="#d1d5db" opacity="0.6" />
                           </svg>
                         </div>
                       </div>
@@ -765,60 +810,76 @@ function WheelPage() {
                   </CardContent>
                 </Card>
 
+                {/* Spin Controls */}
                 <div class="flex justify-center gap-4">
                   <Button
                     onClick={spinWheel}
                     disabled={isSpinning() || segments().length === 0}
                     size="lg"
-                    class="px-8"
+                    class={`px-10 text-lg btn-glow ${isSpinning() ? "animate-pulse" : ""}`}
                     data-testid="spin-wheel"
                   >
-                    <Play class="w-5 h-5 mr-2" />
-                    {isSpinning() ? "Spinning..." : "Spin Wheel"}
+                    <Play class="w-5 h-5" />
+                    {isSpinning() ? "Spinning..." : "Spin the Wheel!"}
                   </Button>
                   <Button
                     onClick={resetWheel}
                     variant="outline"
                     size="lg"
                     disabled={isSpinning()}
+                    class="gap-2"
                   >
-                    <RotateCcw class="w-5 h-5 mr-2" />
+                    <RotateCcw class="w-5 h-5" />
                     Reset
                   </Button>
                 </div>
 
+                {/* Winner Card - Animated celebration */}
                 {selectedEatery() && (
-                  <Card class="border-warning bg-success">
-                    <CardHeader>
-                      <CardTitle class="text-success-foreground">
-                        🎉 Winner!
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div class="text-2xl font-bold text-success-foreground">
+                  <Card class="winner-card border-0 shadow-elevated animate-bounce-in">
+                    <CardContent class="relative p-6 text-center z-10">
+                      <div class="text-5xl mb-3 animate-wiggle">🎉</div>
+                      <p class="text-sm font-medium text-success-foreground/80 uppercase tracking-wide mb-1">
+                        The Winner Is...
+                      </p>
+                      <h2 class="text-3xl font-bold text-success-foreground mb-3">
                         {selectedEatery()!.name}
-                      </div>
+                      </h2>
                       {selectedEatery()!.cuisine && (
-                        <Badge variant="secondary" class="mt-2">
+                        <Badge class="bg-white/20 text-success-foreground border-0">
                           {selectedEatery()!.cuisine}
                         </Badge>
                       )}
+                      <div class="flex justify-center gap-2 mt-4 text-2xl">
+                        <span>🍴</span>
+                        <span>🎊</span>
+                        <span>🍴</span>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
               </div>
 
-              <div class="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle class="flex items-center gap-2">
-                      <Users class="w-5 h-5" />
-                      Participating Users
+              {/* Sidebar */}
+              <div class="space-y-6 page-section">
+                {/* Participating Users */}
+                <Card class="food-card border-2">
+                  <CardHeader class="pb-3">
+                    <CardTitle class="flex items-center gap-2 text-lg">
+                      <Users class="w-5 h-5 text-primary" />
+                      Who's Eating?
                     </CardTitle>
                   </CardHeader>
-                  <CardContent class="space-y-3">
+                  <CardContent class="space-y-2">
                     {activeUsers().map((user) => (
-                      <div class="flex items-center space-x-2">
+                      <label
+                        for={`user-${user.id}`}
+                        class={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all border-2 ${
+                          selectedUsers().includes(user.id)
+                            ? "bg-primary/10 border-primary/30"
+                            : "bg-transparent border-transparent hover:bg-muted/50"
+                        }`}
+                      >
                         <input
                           type="checkbox"
                           id={`user-${user.id}`}
@@ -832,54 +893,59 @@ function WheelPage() {
                               );
                             }
                           }}
-                          class="rounded border-secondary"
+                          class="w-5 h-5 rounded-md border-2 border-primary/30 text-primary accent-primary cursor-pointer"
                         />
-                        <label
-                          for={`user-${user.id}`}
-                          class={`text-sm font-medium`}
-                        >
+                        <span class="text-sm font-medium flex-1">
                           {user.name}
-                        </label>
-                      </div>
+                        </span>
+                        {selectedUsers().includes(user.id) && (
+                          <span class="text-primary text-sm">✓</span>
+                        )}
+                      </label>
                     ))}
                     {selectedUsers().length === 0 && (
-                      <p class="text-sm text-destructive">
-                        Select at least one user to spin
-                      </p>
+                      <div class="text-center py-4 text-destructive bg-destructive/5 rounded-xl border border-destructive/20">
+                        <p class="text-sm font-medium">👆 Select at least one person</p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle class="flex items-center gap-2">
-                      Eateries ({activeEateries().length})
+                {/* Eateries List */}
+                <Card class="food-card border-2">
+                  <CardHeader class="pb-3">
+                    <CardTitle class="flex items-center justify-between text-lg">
+                      <span class="flex items-center gap-2">
+                        <span class="text-xl">🍽️</span>
+                        On the Wheel
+                      </span>
                       <Show when={vetoedEateryCount() > 0}>
-                        <Badge variant="secondary">
+                        <Badge variant="destructive" class="text-xs">
                           {vetoedEateryCount()} vetoed
                         </Badge>
                       </Show>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div class="space-y-2 max-h-60 overflow-y-auto">
-                      {getWheelSegments().map((segment) => (
-                        <div class="flex items-center justify-between p-2 border-[3px] rounded">
-                          <div>
-                            <div class="font-medium">{segment.eatery.name}</div>
+                    <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {getWheelSegments().map((segment, index) => (
+                        <div 
+                          class="flex items-center gap-3 p-3 rounded-xl border-2 border-border hover:border-primary/20 transition-colors"
+                          style={`animation-delay: ${index * 0.05}s`}
+                        >
+                          <div 
+                            class="w-4 h-4 rounded-full flex-shrink-0 shadow-sm"
+                            style={`background-color: ${segment.color}`}
+                          />
+                          <div class="flex-1 min-w-0">
+                            <p class="font-medium text-sm truncate">{segment.eatery.name}</p>
                             {segment.eatery.cuisine && (
-                              <div class="text-sm text-muted-foreground">
-                                {segment.eatery.cuisine}
-                              </div>
+                              <p class="text-xs text-muted-foreground">{segment.eatery.cuisine}</p>
                             )}
                           </div>
-                          <div class="text-right">
-                            <div class="text-sm font-medium">
-                              Score: {segment.combinedScore}
-                            </div>
-                            <div class="text-xs text-muted-foreground">
-                              {segment.percentage.toFixed(1)}% of wheel
-                            </div>
+                          <div class="text-right flex-shrink-0">
+                            <p class="text-sm font-semibold text-primary">{segment.percentage.toFixed(0)}%</p>
+                            <p class="text-xs text-muted-foreground">Score: {segment.combinedScore}</p>
                           </div>
                         </div>
                       ))}
