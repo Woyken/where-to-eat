@@ -87,13 +87,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git fetch origin gh-pages || true
+          git fetch origin gh-pages:gh-pages || true
 
-          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
-            git worktree add -B gh-pages ../_gh-pages origin/gh-pages
+          if git show-ref --verify --quiet refs/heads/gh-pages; then
+            git worktree add ../_gh-pages gh-pages
           else
-            mkdir -p ../_gh-pages
-            git worktree add ../_gh-pages
+            git worktree add --detach ../_gh-pages
             (
               cd ../_gh-pages
               git checkout --orphan gh-pages
@@ -184,14 +183,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git fetch origin gh-pages || true
+          git fetch origin gh-pages:gh-pages || true
 
-          if ! git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+          if ! git show-ref --verify --quiet refs/heads/gh-pages; then
             echo "gh-pages branch does not exist; nothing to clean."
             exit 0
           fi
 
-          git worktree add -B gh-pages ../_gh-pages origin/gh-pages
+          git worktree add ../_gh-pages gh-pages
 
           if [ -d "../_gh-pages/previews/pr-${pr}" ]; then
             rm -rf "../_gh-pages/previews/pr-${pr}"
