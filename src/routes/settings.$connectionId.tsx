@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/solid-router";
 import Ban from "lucide-solid/icons/ban";
 import Home from "lucide-solid/icons/home";
+import Pencil from "lucide-solid/icons/pencil";
 import Plus from "lucide-solid/icons/plus";
 import Trash2 from "lucide-solid/icons/trash-2";
 import ArrowLeft from "lucide-solid/icons/arrow-left";
@@ -42,6 +43,12 @@ function SettingsPage() {
   const [newUserName, setNewUserName] = createSignal("");
   const [showAddEatery, setShowAddEatery] = createSignal(false);
   const [showAddUser, setShowAddUser] = createSignal(false);
+
+  // Edit state
+  const [editingEatery, setEditingEatery] = createSignal<StorageSchemaType["settings"]["eateries"][0] | null>(null);
+  const [editEateryName, setEditEateryName] = createSignal("");
+  const [editingUser, setEditingUser] = createSignal<StorageSchemaType["settings"]["users"][0] | null>(null);
+  const [editUserName, setEditUserName] = createSignal("");
 
   const settingsStorage = useSettingsStorage();
   const peer = usePeer2Peer();
@@ -133,6 +140,32 @@ function SettingsPage() {
     });
   };
 
+  const openEditEatery = (eatery: StorageSchemaType["settings"]["eateries"][0]) => {
+    setEditingEatery(eatery);
+    setEditEateryName(eatery.name);
+  };
+
+  const saveEditEatery = () => {
+    const eatery = editingEatery();
+    if (!eatery || !editEateryName().trim()) return;
+
+    settingsStorage.updateEatery(connectionId(), eatery.id, editEateryName().trim());
+
+    const updatedEatery = currentConnection()?.settings.eateries.find((x) => x.id === eatery.id);
+    if (updatedEatery) {
+      peer.broadcast({
+        type: "updated-eatery",
+        data: {
+          connectionId: connectionId(),
+          eatery: updatedEatery,
+        },
+      });
+    }
+
+    setEditingEatery(null);
+    setEditEateryName("");
+  };
+
   const addUser = () => {
     if (!newUserName().trim()) return;
 
@@ -172,6 +205,32 @@ function SettingsPage() {
         userId: id,
       },
     });
+  };
+
+  const openEditUser = (user: StorageSchemaType["settings"]["users"][0]) => {
+    setEditingUser(user);
+    setEditUserName(user.name);
+  };
+
+  const saveEditUser = () => {
+    const user = editingUser();
+    if (!user || !editUserName().trim()) return;
+
+    settingsStorage.updateUser(connectionId(), user.id, editUserName().trim());
+
+    const updatedUser = currentConnection()?.settings.users.find((x) => x.id === user.id);
+    if (updatedUser) {
+      peer.broadcast({
+        type: "updated-user",
+        data: {
+          connectionId: connectionId(),
+          user: updatedUser,
+        },
+      });
+    }
+
+    setEditingUser(null);
+    setEditUserName("");
   };
 
   const updateUserScore = (userId: string, eateryId: string, score: number) => {
@@ -403,15 +462,26 @@ function SettingsPage() {
                               <h3 class="font-medium truncate">{eatery.name}</h3>
                             </div>
                           </div>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => removeEatery(eatery.id)}
-                            data-testid="delete-eatery"
-                            class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0 w-8 h-8"
-                          >
-                            <Trash2 class="w-4 h-4" />
-                          </Button>
+                          <div class="flex gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => openEditEatery(eatery)}
+                              data-testid="edit-eatery"
+                              class="text-muted-foreground hover:text-primary hover:bg-primary/10 flex-shrink-0 w-8 h-8"
+                            >
+                              <Pencil class="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => removeEatery(eatery.id)}
+                              data-testid="delete-eatery"
+                              class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0 w-8 h-8"
+                            >
+                              <Trash2 class="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </For>
@@ -501,15 +571,26 @@ function SettingsPage() {
                               </p>
                             </div>
                           </div>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => removeUser(user.id)}
-                            data-testid="delete-user"
-                            class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0 w-8 h-8"
-                          >
-                            <Trash2 class="w-4 h-4" />
-                          </Button>
+                          <div class="flex gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => openEditUser(user)}
+                              data-testid="edit-user"
+                              class="text-muted-foreground hover:text-primary hover:bg-primary/10 flex-shrink-0 w-8 h-8"
+                            >
+                              <Pencil class="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => removeUser(user.id)}
+                              data-testid="delete-user"
+                              class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0 w-8 h-8"
+                            >
+                              <Trash2 class="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </For>
@@ -668,6 +749,80 @@ function SettingsPage() {
               </CardContent>
             </Card>
           </Show>
+
+          {/* Edit Eatery Dialog */}
+          <Dialog open={editingEatery() !== null} onOpenChange={(open) => !open && setEditingEatery(null)}>
+            <DialogContent class="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Restaurant</DialogTitle>
+                <DialogDescription>
+                  Update the restaurant name
+                </DialogDescription>
+              </DialogHeader>
+              <div class="space-y-4 pt-2">
+                <TextField
+                  value={editEateryName()}
+                  onChange={(e) => setEditEateryName(e)}
+                >
+                  <TextFieldLabel for="edit-eatery-name" class="text-sm font-medium">
+                    Restaurant Name *
+                  </TextFieldLabel>
+                  <TextFieldInput
+                    type="text"
+                    id="edit-eatery-name"
+                    placeholder="e.g., Pizza Palace"
+                    class="h-10"
+                    data-testid="edit-eatery-name"
+                  />
+                </TextField>
+                <Button
+                  onClick={saveEditEatery}
+                  class="w-full"
+                  data-testid="edit-eatery-submit"
+                >
+                  <Save class="w-4 h-4" />
+                  Save Changes
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit User Dialog */}
+          <Dialog open={editingUser() !== null} onOpenChange={(open) => !open && setEditingUser(null)}>
+            <DialogContent class="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Edit Person</DialogTitle>
+                <DialogDescription>
+                  Update the person's name
+                </DialogDescription>
+              </DialogHeader>
+              <div class="space-y-4 pt-2">
+                <TextField
+                  value={editUserName()}
+                  onChange={(e) => setEditUserName(e)}
+                >
+                  <TextFieldLabel for="edit-user-name" class="text-sm font-medium">
+                    Name *
+                  </TextFieldLabel>
+                  <TextFieldInput
+                    type="text"
+                    id="edit-user-name"
+                    placeholder="e.g., Alex"
+                    class="h-10"
+                    data-testid="edit-user-name"
+                  />
+                </TextField>
+                <Button
+                  onClick={saveEditUser}
+                  class="w-full"
+                  data-testid="edit-user-submit"
+                >
+                  <Save class="w-4 h-4" />
+                  Save Changes
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </Show>
