@@ -8,6 +8,7 @@ import { ExpirationPlugin } from "workbox-expiration";
 import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching";
 import { NavigationRoute, registerRoute } from "workbox-routing";
 import { CacheFirst, NetworkFirst } from "workbox-strategies";
+import { logger } from "./utils/logger";
 import {
   broadcastToSwClients,
   swFromClientMessageSchema,
@@ -117,9 +118,9 @@ async function initPeerId(): Promise<string> {
   if (!peerId) {
     peerId = crypto.randomUUID();
     await storePeerId(peerId);
-    console.log("SW: Generated new browser-wide peer ID:", peerId);
+    logger.log("SW: Generated new browser-wide peer ID:", peerId);
   } else {
-    console.log("SW: Restored browser-wide peer ID:", peerId);
+    logger.log("SW: Restored browser-wide peer ID:", peerId);
   }
   return peerId;
 }
@@ -134,7 +135,7 @@ let browserPeerId: string | null = null;
 globalThis.addEventListener("message", async (event: MessageEvent) => {
   const parsedData = v.safeParse(swFromClientMessageSchema, event.data);
   if (!parsedData.success) {
-    console.log("SW: Failed to parse message from client", event.data);
+    logger.log("SW: Failed to parse message from client", event.data);
     return;
   }
   const data = parsedData.output;
@@ -159,18 +160,18 @@ globalThis.addEventListener("message", async (event: MessageEvent) => {
     case "set-known-peer-ids":
       // These are now handled by the client-side P2P code
       // SW can relay these to other tabs if needed
-      console.log("SW: Received P2P message (client handles):", data.type);
+      logger.log("SW: Received P2P message (client handles):", data.type);
       return;
 
     case "db-collection-share-insert":
     case "db-collection-share-delete":
     case "db-collection-share-update":
       // These should be handled by the client-side P2P code
-      console.log("SW: Received DB sync message (client handles):", data.type);
+      logger.log("SW: Received DB sync message (client handles):", data.type);
       return;
 
     default:
-      console.warn(
+      logger.warn(
         "SW: Unknown message type received:",
         // @ts-expect-error data type is expected to be `never`
         data.type,
@@ -182,15 +183,15 @@ globalThis.addEventListener("message", async (event: MessageEvent) => {
 (async () => {
   try {
     browserPeerId = await initPeerId();
-    console.log("SW: Peer ID initialized:", browserPeerId);
+    logger.log("SW: Peer ID initialized:", browserPeerId);
     // Broadcast to any existing clients
     broadcastToSwClients({
       type: "p2p-status",
       data: { status: "disconnected", peerId: browserPeerId },
     });
   } catch (err) {
-    console.error("SW: Failed to initialize peer ID:", err);
+    logger.error("SW: Failed to initialize peer ID:", err);
   }
 })();
 
-console.log("SW: Service worker loaded (P2P handled in client)");
+logger.log("SW: Service worker loaded (P2P handled in client)");

@@ -13,6 +13,7 @@ import RotateCcw from "lucide-solid/icons/rotate-ccw";
 import Settings from "lucide-solid/icons/settings";
 import Share2 from "lucide-solid/icons/share-2";
 import Users from "lucide-solid/icons/users";
+import { logger } from "~/utils/logger";
 import {
   createEffect,
   createMemo,
@@ -169,7 +170,7 @@ function WheelPage() {
   // Redirect if connection not found
   createEffect(() => {
     if (currentConnection() === undefined) {
-      console.log("wheel: redirecting - connection not found");
+      logger.log("wheel: redirecting - connection not found");
       router.navigate({ to: "/", replace: true });
     }
   });

@@ -3,6 +3,7 @@ import Ban from "lucide-solid/icons/ban";
 import Home from "lucide-solid/icons/home";
 import Plus from "lucide-solid/icons/plus";
 import Trash2 from "lucide-solid/icons/trash-2";
+import { logger } from "~/utils/logger";
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
 import { Button } from "~/components/ui/button";
@@ -65,10 +66,10 @@ function SettingsPage() {
   createEffect(() => {
     const conn = currentConnection();
     if (conn === undefined) {
-      console.log("settings: redirecting - connection not found");
+      logger.log("settings: redirecting - connection not found");
       router.navigate({ to: "/", replace: true });
     } else {
-      console.log("settings: loaded connection", {
+      logger.log("settings: loaded connection", {
         id: conn.id,
         users: conn.settings.users.length,
         activeUsers: activeUsers().length,

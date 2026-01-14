@@ -5,6 +5,7 @@ import {
   type Peer2PeerDataSchemaType,
   type swFromClientMessageSchema,
 } from "./serviceWorkerMessages";
+import { logger } from "./logger";
 
 // Declare window for TypeScript in non-browser contexts (like service workers)
 declare const window: (Window & typeof globalThis) | undefined;
@@ -26,7 +27,7 @@ function getWorkbox(): Workbox | null {
 
     // On activation, request status from service worker
     wb.addEventListener("activated", () => {
-      console.log("SW activated, requesting P2P status");
+      logger.log("SW activated, requesting P2P status");
       // Request current status from service worker
       p2pRequestStatus();
 
@@ -133,7 +134,7 @@ export function subscribeToP2PMessages(
 export function subscribeToDebugMessages(): () => void {
   return addSwToClientMessageListener((data) => {
     if (data.type === "p2p-debug") {
-      console.log("[SW DEBUG]", data.data);
+      logger.log("[SW DEBUG]", data.data);
     }
   });
 }

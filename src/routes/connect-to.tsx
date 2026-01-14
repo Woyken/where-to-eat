@@ -2,6 +2,7 @@ import { createFileRoute, useRouter } from "@tanstack/solid-router";
 import { createEffect, createSignal, Match, onMount, Switch } from "solid-js";
 import * as v from "valibot";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
+import { logger } from "~/utils/logger";
 import { usePeer2Peer } from "~/utils/peer2peerSharing";
 
 const searchSchema = v.object({
@@ -27,7 +28,7 @@ function RouteComponent() {
   // Add peer and start requesting storage - must run in browser only
   onMount(() => {
     setCurrentStatus("connecting");
-    console.log("connect-to: adding peer (onMount)", {
+    logger.log("connect-to: adding peer (onMount)", {
       peerId: peerId(),
       connectionId: connectionId(),
     });
@@ -37,7 +38,7 @@ function RouteComponent() {
     setCurrentStatus("waiting-for-data");
 
     const sendRequest = () => {
-      console.log("connect-to: sending request-storage", {
+      logger.log("connect-to: sending request-storage", {
         peerId: peerId(),
         connectionId: connectionId(),
       });
@@ -73,7 +74,7 @@ function RouteComponent() {
     if (storage.store.connections.find((c) => c.id === connectionId())) {
       setCurrentStatus("received-data");
       setHasNavigated(true);
-      console.log("connect-to: received data, navigating", {
+      logger.log("connect-to: received data, navigating", {
         connectionId: connectionId(),
       });
       router.navigate({
