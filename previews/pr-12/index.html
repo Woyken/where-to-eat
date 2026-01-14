@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Where to Eat</title>
+    <meta
+      name="description"
+      content="Collaboratively choose where to eat with a spinning wheel"
+    />
+    <!-- Preconnect for faster font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Professional typography: DM Sans for headings, Inter for body -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="apple-touch-icon" sizes="180x180" href="/where-to-eat/previews/pr-12/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/where-to-eat/previews/pr-12/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/where-to-eat/previews/pr-12/favicon-16x16.png" />
+    <link rel="manifest" href="/where-to-eat/previews/pr-12/site.webmanifest" />
+    <link rel="icon" href="/where-to-eat/previews/pr-12/favicon.ico" />
+    <!-- Handle SPA redirects from 404.html for GitHub Pages -->
+    <script>
+      (function() {
+        // Check for redirect query parameter from 404.html
+        var params = new URLSearchParams(location.search);
+        var redirectPath = params.get("redirect");
+
+        if (redirectPath) {
+          // Use DOM URL parsing to validate the redirect path
+          var dest = new URL(redirectPath, location.origin);
+          if (dest.origin === location.origin) {
+            params.delete("redirect");
+            var newSearch = params.toString();
+
+            // Derive the current base path from where index.html is served.
+            // Examples:
+            // - /where-to-eat/
+            // - /where-to-eat/previews/pr-4/
+            var basePath = location.pathname;
+            if (basePath.endsWith("/index.html")) {
+              basePath = basePath.slice(0, -"/index.html".length);
+            }
+            basePath = basePath.replace(/\/$/, "");
+
+            var newUrl =
+              basePath + redirectPath + (newSearch ? "?" + newSearch : "");
+            history.replaceState(null, null, newUrl);
+          }
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/where-to-eat/previews/pr-12/assets/index-B6jkQkPA.js"></script>
+    <link rel="stylesheet" crossorigin href="/where-to-eat/previews/pr-12/assets/index-CPYqf2_Y.css">
+  <link rel="manifest" href="/where-to-eat/previews/pr-12/manifest.webmanifest"></head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
