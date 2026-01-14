@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectOrCreateUser } from "./helpers";
 
 test("multi-tab sync: changes propagate to all tabs in the same browser context", async ({
   browser,
@@ -25,6 +26,7 @@ test("multi-tab sync: changes propagate to all tabs in the same browser context"
   await startBtn.click();
   // Wait for the connection ID to appear in the URL
   await expect(pageA).toHaveURL(/\/wheel\/[a-f0-9-]+/, { timeout: 15_000 });
+  await selectOrCreateUser(pageA, "User A");
 
   // Get connection info via Share Dialog
   await pageA.getByTestId("share-button").click();
@@ -40,6 +42,7 @@ test("multi-tab sync: changes propagate to all tabs in the same browser context"
 
   // Expect redirection to wheel
   await expect(pageB1).toHaveURL(/\/wheel\/[a-f0-9-]+/);
+  await selectOrCreateUser(pageB1, "User B");
 
   // 4. Open multiple tabs in context B
   const pageB2 = await contextB.newPage();
@@ -57,15 +60,9 @@ test("multi-tab sync: changes propagate to all tabs in the same browser context"
   // Settings page heading: 'Users', 'Restaurants' etc.
   // Wheel page heading: 'Spin Wheel'
   // Let's check for 'Restaurants' section
-  await expect(
-    pageB1.getByText(/Restaurants \(/),
-  ).toBeVisible();
-  await expect(
-    pageB2.getByText(/Restaurants \(/),
-  ).toBeVisible();
-  await expect(
-    pageB3.getByText(/Restaurants \(/),
-  ).toBeVisible();
+  await expect(pageB1.getByText(/Restaurants \(/)).toBeVisible();
+  await expect(pageB2.getByText(/Restaurants \(/)).toBeVisible();
+  await expect(pageB3.getByText(/Restaurants \(/)).toBeVisible();
 
   // 6. Wait for P2P connection to be established first (on B1 side since B is the joiner)
   // B1 needs to wait for connection to A before we proceed
@@ -93,7 +90,9 @@ test("multi-tab sync: changes propagate to all tabs in the same browser context"
   await pageA.getByTestId("add-eatery-open").click();
 
   // Wait for dialog content
-  await expect(pageA.getByRole("heading", { name: "Add Restaurant" })).toBeVisible({
+  await expect(
+    pageA.getByRole("heading", { name: "Add Restaurant" }),
+  ).toBeVisible({
     timeout: 15_000,
   });
   await expect(pageA.getByTestId("add-eatery-name")).toBeVisible({

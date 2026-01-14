@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectOrCreateUser } from "./helpers";
 
 test("offline-reload-sync: page reload works offline and changes sync after reconnect", async ({
   browser,
@@ -34,6 +35,7 @@ test("offline-reload-sync: page reload works offline and changes sync after reco
 
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -46,6 +48,7 @@ test("offline-reload-sync: page reload works offline and changes sync after reco
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   // Verify connection with initial data
   console.log("Step 1: Adding initial eatery to verify connection");

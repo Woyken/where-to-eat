@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { injectConnection } from "./helpers";
+import { injectConnection, selectOrCreateUser } from "./helpers";
 
 test("resilient connection: remaining tab stays connected after others close", async ({
   browser,
@@ -37,6 +37,7 @@ test("resilient connection: remaining tab stays connected after others close", a
   await page2a.waitForLoadState("networkidle");
   await page2a.getByTestId("start-fresh").click();
   await expect(page2a).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(page2a, "User 2a");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(page2a.url());
   const connectionId = connectionIdMatch![1];

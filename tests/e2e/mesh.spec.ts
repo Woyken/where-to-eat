@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectOrCreateUser } from "./helpers";
 
 test("mesh networking: changes propagate after intermediate peer disconnects", async ({
   browser,
@@ -32,6 +33,7 @@ test("mesh networking: changes propagate after intermediate peer disconnects", a
   // Ensure we get a fresh wheel
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const wheelUrlA = pageA.url();
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(wheelUrlA);
@@ -52,6 +54,7 @@ test("mesh networking: changes propagate after intermediate peer disconnects", a
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 30_000,
   });
+  await selectOrCreateUser(pageB, "User B");
   console.log("B connected to A");
 
   // Get Share URL from B (points to B)
@@ -70,6 +73,7 @@ test("mesh networking: changes propagate after intermediate peer disconnects", a
   await expect(pageC).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 30_000,
   });
+  await selectOrCreateUser(pageC, "User C");
   console.log("C connected to B");
 
   // Navigate C to settings to verify initial data sync

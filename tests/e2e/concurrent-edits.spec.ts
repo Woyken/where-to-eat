@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectOrCreateUser } from "./helpers";
 
 test("concurrent edits: multiple peers edit same eatery simultaneously", async ({
   browser,
@@ -32,6 +33,7 @@ test("concurrent edits: multiple peers edit same eatery simultaneously", async (
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -48,11 +50,13 @@ test("concurrent edits: multiple peers edit same eatery simultaneously", async (
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "User B");
 
   await pageC.goto(shareUrl.href);
   await expect(pageC).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageC, "User C");
 
   // Wait for full mesh to establish
   await pageA.waitForTimeout(3000);
@@ -178,6 +182,7 @@ test("concurrent edits: multiple peers add users simultaneously", async ({
   await pageA.waitForLoadState("networkidle");
   await pageA.getByTestId("start-fresh").click();
   await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+  await selectOrCreateUser(pageA, "Initial User A");
 
   const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
   const connectionId = connectionIdMatch![1];
@@ -191,6 +196,7 @@ test("concurrent edits: multiple peers add users simultaneously", async ({
   await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
     timeout: 60_000,
   });
+  await selectOrCreateUser(pageB, "Initial User B");
 
   // Navigate both to settings
   await pageA.goto(`/settings/${connectionId}`);

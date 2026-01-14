@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectOrCreateUser } from "./helpers";
 
 test.describe("connected peer count", () => {
   test("displays 0 connected peers initially", async ({ page }) => {
@@ -55,6 +56,7 @@ test.describe("connected peer count", () => {
     await expect(sharer).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/, {
       timeout: 60_000,
     });
+    await selectOrCreateUser(sharer, "Sharer");
 
     // Get the share URL
     await sharer.getByTestId("share-button").click();
@@ -81,6 +83,7 @@ test.describe("connected peer count", () => {
     await expect(receiver).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 90_000,
     });
+    await selectOrCreateUser(receiver, "Receiver");
 
     // Wait for peer count to update on both sides
     // Each should show 1 connected peer
@@ -136,6 +139,7 @@ test.describe("connected peer count", () => {
     await expect(sharer).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/, {
       timeout: 60_000,
     });
+    await selectOrCreateUser(sharer, "Sharer");
 
     // Get the share URL
     await sharer.getByTestId("share-button").click();
@@ -157,6 +161,7 @@ test.describe("connected peer count", () => {
     await expect(receiver).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 90_000,
     });
+    await selectOrCreateUser(receiver, "Receiver");
 
     // Wait for peer count to update
     await expect(sharer.getByTestId("peer-count-value")).toHaveText("1", {
@@ -224,6 +229,7 @@ test.describe("connected peer count", () => {
     await expect(sharer).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/, {
       timeout: 60_000,
     });
+    await selectOrCreateUser(sharer, "Sharer");
 
     // Get the share URL
     await sharer.getByTestId("share-button").click();
@@ -247,6 +253,7 @@ test.describe("connected peer count", () => {
     await expect(receiver).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 90_000,
     });
+    await selectOrCreateUser(receiver, "Receiver");
 
     // Wait for peer count to be 1 on both sides
     await expect(sharer.getByTestId("peer-count-value")).toHaveText("1", {
@@ -320,6 +327,7 @@ test.describe("connected peer count", () => {
     await expect(sharer).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/, {
       timeout: 60_000,
     });
+    await selectOrCreateUser(sharer, "Sharer");
 
     // Get the share URL
     await sharer.getByTestId("share-button").click();
@@ -342,6 +350,7 @@ test.describe("connected peer count", () => {
     await expect(receiver1).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 90_000,
     });
+    await selectOrCreateUser(receiver1, "Receiver 1");
 
     // Wait for peer count to be 1 on sharer
     await expect(sharer.getByTestId("peer-count-value")).toHaveText("1", {
@@ -353,6 +362,7 @@ test.describe("connected peer count", () => {
     await expect(receiver2).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 90_000,
     });
+    await selectOrCreateUser(receiver2, "Receiver 2");
 
     // Wait for peer count to be 2 on sharer (connected to both receivers)
     await expect(sharer.getByTestId("peer-count-value")).toHaveText("2", {
@@ -413,6 +423,7 @@ test.describe("connected peer count", () => {
     await expect(userATab1).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/, {
       timeout: 60_000,
     });
+    await selectOrCreateUser(userATab1, "User A");
 
     const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(userATab1.url());
     if (!connectionIdMatch) {
@@ -433,11 +444,13 @@ test.describe("connected peer count", () => {
     await expect(userATab2).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 60_000,
     });
+    await selectOrCreateUser(userATab2, "User A");
 
     await userATab3.goto(shareUrl);
     await expect(userATab3).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 60_000,
     });
+    await selectOrCreateUser(userATab3, "User A");
 
     // Wait for tabs to establish with SW
     await userATab1.waitForTimeout(2000);
@@ -447,6 +460,7 @@ test.describe("connected peer count", () => {
     await expect(userBPage).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 60_000,
     });
+    await selectOrCreateUser(userBPage, "User B");
 
     // Wait for all connections to establish
     await userBPage.waitForTimeout(3000);
