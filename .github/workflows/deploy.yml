@@ -75,8 +75,8 @@ jobs:
             )
           fi
 
-          # Sync dist -> gh-pages root, but never delete the previews folder.
-          rsync -av --delete --exclude "previews" "dist/" "../_gh-pages/"
+          # Sync dist -> gh-pages root, but never delete the previews folder or .git.
+          rsync -av --delete --exclude ".git" --exclude "previews" "dist/" "../_gh-pages/"
 
           (
             cd ../_gh-pages

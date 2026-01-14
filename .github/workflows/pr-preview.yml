@@ -101,7 +101,7 @@ jobs:
           fi
 
           mkdir -p "${target_dir}"
-          rsync -av --delete "dist/" "${target_dir}/"
+          rsync -av --delete --exclude ".git" "dist/" "${target_dir}/"
 
           (
             cd ../_gh-pages
