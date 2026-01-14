@@ -1,6 +1,9 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/solid-router";
 import Plus from "lucide-solid/icons/plus";
 import Trash2 from "lucide-solid/icons/trash-2";
+import Sparkles from "lucide-solid/icons/sparkles";
+import ArrowRight from "lucide-solid/icons/arrow-right";
+import Calendar from "lucide-solid/icons/calendar";
 import { createSignal, For, Show } from "solid-js";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
 import { Button } from "~/components/ui/button";
@@ -55,37 +58,6 @@ function HomePage() {
 
   const router = useRouter();
 
-  // const connectToExisting = () => {
-  //   if (!connectId().trim()) return;
-
-  //   // Check if settings exist for this ID
-  //   const existingSettings = localStorage.getItem(
-  //     `eatery-settings-${connectId()}`,
-  //   );
-  //   if (!existingSettings) {
-  //     alert("No settings found for this connection ID");
-  //     return;
-  //   }
-
-  //   // Add to connections if not already there
-  //   const existingConnection = connections().find((c) => c.id === connectId());
-  //   if (!existingConnection) {
-  //     const newConnection: Connection = {
-  //       id: connectId(),
-  //       name: connectionName() || `Connected ${connections().length + 1}`,
-  //       updatedAt: Date.now(),
-  //     };
-  //     const newConnections = [...connections(), newConnection];
-  //     saveConnections(newConnections);
-  //   }
-
-  //   // Redirect to wheel page
-  //   router.navigate({
-  //     to: "/wheel/$connectionId",
-  //     params: { connectionId: connectId() },
-  //   });
-  // };
-
   const deleteConnection = (id: string) => {
     settingsStorage.removeConnection(id);
   };
@@ -93,90 +65,103 @@ function HomePage() {
   const connections = () => settingsStorage.store.connections;
 
   return (
-    <div class="min-h-screen p-4">
-      <div class="max-w-2xl mx-auto space-y-6">
-        <div class="text-center space-y-2">
-          <h1 class="text-4xl font-bold">Eatery Wheel</h1>
-          <p class="text-muted-foreground">
-            Spin the wheel to decide where to eat!
+    <div class="min-h-[calc(100vh-theme(spacing.28))] py-12 px-4">
+      <div class="max-w-3xl mx-auto space-y-8">
+        {/* Hero Section */}
+        <div class="text-center space-y-4 page-section">
+          <h1 class="text-4xl md:text-5xl font-bold text-foreground leading-tight">
+            Decide Where to Eat
+          </h1>
+
+          <p class="text-lg text-muted-foreground max-w-xl mx-auto">
+            Spin the wheel with your team. Add restaurants, set preferences, and let the wheel pick for you.
           </p>
         </div>
 
-        <div class="space-y-6">
-          <Card>
-            <CardHeader>
+        <div class="space-y-4">
+          {/* Main Action Card */}
+          <Card class="food-card page-section">
+            <CardHeader class="pb-3">
               <Show
                 when={connections().length > 0}
                 fallback={
                   <>
-                    <CardTitle>Welcome!</CardTitle>
+                    <CardTitle class="text-xl">Get Started</CardTitle>
                     <CardDescription>
-                      Get started by creating a new wheel or connecting to an
-                      existing one
+                      Create a new session to start making decisions together
                     </CardDescription>
                   </>
                 }
               >
-                <CardTitle>Your Connections</CardTitle>
+                <CardTitle class="text-xl">
+                  Your Sessions
+                </CardTitle>
                 <CardDescription>
-                  Select a connection to continue or create a new one
+                  {connections().length} {connections().length === 1 ? 'session' : 'sessions'} available
                 </CardDescription>
               </Show>
             </CardHeader>
+
             <Show
               when={connections().length > 0}
               fallback={
                 <>
                   <CardContent class="space-y-4">
-                    <div class="space-y-2">
-                      <TextField
-                        id="connection-name-field"
-                        value={connectionName()}
-                        onChange={(e) => setConnectionName(e)}
-                      >
-                        <TextFieldLabel for="connection-name">
-                          Connection Name (Optional)
-                        </TextFieldLabel>
-                        <TextFieldInput
-                          type="text"
-                          id="connection-name"
-                          placeholder="My Eatery Wheel"
-                        />
-                      </TextField>
-                    </div>
+                    <TextField
+                      id="connection-name-field"
+                      value={connectionName()}
+                      onChange={(e) => setConnectionName(e)}
+                    >
+                      <TextFieldLabel for="connection-name" class="text-sm font-medium">
+                        Session name
+                      </TextFieldLabel>
+                      <TextFieldInput
+                        type="text"
+                        id="connection-name"
+                        placeholder="e.g., Friday Lunch"
+                        class="h-10"
+                      />
+                    </TextField>
                   </CardContent>
                   <CardFooter>
-                    <AddConnectionOrConnectToExisting
-                      connectId={connectId()}
-                      // connectToExisting={connectToExisting}
-                      connectionName={connectionName()}
-                      createFreshConnection={createFreshConnection}
-                      setConnectId={setConnectId}
-                      setConnectionName={setConnectionName}
-                      setShowConnectDialog={setShowConnectDialog}
-                      setShowQRScanner={() => {}}
-                      showConnectDialog={showConnectDialog()}
-                    />
+                    <Button
+                      onClick={createFreshConnection}
+                      class="w-full"
+                      data-testid="start-fresh"
+                    >
+                      <Plus class="w-4 h-4" />
+                      Create Session
+                    </Button>
                   </CardFooter>
                 </>
               }
             >
-              <CardContent class="space-y-3">
+              <CardContent class="space-y-2">
                 <For each={connections()}>
-                  {(connection) => (
-                    <div class="flex items-center justify-between p-3 border-[3px] rounded-lg">
-                      <div>
-                        <h3 class="font-medium">
-                          {connection.settings.connection.name}
-                        </h3>
-                        <p class="text-sm text-muted-foreground">
-                          Created{" "}
-                          {new Date(
-                            connection.settings.connection.updatedAt,
-                          ).toLocaleDateString()}
-                        </p>
+                  {(connection, index) => (
+                    <div
+                      class="food-list-item flex items-center justify-between"
+                    >
+                      <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <span class="text-primary font-semibold text-sm">
+                            {connection.settings.connection.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div class="min-w-0">
+                          <h3 class="font-medium truncate">
+                            {connection.settings.connection.name}
+                          </h3>
+                          <p class="text-xs text-muted-foreground flex items-center gap-1">
+                            {connection.settings.eateries.filter(e => !e._deleted).length} restaurants
+                            <span class="mx-1">·</span>
+                            {new Date(
+                              connection.settings.connection.updatedAt,
+                            ).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                      <div class="flex gap-2">
+                      <div class="flex gap-1 flex-shrink-0">
                         <Link
                           to="/wheel/$connectionId"
                           params={{ connectionId: connection.id }}
@@ -194,9 +179,10 @@ function HomePage() {
                           </Button>
                         </Link>
                         <Button
-                          size="sm"
-                          variant="outline"
+                          size="icon"
+                          variant="ghost"
                           onClick={() => deleteConnection(connection.id)}
+                          class="text-muted-foreground hover:text-destructive"
                         >
                           <Trash2 class="w-4 h-4" />
                         </Button>
@@ -208,136 +194,53 @@ function HomePage() {
             </Show>
           </Card>
 
+          {/* Create New Wheel Card (shown when connections exist) */}
           <Show when={connections().length > 0}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Create new connection</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <Card class="border border-dashed page-section">
+              <CardContent class="pt-4">
                 <div class="flex flex-col sm:flex-row gap-3">
-                  <div class="space-y-2 flex-1">
+                  <div class="flex-1">
                     <TextField
                       value={connectionName()}
                       onChange={(e) => setConnectionName(e)}
                     >
-                      <TextFieldLabel for="new-connection-name">
-                        New Connection Name
-                      </TextFieldLabel>
                       <TextFieldInput
                         type="text"
                         id="new-connection-name"
-                        placeholder="My New Wheel"
+                        placeholder="New session name"
+                        class="h-10"
                       />
                     </TextField>
                   </div>
+                  <Button
+                    onClick={createFreshConnection}
+                    data-testid="start-fresh"
+                  >
+                    <Plus class="w-4 h-4" />
+                    Create
+                  </Button>
                 </div>
               </CardContent>
-              <CardFooter>
-                <AddConnectionOrConnectToExisting
-                  connectId={connectId()}
-                  // connectToExisting={connectToExisting}
-                  connectionName={connectionName()}
-                  createFreshConnection={createFreshConnection}
-                  setConnectId={setConnectId}
-                  setConnectionName={setConnectionName}
-                  setShowConnectDialog={setShowConnectDialog}
-                  setShowQRScanner={() => {}}
-                  showConnectDialog={showConnectDialog()}
-                />
-              </CardFooter>
             </Card>
           </Show>
+
+          {/* Features Section */}
+          <div class="grid sm:grid-cols-3 gap-3 pt-4 page-section">
+            <div class="p-4 rounded-lg bg-muted/50 border border-border">
+              <h3 class="font-medium text-sm mb-1">Weighted Random</h3>
+              <p class="text-xs text-muted-foreground">Selection based on group preferences</p>
+            </div>
+            <div class="p-4 rounded-lg bg-muted/50 border border-border">
+              <h3 class="font-medium text-sm mb-1">Real-time Sync</h3>
+              <p class="text-xs text-muted-foreground">Collaborate with your team instantly</p>
+            </div>
+            <div class="p-4 rounded-lg bg-muted/50 border border-border">
+              <h3 class="font-medium text-sm mb-1">Veto Option</h3>
+              <p class="text-xs text-muted-foreground">Block restaurants you want to avoid</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function AddConnectionOrConnectToExisting(props: {
-  createFreshConnection: () => void;
-  showConnectDialog: boolean;
-  setShowConnectDialog: (show: boolean) => void;
-  connectId: string;
-  setConnectId: (id: string) => void;
-  connectionName: string;
-  setConnectionName: (name: string) => void;
-  // connectToExisting: () => void;
-  setShowQRScanner: (show: boolean) => void;
-}) {
-  return (
-    <>
-      {/* <div class="flex flex-col sm:flex-row gap-3"> */}
-      <Button
-        onClick={props.createFreshConnection}
-        class="flex-1"
-        data-testid="start-fresh"
-      >
-        <Plus class="w-4 h-4 mr-2" />
-        Start Fresh
-      </Button>
-      {/* <Dialog
-        open={props.showConnectDialog}
-        onOpenChange={props.setShowConnectDialog}
-      >
-        <DialogTrigger>
-          <Button variant="outline" class="flex-1 bg-transparent">
-            <Scan class="w-4 h-4 mr-2" />
-            Connect to Existing
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Connect to Existing Wheel</DialogTitle>
-            <DialogDescription>
-              Enter the connection ID or scan a QR code
-            </DialogDescription>
-          </DialogHeader>
-          <div class="space-y-4">
-            <div class="space-y-2">
-              <TextField
-                value={props.connectId}
-                onChange={(e) => props.setConnectId(e)}
-              >
-                <TextFieldLabel for="connection-uuid">
-                  Connection ID
-                </TextFieldLabel>
-                <TextFieldInput
-                  type="text"
-                  id="connection-uuid"
-                  placeholder="Enter UUID"
-                />
-              </TextField>
-            </div>
-            <div class="space-y-2">
-              <TextField
-                value={props.connectionName}
-                onChange={(e) => props.setConnectionName(e)}
-              >
-                <TextFieldLabel for="connection-name">
-                  Connection Name (Optional)
-                </TextFieldLabel>
-                <TextFieldInput
-                  type="text"
-                  id="connection-name"
-                  placeholder="Name this connection"
-                />
-              </TextField>
-            </div>
-            <div class="flex gap-2">
-              <Button onClick={props.connectToExisting} class="flex-1">
-                Connect
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => props.setShowQRScanner(true)}
-              >
-                <QrCode class="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog> */}
-      {/* </div> */}
-    </>
   );
 }

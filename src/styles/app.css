@@ -4,87 +4,136 @@
 
 @custom-variant dark (&:where(.dark, .dark *, [data-kb-theme=dark], [data-kb-theme=dark] *));
 
+/* ==========================================================================
+   WHERE TO EAT - Professional Restaurant Decision Platform
+   A refined palette with warm burnt orange accents and clean typography
+   ========================================================================== */
+
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  /* Typography - Professional, clean font stack */
+  --font-display: "DM Sans", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Core palette - Clean white base with warm undertones */
+  --background: oklch(0.985 0.003 90);  /* Nearly white with slight warmth */
+  --foreground: oklch(0.2 0.02 250);    /* Slate charcoal */
+
+  /* Card - Pure white for contrast */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.2 0.02 250);
+
+  /* Popover */
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --popover-foreground: oklch(0.2 0.02 250);
 
-  --info: oklch(0.95 0.024 236.81);
-  --info-foreground: oklch(0.68 0.148143 238.1044);
-  --success: oklch(0.95 0.0506 162.83);
-  --success-foreground: oklch(0.69 0.1481 162.37);
-  --warning: oklch(0.96 0.0569 95.61);
-  --warning-foreground: oklch(0.71 0.186 48.13);
-  --error: oklch(0.93 0.0314 17.73);
-  --error-foreground: oklch(0.64 0.2082 25.38);
+  /* Primary - Burnt orange / terracotta */
+  --primary: oklch(0.55 0.16 45);
+  --primary-foreground: oklch(0.99 0.005 90);
 
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  /* Secondary - Warm stone gray */
+  --secondary: oklch(0.95 0.008 70);
+  --secondary-foreground: oklch(0.35 0.02 250);
 
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Muted - Light warm gray */
+  --muted: oklch(0.96 0.005 70);
+  --muted-foreground: oklch(0.45 0.015 250);
+
+  /* Accent - Soft amber highlight */
+  --accent: oklch(0.92 0.05 70);
+  --accent-foreground: oklch(0.3 0.04 45);
+
+  /* Destructive - Muted red */
+  --destructive: oklch(0.5 0.18 25);
+  --destructive-foreground: oklch(0.98 0.01 25);
+
+  /* Semantic colors - Muted, professional */
+  --info: oklch(0.94 0.04 230);
+  --info-foreground: oklch(0.4 0.1 230);
+  --success: oklch(0.92 0.08 155);
+  --success-foreground: oklch(0.35 0.1 155);
+  --warning: oklch(0.92 0.1 75);
+  --warning-foreground: oklch(0.4 0.1 55);
+  --error: oklch(0.94 0.06 25);
+  --error-foreground: oklch(0.45 0.15 25);
+
+  /* Borders and inputs - Neutral with subtle warmth */
+  --border: oklch(0.9 0.01 70);
+  --input: oklch(0.95 0.005 70);
+  --ring: oklch(0.55 0.16 45);
+
+  /* Sidebar - Light warm gray */
+  --sidebar: oklch(0.97 0.008 70);
+  --sidebar-foreground: oklch(0.2 0.02 250);
+  --sidebar-primary: oklch(0.55 0.16 45);
+  --sidebar-primary-foreground: oklch(0.99 0.005 90);
+  --sidebar-accent: oklch(0.94 0.02 70);
+  --sidebar-accent-foreground: oklch(0.3 0.02 250);
+  --sidebar-border: oklch(0.9 0.01 70);
+  --sidebar-ring: oklch(0.55 0.16 45);
+
+  /* Refined gradients - Subtle, professional */
+  --gradient-primary: linear-gradient(135deg, oklch(0.55 0.16 45) 0%, oklch(0.6 0.14 55) 100%);
+  --gradient-sunset: linear-gradient(135deg, oklch(0.55 0.12 45) 0%, oklch(0.65 0.1 60) 100%);
+  --gradient-fresh: linear-gradient(135deg, oklch(0.5 0.08 155) 0%, oklch(0.55 0.06 170) 100%);
+  --gradient-warm: linear-gradient(180deg, oklch(0.985 0.003 90) 0%, oklch(0.97 0.01 70) 100%);
 }
 
 .dark,
 [data-kb-theme="dark"] {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  /* Dark mode - Professional slate with warm accents */
+  --background: oklch(0.14 0.01 250);  /* Deep slate */
+  --foreground: oklch(0.95 0.005 90);  /* Clean white text */
 
-  --info: oklch(0.28 0.0875 267.91);
-  --info-foreground: oklch(0.68 0.148143 238.1044);
-  --success: oklch(0.26 0.0487 172.54);
-  --success-foreground: oklch(0.69 0.1481 162.37);
-  --warning: oklch(0.29 0.0638 53.82);
-  --warning-foreground: oklch(0.71 0.186 48.13);
-  --error: oklch(0.26 0.0886 26.05);
-  --error-foreground: oklch(0.64 0.2082 25.38);
+  --card: oklch(0.18 0.01 250);
+  --card-foreground: oklch(0.95 0.005 90);
 
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  --popover: oklch(0.18 0.01 250);
+  --popover-foreground: oklch(0.95 0.005 90);
 
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  /* Primary - Warmer orange for dark mode visibility */
+  --primary: oklch(0.65 0.15 45);
+  --primary-foreground: oklch(0.12 0.01 250);
+
+  /* Secondary - Dark slate */
+  --secondary: oklch(0.25 0.01 250);
+  --secondary-foreground: oklch(0.9 0.005 90);
+
+  --muted: oklch(0.22 0.01 250);
+  --muted-foreground: oklch(0.65 0.01 90);
+
+  /* Accent - Muted amber */
+  --accent: oklch(0.35 0.08 60);
+  --accent-foreground: oklch(0.9 0.04 60);
+
+  --destructive: oklch(0.45 0.15 25);
+  --destructive-foreground: oklch(0.95 0.01 25);
+
+  --info: oklch(0.3 0.06 230);
+  --info-foreground: oklch(0.75 0.08 230);
+  --success: oklch(0.35 0.08 155);
+  --success-foreground: oklch(0.8 0.08 155);
+  --warning: oklch(0.4 0.1 60);
+  --warning-foreground: oklch(0.85 0.08 60);
+  --error: oklch(0.35 0.1 25);
+  --error-foreground: oklch(0.8 0.12 25);
+
+  --border: oklch(0.28 0.01 250);
+  --input: oklch(0.22 0.01 250);
+  --ring: oklch(0.65 0.15 45);
+
+  --sidebar: oklch(0.12 0.01 250);
+  --sidebar-foreground: oklch(0.95 0.005 90);
+  --sidebar-primary: oklch(0.65 0.15 45);
+  --sidebar-primary-foreground: oklch(0.12 0.01 250);
+  --sidebar-accent: oklch(0.22 0.01 250);
+  --sidebar-accent-foreground: oklch(0.9 0.005 90);
+  --sidebar-border: oklch(0.28 0.01 250);
+  --sidebar-ring: oklch(0.65 0.15 45);
+
+  --gradient-primary: linear-gradient(135deg, oklch(0.65 0.15 45) 0%, oklch(0.68 0.12 55) 100%);
+  --gradient-sunset: linear-gradient(135deg, oklch(0.45 0.1 45) 0%, oklch(0.5 0.08 55) 100%);
+  --gradient-fresh: linear-gradient(135deg, oklch(0.35 0.06 155) 0%, oklch(0.4 0.05 170) 100%);
+  --gradient-warm: linear-gradient(180deg, oklch(0.14 0.01 250) 0%, oklch(0.18 0.015 250) 100%);
 }
 
 @theme {
@@ -128,10 +177,15 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   --radius: 0.5rem;
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
+
+  /* Professional shadows - subtle depth */
+  --shadow-food: 0 1px 3px 0 oklch(0.2 0.01 250 / 0.1), 0 1px 2px -1px oklch(0.2 0.01 250 / 0.1);
+  --shadow-card: 0 4px 6px -1px oklch(0.2 0.01 250 / 0.08), 0 2px 4px -2px oklch(0.2 0.01 250 / 0.06);
+  --shadow-elevated: 0 10px 15px -3px oklch(0.2 0.01 250 / 0.1), 0 4px 6px -4px oklch(0.2 0.01 250 / 0.08);
 
   @keyframes accordion-down {
     from {
@@ -176,6 +230,49 @@
       transform: scale(0.96);
     }
   }
+
+  /* Custom food-themed animations */
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 oklch(0.55 0.16 45 / 0.3); }
+    50% { box-shadow: 0 0 12px 2px oklch(0.55 0.16 45 / 0.15); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes bounce-in {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes confetti-fall {
+    0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  @keyframes slide-up-fade {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 }
 
 @utility container {
@@ -200,31 +297,227 @@
   }
 }
 
+/* Food-themed utility classes */
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+@utility font-body {
+  font-family: var(--font-body);
+}
+
+@utility gradient-primary {
+  background: var(--gradient-primary);
+}
+
+@utility gradient-sunset {
+  background: var(--gradient-sunset);
+}
+
+@utility gradient-fresh {
+  background: var(--gradient-fresh);
+}
+
+@utility gradient-warm {
+  background: var(--gradient-warm);
+}
+
+@utility shadow-food {
+  box-shadow: var(--shadow-food);
+}
+
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+@utility shadow-elevated {
+  box-shadow: var(--shadow-elevated);
+}
+
+@utility animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+@utility animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@utility animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@utility animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, oklch(1 0 0 / 0.1) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@utility animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+@utility animate-bounce-in {
+  animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@utility animate-slide-up {
+  animation: slide-up-fade 0.4s ease-out;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html {
+    font-family: var(--font-body);
   }
 
-  /**
-   * Scrollbar
-   */
+  body {
+    @apply bg-background text-foreground;
+    background: var(--gradient-warm);
+    min-height: 100vh;
+  }
 
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-body);
+    font-weight: 700;
+  }
+
+  /* Professional scrollbar */
   ::-webkit-scrollbar {
-    width: 16px;
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--muted);
+    border-radius: 6px;
   }
 
   ::-webkit-scrollbar-thumb {
-    border-radius: 9999px;
-    border: 4px solid transparent;
+    border-radius: 6px;
+    border: 3px solid transparent;
     background-clip: content-box;
-    @apply bg-accent;
+    background: oklch(0.7 0.03 250);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.55 0.16 45);
+    background-clip: content-box;
   }
 
   ::-webkit-scrollbar-corner {
     display: none;
+  }
+
+  /* Selection styling */
+  ::selection {
+    background: oklch(0.55 0.16 45 / 0.2);
+    color: var(--foreground);
+  }
+}
+
+/* Professional component styles */
+@layer components {
+  /* Clean card with subtle hover */
+  .food-card {
+    @apply relative overflow-hidden transition-all duration-200;
+    box-shadow: var(--shadow-card);
+  }
+
+  .food-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .food-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-primary);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .food-card:hover::before {
+    opacity: 1;
+  }
+
+  /* Professional badge */
+  .food-badge {
+    @apply px-3 py-1 rounded-md text-sm font-medium;
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  /* Wheel styles */
+  .wheel-container {
+    @apply relative;
+    filter: drop-shadow(0 8px 20px oklch(0.2 0.01 250 / 0.15));
+  }
+
+  .wheel-pointer {
+    filter: drop-shadow(0 2px 4px oklch(0.2 0.01 250 / 0.3));
+  }
+
+  /* Winner announcement */
+  .winner-card {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, oklch(0.55 0.16 45) 0%, oklch(0.6 0.14 55) 100%);
+    border: 2px solid oklch(0.5 0.14 45);
+    animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .winner-card::before {
+    display: none;
+  }
+
+  /* Interactive list items */
+  .food-list-item {
+    @apply p-4 rounded-lg border border-border bg-card transition-all duration-150;
+  }
+
+  .food-list-item:hover {
+    @apply border-primary/40 bg-primary/5;
+  }
+
+  /* Primary button highlight */
+  .btn-glow {
+    @apply relative;
+  }
+
+  .btn-glow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--primary);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    filter: blur(12px);
+    transition: opacity 0.2s ease;
+  }
+
+  .btn-glow:hover::after {
+    opacity: 0.3;
+  }
+
+  /* Page section styling */
+  .page-section {
+    @apply animate-slide-up;
+    animation-fill-mode: both;
+  }
+
+  .page-section:nth-child(1) { animation-delay: 0.05s; }
+  .page-section:nth-child(2) { animation-delay: 0.1s; }
+  .page-section:nth-child(3) { animation-delay: 0.15s; }
+  .page-section:nth-child(4) { animation-delay: 0.2s; }
+
+  /* Clean minimal background */
+  .food-pattern {
+    background: transparent;
   }
 }

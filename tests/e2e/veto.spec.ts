@@ -66,12 +66,12 @@ test("veto: never pick hides rating and excludes from wheel", async ({
   await page.getByLabel("Alice").check();
 
   // Ensure the app registered the selection
-  await expect(page.getByText("Select at least one user to spin")).toHaveCount(
+  await expect(page.getByText("Select at least one person")).toHaveCount(
     0,
   );
 
-  const eateriesCardHeader = page.getByText(/Eateries \(2\)/);
-  await expect(eateriesCardHeader).toBeVisible();
+  // The sidebar shows "On the Wheel" card with vetoed badge
+  await expect(page.getByText("On the Wheel")).toBeVisible();
   await expect(page.getByText(/1 vetoed/)).toBeVisible();
 
   // Wheel segments use <title> with the full eatery name

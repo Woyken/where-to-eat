@@ -112,9 +112,9 @@ test("edge cases: empty connection (no users or eateries)", async ({
   await pageA.goto(`/settings/${connectionId}`);
   await pageB.goto(`/settings/${connectionId}`);
 
-  // Should show empty state
-  await expect(pageA.getByRole("heading", { name: /^Eateries/ })).toBeVisible();
-  await expect(pageB.getByRole("heading", { name: /^Eateries/ })).toBeVisible();
+  // Should show restaurant list - settings page uses "Restaurants" heading with count
+  await expect(pageA.getByText(/Restaurants \(\d+\)/)).toBeVisible();
+  await expect(pageB.getByText(/Restaurants \(\d+\)/)).toBeVisible();
 
   console.log("Empty connection handles correctly");
 
@@ -307,30 +307,39 @@ test("edge cases: simultaneous deletion from multiple peers", async ({
 
   await pageB.goto(`/settings/${connectionId}`);
   await expect(
-    pageB.getByRole("heading", { name: eateryToDelete }).first(),
+    pageB.locator(`[data-eatery-name="${eateryToDelete}"]`).first(),
   ).toBeVisible({ timeout: 15_000 });
 
   await pageA.goto(`/settings/${connectionId}`);
+  await expect(
+    pageA.locator(`[data-eatery-name="${eateryToDelete}"]`).first(),
+  ).toBeVisible({ timeout: 15_000 });
 
-  // Both try to delete simultaneously
+  // Wait for animations to settle
+  await pageA.waitForTimeout(500);
+  await pageB.waitForTimeout(500);
+
+  // Both try to delete simultaneously - use force to bypass animation instability
   await Promise.all([
     pageA
       .locator(`[data-eatery-name="${eateryToDelete}"]`)
+      .first()
       .getByTestId("delete-eatery")
-      .click(),
+      .click({ force: true }),
     pageB
       .locator(`[data-eatery-name="${eateryToDelete}"]`)
+      .first()
       .getByTestId("delete-eatery")
-      .click(),
+      .click({ force: true }),
   ]);
 
-  // Both should show it as deleted
+  // Both should show it as deleted (check that no matching elements remain)
   await expect(
-    pageA.getByRole("heading", { name: eateryToDelete }).first(),
-  ).not.toBeVisible({ timeout: 10_000 });
+    pageA.locator(`[data-eatery-name="${eateryToDelete}"]`),
+  ).toHaveCount(0, { timeout: 10_000 });
   await expect(
-    pageB.getByRole("heading", { name: eateryToDelete }).first(),
-  ).not.toBeVisible({ timeout: 10_000 });
+    pageB.locator(`[data-eatery-name="${eateryToDelete}"]`),
+  ).toHaveCount(0, { timeout: 10_000 });
 
   console.log("Simultaneous deletion handled correctly");
 

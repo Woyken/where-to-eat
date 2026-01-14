@@ -121,4 +121,34 @@ Add new components via CLI: `pnpx solid-ui-cli@latest add <component-name>`
 - **Service worker routing:** All P2P messages go through SW for offline reliability
 
 ---
+
+## Design System
+
+### Philosophy
+Professional, warm, and approachable. Uses **burnt orange accent** with clean typography. Avoid playful elements like food emojis, excessive animations, or bright gradients.
+
+### Key Files
+| File | What it defines |
+|------|-----------------|
+| `src/styles/app.css` | Color tokens (oklch), custom classes (`.food-card`, `.food-list-item`), shadows, animations |
+| `index.html` | Font loading (DM Sans for headings, Inter for body) |
+| `src/components/ui/button.tsx` | Button variants and sizing |
+| `src/routes/settings.$connectionId.tsx` | Reference for cards, list items, dialogs, sliders |
+| `src/routes/index.tsx` | Reference for page layout, session cards, empty states |
+
+### Avoid
+- ❌ Food emojis in UI - use letter avatars or Lucide icons
+- ❌ `rounded-xl` on cards/inputs - use `rounded-md`
+- ❌ `border-2` on cards - use default border
+- ❌ Gradient text - use `text-primary` instead
+- ❌ `text-3xl` for titles - use `text-2xl`
+- ❌ Exclamation marks or playful language in copy
+
+### Use
+- ✅ Letter avatars: `w-8 h-8 rounded-md bg-primary/10 text-primary`
+- ✅ Lucide icons from `lucide-solid` at `w-4 h-4`
+- ✅ `.food-card` and `.food-list-item` classes from app.css
+- ✅ Simple copy: "No restaurants yet", "Select a person"
+
+---
 *Update this file when adding new patterns or significant architecture changes.*
