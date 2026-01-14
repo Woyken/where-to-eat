@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Where to Eat</title>
+    <script>
+      // Single Page App redirect for GitHub Pages
+      // This script redirects 404s to the main app while preserving the path
+      // The path is converted to a query string which the app will restore
+      (function() {
+        var loc = window.location;
+        var repo = "/where-to-eat";
+
+        // Support both:
+        // - https://<user>.github.io/where-to-eat/... (main)
+        // - https://<user>.github.io/where-to-eat/previews/pr-<n>/... (PR preview)
+        var path = loc.pathname;
+        var base = repo;
+
+        var previewsPrefix = repo + "/previews/";
+        if (path.indexOf(previewsPrefix) === 0) {
+          var rest = path.slice(previewsPrefix.length);
+          var firstSlash = rest.indexOf("/");
+          if (firstSlash !== -1) {
+            base = previewsPrefix + rest.slice(0, firstSlash);
+          } else {
+            base = previewsPrefix + rest;
+          }
+        }
+
+        var relative = path.replace(base, "");
+        var redirectUrl =
+          loc.origin +
+          base +
+          "/?redirect=" +
+          encodeURIComponent(relative + loc.search + loc.hash);
+
+        loc.replace(redirectUrl);
+      })();
+    </script>
+  </head>
+  <body>
+    Redirecting...
+  </body>
+</html>
