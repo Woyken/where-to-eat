@@ -12,6 +12,7 @@ import {
 import { unwrap } from "solid-js/store";
 import * as v from "valibot";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
+import { logger } from "./logger";
 import { p2pRequestStatus, subscribeToPeerStatus } from "./serviceWorkerComm";
 import {
   type Peer2PeerDataSchemaType,
@@ -205,7 +206,7 @@ export function Peer2PeerSharing(props: ParentProps) {
   // Get peer ID from service worker
   createEffect(() => {
     const unsubscribe = subscribeToPeerStatus((status) => {
-      console.log("P2P: Received peer status from SW:", status);
+      logger.log("P2P: Received peer status from SW:", status);
       if (status.peerId) {
         setMyPeerId(status.peerId);
         setGlobalPeerId(status.peerId);
@@ -235,7 +236,7 @@ export function Peer2PeerSharing(props: ParentProps) {
           // Another tab is claiming leadership
           // If we're the leader, re-announce ourselves
           if (isLeader()) {
-            console.log(
+            logger.log(
               "P2P: Someone claiming leadership, re-announcing as leader",
             );
             leaderChannel?.postMessage({
@@ -251,7 +252,7 @@ export function Peer2PeerSharing(props: ParentProps) {
           break;
 
         case "leader-announce":
-          console.log("P2P: Leader announced:", msg.tabId);
+          logger.log("P2P: Leader announced:", msg.tabId);
           setCurrentLeaderId(msg.tabId);
           setLastLeaderHeartbeat(Date.now());
           if (msg.tabId !== TAB_ID) {
@@ -311,7 +312,7 @@ export function Peer2PeerSharing(props: ParentProps) {
         } satisfies LeaderMessage);
       } else if (currentLeaderId() && now - lastHeartbeat > LEADER_TIMEOUT) {
         // Leader hasn't sent heartbeat, try to become leader
-        console.log("P2P: Leader timeout, attempting takeover");
+        logger.log("P2P: Leader timeout, attempting takeover");
         tryBecomeLeader();
       }
     }, HEARTBEAT_INTERVAL);
@@ -330,7 +331,7 @@ export function Peer2PeerSharing(props: ParentProps) {
   });
 
   function tryBecomeLeader() {
-    console.log("P2P: Attempting to become leader, tabId:", TAB_ID);
+    logger.log("P2P: Attempting to become leader, tabId:", TAB_ID);
 
     // Announce we're claiming leadership
     leaderChannel?.postMessage({
@@ -345,7 +346,7 @@ export function Peer2PeerSharing(props: ParentProps) {
 
       // If no leader has sent heartbeat recently, become leader
       if (!currentLeaderId() || now - lastHeartbeat > LEADER_TIMEOUT) {
-        console.log("P2P: Becoming leader, tabId:", TAB_ID);
+        logger.log("P2P: Becoming leader, tabId:", TAB_ID);
         setIsLeader(true);
         setCurrentLeaderId(TAB_ID);
         setLastLeaderHeartbeat(now);
@@ -390,20 +391,20 @@ export function Peer2PeerSharing(props: ParentProps) {
         }
       : undefined;
 
-    console.log("P2P [Leader]: Creating Peer with config:", peerConfig);
+    logger.log("P2P [Leader]: Creating Peer with config:", peerConfig);
     const newPeer = new Peer(id, peerConfig);
 
     newPeer.on("open", (peerId) => {
-      console.log("P2P [Leader]: Peer open with ID:", peerId);
+      logger.log("P2P [Leader]: Peer open with ID:", peerId);
       setPeerStatus("connected");
     });
 
     newPeer.on("error", (err) => {
-      console.error("P2P [Leader]: Peer error:", err.type, err.message);
+      logger.error("P2P [Leader]: Peer error:", err.type, err.message);
     });
 
     newPeer.on("disconnected", () => {
-      console.log("P2P [Leader]: Peer disconnected from signaling server");
+      logger.log("P2P [Leader]: Peer disconnected from signaling server");
       setPeerStatus("disconnected");
       setTimeout(() => {
         if (isLeader()) {
@@ -414,12 +415,12 @@ export function Peer2PeerSharing(props: ParentProps) {
     });
 
     newPeer.on("close", () => {
-      console.log("P2P [Leader]: Peer connection closed");
+      logger.log("P2P [Leader]: Peer connection closed");
       setPeerStatus("disconnected");
     });
 
     newPeer.on("connection", (connection) => {
-      console.log(
+      logger.log(
         "P2P [Leader]: Incoming peer connection from:",
         connection.peer,
       );
@@ -428,7 +429,7 @@ export function Peer2PeerSharing(props: ParentProps) {
 
     onCleanup(() => {
       if (isLeader()) {
-        console.log("P2P [Leader]: Destroying peer");
+        logger.log("P2P [Leader]: Destroying peer");
         newPeer.destroy();
       }
     });
@@ -450,7 +451,7 @@ export function Peer2PeerSharing(props: ParentProps) {
     direction: "incoming" | "outgoing",
   ) {
     conn.on("open", () => {
-      console.log(
+      logger.log(
         `P2P [Leader]: ${direction} connection opened to:`,
         conn.peer,
       );
@@ -481,7 +482,7 @@ export function Peer2PeerSharing(props: ParentProps) {
     });
 
     conn.on("close", () => {
-      console.log(
+      logger.log(
         `P2P [Leader]: ${direction} connection closed to:`,
         conn.peer,
       );
@@ -503,7 +504,7 @@ export function Peer2PeerSharing(props: ParentProps) {
     });
 
     conn.on("error", (err) => {
-      console.error(`P2P [Leader]: ${direction} connection error:`, err);
+      logger.error(`P2P [Leader]: ${direction} connection error:`, err);
     });
 
     if (direction === "incoming") {
@@ -551,12 +552,12 @@ export function Peer2PeerSharing(props: ParentProps) {
     const parsedData = v.safeParse(peer2PeerDataSchema, normalized);
 
     if (!parsedData.success) {
-      console.warn("P2P [Leader]: Failed to parse peer data:", normalized);
+      logger.warn("P2P [Leader]: Failed to parse peer data:", normalized);
       return;
     }
 
     const message = parsedData.output;
-    console.log("P2P [Leader]: Received peer message type:", message.type);
+    logger.log("P2P [Leader]: Received peer message type:", message.type);
 
     // Handle protocol messages locally
     switch (message.type) {
@@ -587,7 +588,7 @@ export function Peer2PeerSharing(props: ParentProps) {
           if (remoteConnectionIds.has(connectionData.id)) {
             const data = unwrap(connectionData);
             if (data) {
-              console.log(
+              logger.log(
                 "P2P [Leader]: Sending storage to peer for shared connection:",
                 data.id,
               );
@@ -619,7 +620,7 @@ export function Peer2PeerSharing(props: ParentProps) {
         // Already handled by leader in handleIncomingPeerData
         break;
       case "request-storage": {
-        console.log(
+        logger.log(
           "P2P: Received request-storage for connectionId:",
           event.data.connectionId,
         );
@@ -639,7 +640,7 @@ export function Peer2PeerSharing(props: ParentProps) {
         break;
       }
       case "storage":
-        console.log(
+        logger.log(
           "P2P: Received storage data for connectionId:",
           event.data.id,
         );
@@ -682,22 +683,22 @@ export function Peer2PeerSharing(props: ParentProps) {
         );
         break;
       default:
-        console.warn(
+        logger.warn(
           "P2P: Unknown message type:",
           (event as { type: string }).type,
         );
     }
   }
 
-  createEffect(() => console.log("P2P: Leader changed", isLeader()));
-  createEffect(() => console.log("P2P: Peer status changed", peerStatus()));
-  createEffect(() => console.log("P2P: Peer changed", peer()));
-  createEffect(() => console.log("P2P: My peer ID changed", myPeerId()));
+  createEffect(() => logger.log("P2P: Leader changed", isLeader()));
+  createEffect(() => logger.log("P2P: Peer status changed", peerStatus()));
+  createEffect(() => logger.log("P2P: Peer changed", peer()));
+  createEffect(() => logger.log("P2P: My peer ID changed", myPeerId()));
   createEffect(() =>
-    console.log("P2P: Known peers changed", Array.from(knownPeerIds())),
+    logger.log("P2P: Known peers changed", Array.from(knownPeerIds())),
   );
   createEffect(() =>
-    console.log(
+    logger.log(
       "P2P: Currently connected peers changed",
       Array.from(currentlyConnectedPeerIds()),
     ),
@@ -713,7 +714,7 @@ export function Peer2PeerSharing(props: ParentProps) {
     const knownPeers = knownPeerIds();
     const alreadyConnected = currentlyConnectedPeerIds();
 
-    console.log("P2P: Connect effect running", {
+    logger.log("P2P: Connect effect running", {
       isLeader: leader,
       peerStatus: status,
       hasPeer: !!p,
@@ -731,7 +732,7 @@ export function Peer2PeerSharing(props: ParentProps) {
       if (peerId === selfId) continue;
       if (alreadyConnected.has(peerId)) continue;
 
-      console.log("P2P [Leader]: Connecting to known peer:", peerId);
+      logger.log("P2P [Leader]: Connecting to known peer:", peerId);
       const conn = p.connect(peerId, { serialization: "binary" });
       setupConnection(conn, "outgoing");
     }
@@ -762,7 +763,7 @@ export function Peer2PeerSharing(props: ParentProps) {
 
   // Public API
   function addNewPeer(peerId: string) {
-    console.log("P2P: Adding new known peer:", peerId);
+    logger.log("P2P: Adding new known peer:", peerId);
 
     // Always add to local state first (leader will pick it up via effect)
     setKnownPeerIds((old) => new Set(old).add(peerId));
@@ -782,7 +783,7 @@ export function Peer2PeerSharing(props: ParentProps) {
   }
 
   function broadcast(event: Peer2PeerDataSchemaType) {
-    console.log("P2P: Broadcasting event:", event.type);
+    logger.log("P2P: Broadcasting event:", event.type);
 
     if (isLeader()) {
       broadcastToPeers(event);
@@ -796,7 +797,7 @@ export function Peer2PeerSharing(props: ParentProps) {
   }
 
   function sendToPeer(peerId: string, event: Peer2PeerDataSchemaType): boolean {
-    console.log("P2P: Sending to peer:", peerId, event.type);
+    logger.log("P2P: Sending to peer:", peerId, event.type);
 
     if (isLeader()) {
       const conn = [...incomingConnections(), ...outgoingConnections()].find(
@@ -825,7 +826,7 @@ export function Peer2PeerSharing(props: ParentProps) {
 
   function requestStorageForAllConnections() {
     const connectionIds = settingsStorage.store.connections.map((c) => c.id);
-    console.log("P2P: Requesting storage for connections:", connectionIds);
+    logger.log("P2P: Requesting storage for connections:", connectionIds);
     for (const connectionId of connectionIds) {
       broadcast({ type: "request-storage", data: { connectionId } });
     }

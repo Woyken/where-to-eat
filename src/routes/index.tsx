@@ -4,6 +4,7 @@ import Trash2 from "lucide-solid/icons/trash-2";
 import Sparkles from "lucide-solid/icons/sparkles";
 import ArrowRight from "lucide-solid/icons/arrow-right";
 import Calendar from "lucide-solid/icons/calendar";
+import { logger } from "~/utils/logger";
 import { createSignal, For, Show } from "solid-js";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
 import { Button } from "~/components/ui/button";
@@ -33,14 +34,14 @@ function HomePage() {
   const settingsStorage = useSettingsStorage();
 
   const createFreshConnection = () => {
-    console.log("createFreshConnection called");
+    logger.log("createFreshConnection called");
     try {
       const trimmedName = connectionName().trim();
       const newId = settingsStorage.addNewConnection(
         trimmedName ||
           `Connection ${settingsStorage.store.connections.length + 1}`,
       );
-      console.log("Created connection", newId);
+      logger.log("Created connection", newId);
 
       setConnectionName("");
 
@@ -50,9 +51,9 @@ function HomePage() {
           connectionId: newId,
         },
       });
-      console.log("Navigating to wheel");
+      logger.log("Navigating to wheel");
     } catch (e) {
-      console.error("Error creating connection", e);
+      logger.error("Error creating connection", e);
     }
   };
 

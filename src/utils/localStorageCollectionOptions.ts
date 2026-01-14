@@ -14,6 +14,7 @@ import {
   SyncConfig,
 } from "@tanstack/db";
 import { AnySchema } from "valibot";
+import { logger } from "./logger";
 
 /**
  * Storage API interface - subset of DOM Storage that we need
@@ -488,7 +489,7 @@ function loadFromStorage<T extends object>(
 
     return dataMap;
   } catch (error) {
-    console.warn(
+    logger.warn(
       `[LocalStorageCollection] Error loading data from storage key "${storageKey}":`,
       error
     );
