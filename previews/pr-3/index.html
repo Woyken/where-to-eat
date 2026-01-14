@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Where to Eat</title>
+    <meta
+      name="description"
+      content="Collaboratively choose where to eat with a spinning wheel"
+    />
+    <link rel="apple-touch-icon" sizes="180x180" href="/where-to-eat/previews/pr-3/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/where-to-eat/previews/pr-3/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/where-to-eat/previews/pr-3/favicon-16x16.png" />
+    <link rel="manifest" href="/where-to-eat/previews/pr-3/site.webmanifest" />
+    <link rel="icon" href="/where-to-eat/previews/pr-3/favicon.ico" />
+    <!-- Handle SPA redirects from 404.html for GitHub Pages -->
+    <script>
+      (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.href) {
+          history.replaceState(null, null, redirect);
+        } else {
+          // Check for redirect query parameter from 404.html
+          var params = new URLSearchParams(location.search);
+          var redirectPath = params.get('redirect');
+          if (redirectPath) {
+            params.delete('redirect');
+            var newSearch = params.toString();
+            // Get base path from current location (e.g., /where-to-eat)
+            var basePath = location.pathname.replace(/\/$/, '');
+            var newUrl = basePath + redirectPath + (newSearch ? '?' + newSearch : '');
+            history.replaceState(null, null, newUrl);
+          }
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/where-to-eat/previews/pr-3/assets/index-CPELap1P.js"></script>
+    <link rel="stylesheet" crossorigin href="/where-to-eat/previews/pr-3/assets/index-C-l-EBIy.css">
+  <link rel="manifest" href="/where-to-eat/previews/pr-3/manifest.webmanifest"></head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
