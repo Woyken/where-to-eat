@@ -637,15 +637,26 @@ function SettingsPage() {
                                 </p>
                               </div>
                             </div>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => removeUser(user.id)}
-                              data-testid="delete-user"
-                              class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0 w-8 h-8"
-                            >
-                              <Trash2 class="w-4 h-4" />
-                            </Button>
+                            <div class="flex gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => openEditUser(user)}
+                                data-testid="edit-user"
+                                class="text-muted-foreground hover:text-primary hover:bg-primary/10 flex-shrink-0 w-8 h-8"
+                              >
+                                <Pencil class="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => removeUser(user.id)}
+                                data-testid="delete-user"
+                                class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0 w-8 h-8"
+                              >
+                                <Trash2 class="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         );
                       }}

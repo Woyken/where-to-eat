@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { selectOrCreateUser } from "./helpers";
 
 test.describe("edit", () => {
   test("edit eatery name updates locally", async ({ page }) => {
@@ -7,6 +8,7 @@ test.describe("edit", () => {
     await page.waitForLoadState("networkidle");
     await page.getByTestId("start-fresh").click();
     await expect(page).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+    await selectOrCreateUser(page, "Test User");
 
     const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(page.url());
     const connectionId = connectionIdMatch![1];
@@ -14,6 +16,7 @@ test.describe("edit", () => {
     // Go to settings
     await page.goto(`/settings/${connectionId}`);
     await page.waitForLoadState("networkidle");
+    await selectOrCreateUser(page, "Test User");
 
     // Add an eatery
     const originalName = `Original Eatery ${Date.now()}`;
@@ -54,6 +57,7 @@ test.describe("edit", () => {
     await page.waitForLoadState("networkidle");
     await page.getByTestId("start-fresh").click();
     await expect(page).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+    await selectOrCreateUser(page, "Test User");
 
     const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(page.url());
     const connectionId = connectionIdMatch![1];
@@ -61,6 +65,7 @@ test.describe("edit", () => {
     // Go to settings
     await page.goto(`/settings/${connectionId}`);
     await page.waitForLoadState("networkidle");
+    await selectOrCreateUser(page, "Test User");
 
     // Add a user
     const originalName = `Original User ${Date.now()}`;
@@ -75,10 +80,9 @@ test.describe("edit", () => {
     ).toBeVisible();
 
     // Click edit button
-    await page
-      .locator(`[data-user-name="${originalName}"]`)
-      .getByTestId("edit-user")
-      .click();
+    const userCard = page.locator(`[data-user-name="${originalName}"]`);
+    await expect(userCard).toBeVisible();
+    await userCard.getByTestId("edit-user").click();
 
     // Edit the name
     const newName = `Edited User ${Date.now()}`;
@@ -121,6 +125,7 @@ test.describe("edit", () => {
     await pageA.waitForLoadState("networkidle");
     await pageA.getByTestId("start-fresh").click();
     await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+    await selectOrCreateUser(pageA, "User A");
 
     const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
     const connectionId = connectionIdMatch![1];
@@ -128,6 +133,7 @@ test.describe("edit", () => {
     // Add an eatery
     await pageA.goto(`/settings/${connectionId}`);
     await pageA.waitForLoadState("networkidle");
+    await selectOrCreateUser(pageA, "User A");
 
     const originalName = `Original Eatery ${Date.now()}`;
     await pageA.getByTestId("add-eatery-open").click();
@@ -146,9 +152,11 @@ test.describe("edit", () => {
     await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 60_000,
     });
+    await selectOrCreateUser(pageB, "User B");
 
     // Navigate B to settings and verify eatery is visible
     await pageB.goto(`/settings/${connectionId}`);
+    await selectOrCreateUser(pageB, "User B");
     await expect(
       pageB.getByRole("heading", { name: originalName }).first(),
     ).toBeVisible({ timeout: 15_000 });
@@ -156,6 +164,7 @@ test.describe("edit", () => {
     // A edits the eatery
     await pageA.goto(`/settings/${connectionId}`);
     await pageA.waitForLoadState("networkidle");
+    await selectOrCreateUser(pageA, "User A");
     
     await pageA
       .locator(`[data-eatery-name="${originalName}"]`)
@@ -210,6 +219,7 @@ test.describe("edit", () => {
     await pageA.waitForLoadState("networkidle");
     await pageA.getByTestId("start-fresh").click();
     await expect(pageA).toHaveURL(/\/wheel\/[0-9a-f-]{36}$/);
+    await selectOrCreateUser(pageA, "User A");
 
     const connectionIdMatch = /\/wheel\/([0-9a-f-]{36})$/.exec(pageA.url());
     const connectionId = connectionIdMatch![1];
@@ -217,6 +227,7 @@ test.describe("edit", () => {
     // Add a user
     await pageA.goto(`/settings/${connectionId}`);
     await pageA.waitForLoadState("networkidle");
+    await selectOrCreateUser(pageA, "User A");
 
     const originalName = `Original User ${Date.now()}`;
     await pageA.getByTestId("add-user-open").click();
@@ -235,9 +246,11 @@ test.describe("edit", () => {
     await expect(pageB).toHaveURL(new RegExp(`/wheel/${connectionId}$`), {
       timeout: 60_000,
     });
+    await selectOrCreateUser(pageB, "User B");
 
     // Navigate B to settings and verify user is visible
     await pageB.goto(`/settings/${connectionId}`);
+    await selectOrCreateUser(pageB, "User B");
     await expect(
       pageB.getByRole("heading", { name: originalName }).first(),
     ).toBeVisible({ timeout: 15_000 });
@@ -245,11 +258,11 @@ test.describe("edit", () => {
     // A edits the user
     await pageA.goto(`/settings/${connectionId}`);
     await pageA.waitForLoadState("networkidle");
+    await selectOrCreateUser(pageA, "User A");
     
-    await pageA
-      .locator(`[data-user-name="${originalName}"]`)
-      .getByTestId("edit-user")
-      .click();
+    const userCardA = pageA.locator(`[data-user-name="${originalName}"]`);
+    await expect(userCardA).toBeVisible();
+    await userCardA.getByTestId("edit-user").click();
 
     const newName = `Edited User ${Date.now()}`;
     await pageA.getByTestId("edit-user-name").clear();
