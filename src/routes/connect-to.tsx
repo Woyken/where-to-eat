@@ -1,10 +1,11 @@
-import { createFileRoute, useRouter } from "@tanstack/solid-router";
-import { createEffect, createMemo, createSignal, For, Match, onMount, Show, Switch } from "solid-js";
+import { createFileRoute, Link, useRouter } from "@tanstack/solid-router";
+import { createEffect, createMemo, createSignal, For, Match, onCleanup, onMount, Show, Switch } from "solid-js";
 import * as v from "valibot";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
 import { logger } from "~/utils/logger";
 import { usePeer2Peer } from "~/utils/peer2peerSharing";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
 import Check from "lucide-solid/icons/check";
 import Loader from "lucide-solid/icons/loader";
 import Circle from "lucide-solid/icons/circle";
@@ -13,6 +14,10 @@ import Users from "lucide-solid/icons/users";
 import Database from "lucide-solid/icons/database";
 import Wifi from "lucide-solid/icons/wifi";
 import WifiOff from "lucide-solid/icons/wifi-off";
+import AlertTriangle from "lucide-solid/icons/alert-triangle";
+import Clock from "lucide-solid/icons/clock";
+import RefreshCw from "lucide-solid/icons/refresh-cw";
+import Home from "lucide-solid/icons/home";
 
 const searchSchema = v.object({
   peerId: v.string(),
@@ -28,9 +33,13 @@ type ConnectionStep = "server" | "peer" | "data" | "complete";
 
 interface StepStatus {
   step: ConnectionStep;
-  status: "pending" | "in-progress" | "completed" | "error";
+  status: "pending" | "in-progress" | "completed" | "error" | "warning";
   message: string;
 }
+
+// Timeout thresholds in seconds
+const PEER_WARNING_TIMEOUT = 10; // Show warning after 10s without peer connection
+const PEER_ERROR_TIMEOUT = 30;  // Show error state after 30s
 
 function RouteComponent() {
   const connectionId = Route.useSearch({ select: (p) => p.connectionId });
@@ -44,6 +53,24 @@ function RouteComponent() {
   const [requestsSent, setRequestsSent] = createSignal(0);
   const [peerConnected, setPeerConnected] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null);
+  const [secondsWaiting, setSecondsWaiting] = createSignal(0);
+  const [serverConnectedAt, setServerConnectedAt] = createSignal<number | null>(null);
+
+  // Track how long we've been waiting for peer connection after server connected
+  const secondsWaitingForPeer = createMemo(() => {
+    const connectedAt = serverConnectedAt();
+    if (!connectedAt) return 0;
+    if (peerConnected()) return 0; // Reset if connected
+    return secondsWaiting();
+  });
+
+  // Determine if we should show warning or error for peer connection
+  const peerConnectionState = createMemo<"normal" | "warning" | "error">(() => {
+    const waiting = secondsWaitingForPeer();
+    if (waiting >= PEER_ERROR_TIMEOUT) return "error";
+    if (waiting >= PEER_WARNING_TIMEOUT) return "warning";
+    return "normal";
+  });
 
   // Derive the current step based on actual connection state
   const currentStep = createMemo<ConnectionStep>(() => {
@@ -66,6 +93,8 @@ function RouteComponent() {
   const steps = createMemo<StepStatus[]>(() => {
     const step = currentStep();
     const serverStatus = peer.serverStatus();
+    const peerState = peerConnectionState();
+    const waitingTime = secondsWaitingForPeer();
 
     return [
       {
@@ -84,12 +113,16 @@ function RouteComponent() {
         status: step === "server"
           ? "pending"
           : step === "peer"
-            ? "in-progress"
+            ? (peerState === "error" ? "error" : peerState === "warning" ? "warning" : "in-progress")
             : "completed",
         message: step === "server"
           ? "Waiting for server..."
           : step === "peer"
-            ? "Establishing peer connection..."
+            ? (peerState === "error"
+              ? "Peer appears to be offline"
+              : peerState === "warning"
+                ? `Waiting for peer... (${waitingTime}s)`
+                : "Establishing peer connection...")
             : "Peer connected",
       },
       {
@@ -132,15 +165,33 @@ function RouteComponent() {
     // Send immediately, then retry until data arrives
     sendRequest();
 
-    const interval = setInterval(() => {
+    const requestInterval = setInterval(() => {
       if (currentStep() === "complete") {
-        clearInterval(interval);
+        clearInterval(requestInterval);
         return;
       }
       sendRequest();
     }, 1000);
 
-    return () => clearInterval(interval);
+    // Timer to track waiting time
+    const waitingTimer = setInterval(() => {
+      if (currentStep() === "complete" || peerConnected()) {
+        return;
+      }
+      setSecondsWaiting((prev) => prev + 1);
+    }, 1000);
+
+    onCleanup(() => {
+      clearInterval(requestInterval);
+      clearInterval(waitingTimer);
+    });
+  });
+
+  // Track when server becomes connected
+  createEffect(() => {
+    if (peer.serverStatus() === "connected" && serverConnectedAt() === null) {
+      setServerConnectedAt(Date.now());
+    }
   });
 
   // Track when peer is connected
@@ -181,9 +232,14 @@ function RouteComponent() {
           <Check class="w-3 h-3 text-success-foreground" />
         </div>
       </Match>
+      <Match when={props.status === "warning"}>
+        <div class="w-5 h-5 rounded-full bg-warning flex items-center justify-center">
+          <Clock class="w-3 h-3 text-warning-foreground" />
+        </div>
+      </Match>
       <Match when={props.status === "error"}>
         <div class="w-5 h-5 rounded-full bg-error flex items-center justify-center">
-          <WifiOff class="w-3 h-3 text-error-foreground" />
+          <AlertTriangle class="w-3 h-3 text-error-foreground" />
         </div>
       </Match>
     </Switch>
@@ -275,6 +331,7 @@ function RouteComponent() {
                           "text-muted-foreground": stepInfo.status === "pending",
                           "text-foreground": stepInfo.status === "in-progress",
                           "text-success-foreground": stepInfo.status === "completed",
+                          "text-warning-foreground": stepInfo.status === "warning",
                           "text-error-foreground": stepInfo.status === "error",
                         }}
                       >
@@ -323,15 +380,75 @@ function RouteComponent() {
                 <p class="text-sm text-error-foreground">{errorMessage()}</p>
               </div>
             </Show>
+
+            {/* Peer connection warning/error */}
+            <Show when={peerConnectionState() === "warning" && currentStep() === "peer"}>
+              <div class="bg-warning/10 border border-warning/20 rounded-md p-3 space-y-2">
+                <div class="flex items-start gap-2">
+                  <AlertTriangle class="w-4 h-4 text-warning-foreground mt-0.5 flex-shrink-0" />
+                  <div class="space-y-1">
+                    <p class="text-sm font-medium text-warning-foreground">
+                      Taking longer than expected
+                    </p>
+                    <p class="text-xs text-muted-foreground">
+                      The peer may not be online yet. Make sure the person who shared the link has the app open.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Show>
+
+            <Show when={peerConnectionState() === "error" && currentStep() === "peer"}>
+              <div class="bg-error/10 border border-error/20 rounded-md p-4 space-y-3">
+                <div class="flex items-start gap-2">
+                  <AlertTriangle class="w-4 h-4 text-error-foreground mt-0.5 flex-shrink-0" />
+                  <div class="space-y-1">
+                    <p class="text-sm font-medium text-error-foreground">
+                      Unable to connect to peer
+                    </p>
+                    <p class="text-xs text-muted-foreground">
+                      The person who shared this link may have closed their browser or the link may be outdated. 
+                      Ask them to share a new link while they have the app open.
+                    </p>
+                  </div>
+                </div>
+                <div class="flex gap-2 pt-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.location.reload()}
+                    class="gap-1.5"
+                  >
+                    <RefreshCw class="w-3 h-3" />
+                    Retry
+                  </Button>
+                  <Link to="/">
+                    <Button size="sm" variant="ghost" class="gap-1.5">
+                      <Home class="w-3 h-3" />
+                      Go Home
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </Show>
           </CardContent>
         </Card>
 
         {/* Help text */}
-        <p class="text-center text-sm text-muted-foreground">
-          Make sure the person sharing the session has the app open.
-          <br />
-          Connection is automatic once both parties are online.
-        </p>
+        <Show
+          when={peerConnectionState() !== "error"}
+          fallback={
+            <p class="text-center text-sm text-muted-foreground">
+              Need a new link? Ask the session owner to share again while their app is open.
+            </p>
+          }
+        >
+          <p class="text-center text-sm text-muted-foreground">
+            Make sure the person sharing the session has the app open.
+            <br />
+            Connection is automatic once both parties are online.
+          </p>
+        </Show>
       </div>
     </div>
   );
