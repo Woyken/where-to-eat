@@ -59,8 +59,8 @@ function Header() {
             <img
               src={
                 colorMode() === "dark"
-                  ? "/icon-dark-192x192.png"
-                  : "/icon-light-192x192.png"
+                  ? `${import.meta.env.BASE_URL}icon-dark-192x192.png`
+                  : `${import.meta.env.BASE_URL}icon-light-192x192.png`
               }
               alt="Logo"
               class="w-9 h-9 rounded-lg object-cover group-hover:opacity-90 transition-opacity"

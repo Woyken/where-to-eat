@@ -537,7 +537,7 @@ function WheelPage() {
                       <div class="flex justify-center">
                         <div class="p-4 bg-white rounded-lg shadow-sm">
                           <img
-                            src={generateQRCode() || "/placeholder.svg"}
+                            src={generateQRCode() || `${import.meta.env.BASE_URL}placeholder.svg`}
                             alt="QR Code"
                             class="w-48 h-48"
                           />
