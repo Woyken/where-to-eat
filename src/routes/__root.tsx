@@ -189,6 +189,31 @@ function ConnectedPeerCount() {
   const ctx = usePeer2PeerOptional();
   const connectedPeerIds = () => ctx?.connectedPeerIds() ?? [];
   const peerCount = () => ctx?.connectedPeerCount() ?? 0;
+  const serverStatus = () => ctx?.serverStatus() ?? "connecting";
+  const isLeader = () => ctx?.isLeader() ?? false;
+
+  // Server status indicator color
+  const serverStatusColor = () => {
+    switch (serverStatus()) {
+      case "connected":
+        return "bg-green-500";
+      case "connecting":
+        return "bg-yellow-500 animate-pulse";
+      case "disconnected":
+        return "bg-red-500";
+    }
+  };
+
+  const serverStatusText = () => {
+    switch (serverStatus()) {
+      case "connected":
+        return "Connected to server";
+      case "connecting":
+        return "Connecting to server...";
+      case "disconnected":
+        return "Disconnected from server";
+    }
+  };
 
   return (
     <Dialog>
@@ -207,6 +232,11 @@ function ConnectedPeerCount() {
               {peerCount()}
             </span>
           )}
+          {/* Server status indicator dot */}
+          <span
+            class={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ${serverStatusColor()}`}
+            title={serverStatusText()}
+          />
         </div>
         <span
           class="text-sm text-muted-foreground hidden sm:inline"
@@ -230,6 +260,29 @@ function ConnectedPeerCount() {
         </DialogHeader>
 
         <div class="space-y-4 pt-2">
+          {/* Server Status */}
+          <div class="p-3 rounded-md bg-muted border border-border">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-sm font-medium">Server Status</p>
+              <div class="flex items-center gap-2">
+                <span class={`w-2 h-2 rounded-full ${serverStatusColor()}`} />
+                <span class="text-xs text-muted-foreground capitalize">
+                  {serverStatus()}
+                </span>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span class="text-muted-foreground">Role</span>
+                <p class="font-medium">{isLeader() ? "Leader" : "Follower"}</p>
+              </div>
+              <div>
+                <span class="text-muted-foreground">Connected Peers</span>
+                <p class="font-medium">{peerCount()}</p>
+              </div>
+            </div>
+          </div>
+
           <div class="p-3 rounded-md bg-muted border border-border">
             <p class="text-xs text-muted-foreground mb-1">Your Peer ID</p>
             <p class="font-mono text-xs break-all">{ctx?.myPeerId() ?? "—"}</p>
