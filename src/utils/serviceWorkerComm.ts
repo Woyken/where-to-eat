@@ -176,9 +176,34 @@ export { addSwToClientMessageListener } from "./serviceWorkerMessages";
 // SW Update listeners
 const swUpdateListeners = new Set<() => void>();
 let swUpdateAvailable = false;
+let userHasInteracted = false;
+
+// Track user interaction to know if we can safely auto-update
+if (typeof window !== "undefined") {
+  const interactionEvents = ["click", "keydown", "scroll", "touchstart"];
+  const markInteracted = () => {
+    userHasInteracted = true;
+    // Clean up listeners once interaction is detected
+    for (const event of interactionEvents) {
+      window.removeEventListener(event, markInteracted, { capture: true });
+    }
+  };
+  for (const event of interactionEvents) {
+    window.addEventListener(event, markInteracted, { capture: true, passive: true });
+  }
+}
 
 function notifySwUpdateListeners() {
   swUpdateAvailable = true;
+  
+  // If user hasn't interacted yet, auto-update immediately
+  if (!userHasInteracted && wb) {
+    logger.log("SW update available, auto-updating (no user interaction yet)");
+    wb.messageSkipWaiting();
+    return;
+  }
+  
+  // Otherwise, notify listeners to show update UI
   for (const listener of swUpdateListeners) {
     listener();
   }
