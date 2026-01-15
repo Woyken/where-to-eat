@@ -37,7 +37,13 @@ export default defineConfig({
       filename: "sw.ts",
       registerType: "prompt",
       injectRegister: false,
-      includeAssets: ["favicon.ico", "favicon.png", "apple-touch-icon.png"],
+      includeAssets: [
+        "favicon.ico",
+        "favicon.png",
+        "favicon-32x32.png",
+        "apple-touch-icon.png",
+        "icon-dark-192x192.png",
+      ],
       manifest: {
         name: "Where to Eat",
         short_name: "EateryWheel",
@@ -50,12 +56,12 @@ export default defineConfig({
         display: "standalone",
         icons: [
           {
-            src: "android-chrome-192x192.png",
+            src: "icon-light-192x192.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "android-chrome-512x512.png",
+            src: "icon-light-512x512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any maskable",
