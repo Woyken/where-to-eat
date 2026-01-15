@@ -1,16 +1,20 @@
 {
-  "name": "",
-  "short_name": "",
+  "name": "Where to Eat",
+  "short_name": "WhereToEat",
+  "description": "Collaboratively decide where to eat with friends",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
-      "src": "/android-chrome-192x192.png",
+      "src": "/icon-light-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/android-chrome-512x512.png",
+      "src": "/icon-light-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "theme_color": "#ffffff",

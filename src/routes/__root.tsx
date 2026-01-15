@@ -11,12 +11,12 @@ import IconLaptop from "lucide-solid/icons/laptop-2";
 import IconMoon from "lucide-solid/icons/moon";
 import IconSun from "lucide-solid/icons/sun";
 import IconUsers from "lucide-solid/icons/users";
-import UtensilsCrossed from "lucide-solid/icons/utensils-crossed";
 import { createSignal, onCleanup, onMount, Show } from "solid-js";
 import { CurrentUserDisplay } from "~/components/CurrentUserDisplay";
 import { CurrentUserProvider } from "~/components/CurrentUserProvider";
 import { DefaultCatchBoundary } from "~/components/DefaultCatchBoundary";
 import { NotFound } from "~/components/NotFound";
+import { PwaInstallButton } from "~/components/PwaInstallButton";
 import { SettingsStorageProvider } from "~/components/SettingsStorageProvider";
 import { Button } from "~/components/ui/button";
 import {
@@ -48,6 +48,44 @@ export const Route = createRootRoute({
   component: RootComponent,
 });
 
+function Header() {
+  const { colorMode } = useColorMode();
+  return (
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-background/95 border-b border-border">
+      <div class="max-w-5xl mx-auto px-4 py-3">
+        <div class="flex items-center justify-between">
+          {/* Logo & Brand */}
+          <Link to="/" class="flex items-center gap-3 group">
+            <img
+              src={
+                colorMode() === "dark"
+                  ? "/icon-dark-192x192.png"
+                  : "/icon-light-192x192.png"
+              }
+              alt="Logo"
+              class="w-9 h-9 rounded-lg object-cover group-hover:opacity-90 transition-opacity"
+            />
+            <div class="flex flex-col">
+              <span class="font-semibold text-lg text-foreground leading-none">
+                Where to Eat
+              </span>
+              <span class="text-xs text-muted-foreground">Decide together</span>
+            </div>
+          </Link>
+
+          {/* Navigation & Actions */}
+          <div class="flex items-center gap-1">
+            <CurrentUserDisplay />
+            <ConnectedPeerCount />
+            <PwaInstallButton />
+            <ModeToggle />
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 function RootComponent() {
   return (
     <>
@@ -57,34 +95,7 @@ function RootComponent() {
           <CurrentUserProvider>
             <Peer2PeerSharing>
               <div class="min-h-screen flex flex-col">
-                {/* Header */}
-                <header class="sticky top-0 z-50 backdrop-blur-md bg-background/95 border-b border-border">
-                  <div class="max-w-5xl mx-auto px-4 py-3">
-                    <div class="flex items-center justify-between">
-                      {/* Logo & Brand */}
-                      <Link to="/" class="flex items-center gap-3 group">
-                        <div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center group-hover:bg-primary/90 transition-colors">
-                          <UtensilsCrossed class="w-5 h-5 text-primary-foreground" />
-                        </div>
-                        <div class="flex flex-col">
-                          <span class="font-semibold text-lg text-foreground leading-none">
-                            Where to Eat
-                          </span>
-                          <span class="text-xs text-muted-foreground">
-                            Decide together
-                          </span>
-                        </div>
-                      </Link>
-
-                      {/* Navigation & Actions */}
-                      <div class="flex items-center gap-1">
-                        <CurrentUserDisplay />
-                        <ConnectedPeerCount />
-                        <ModeToggle />
-                      </div>
-                    </div>
-                  </div>
-                </header>
+                <Header />
 
                 <UpdateNotification />
 

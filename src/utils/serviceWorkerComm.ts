@@ -23,7 +23,6 @@ function getWorkbox(): Workbox | null {
   }
   if (!wbRegistered) {
     wbRegistered = true;
-    wb.register();
 
     // On activation, request status from service worker
     wb.addEventListener("activated", (event) => {
@@ -60,6 +59,8 @@ function getWorkbox(): Workbox | null {
     wb.addEventListener("controlling", () => {
       window.location.reload();
     });
+
+    wb.register();
   }
   return wb;
 }
@@ -174,8 +175,10 @@ export { addSwToClientMessageListener } from "./serviceWorkerMessages";
 
 // SW Update listeners
 const swUpdateListeners = new Set<() => void>();
+let swUpdateAvailable = false;
 
 function notifySwUpdateListeners() {
+  swUpdateAvailable = true;
   for (const listener of swUpdateListeners) {
     listener();
   }
@@ -183,6 +186,10 @@ function notifySwUpdateListeners() {
 
 export function subscribeToSwUpdate(callback: () => void): () => void {
   swUpdateListeners.add(callback);
+  // If we already know an update is available, notify immediately
+  if (swUpdateAvailable) {
+    callback();
+  }
   return () => {
     swUpdateListeners.delete(callback);
   };
