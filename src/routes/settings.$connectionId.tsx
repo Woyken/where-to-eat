@@ -25,6 +25,7 @@ import {
   TextFieldInput,
   TextFieldLabel,
 } from "~/components/ui/text-field";
+import { StorageSchemaType } from "~/utils/jsonStorage";
 import { logger } from "~/utils/logger";
 import { usePeer2Peer } from "~/utils/peer2peerSharing";
 
