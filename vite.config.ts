@@ -64,7 +64,26 @@ export default defineConfig({
             src: "icon-light-512x512.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "any",
+          },
+          {
+            src: "icon-light-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+        screenshots: [
+          {
+            src: "screenshots/mobile.png",
+            sizes: "390x844",
+            type: "image/png",
+          },
+          {
+            src: "screenshots/desktop.png",
+            sizes: "1280x800",
+            type: "image/png",
+            form_factor: "wide",
           },
         ],
       },
