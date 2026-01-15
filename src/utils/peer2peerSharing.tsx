@@ -109,6 +109,10 @@ const peer2PeerContext = createContext<{
   connectedPeerCount: () => number;
   connectedPeerIds: () => string[];
   myPeerId: () => string | undefined;
+  /** Status of the PeerJS signaling server connection */
+  serverStatus: () => "connecting" | "connected" | "disconnected";
+  /** Whether this tab is the leader (manages the PeerJS connection) */
+  isLeader: () => boolean;
 }>();
 
 export function usePeer2Peer() {
@@ -858,6 +862,8 @@ export function Peer2PeerSharing(props: ParentProps) {
         connectedPeerCount,
         connectedPeerIds,
         myPeerId,
+        serverStatus: peerStatus,
+        isLeader,
       }}
     >
       {props.children}
