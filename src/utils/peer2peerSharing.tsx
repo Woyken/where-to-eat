@@ -758,6 +758,57 @@ export function Peer2PeerSharing(props: ParentProps) {
     }
   });
 
+  // Periodic reconnection attempt for known peers that aren't connected
+  // This handles cases where initial connection attempts failed (e.g., peer was offline)
+  onMount(() => {
+    const RECONNECT_INTERVAL = 5000; // Try to reconnect every 5 seconds
+
+    const reconnectInterval = setInterval(() => {
+      if (!isLeader()) return;
+      if (peerStatus() !== "connected") return;
+
+      const p = peer();
+      const selfId = myPeerId();
+      if (!p || !selfId) return;
+
+      const knownPeers = knownPeerIds();
+      const connected = currentlyConnectedPeerIds();
+
+      // Find peers that should be connected but aren't
+      const disconnectedPeers = Array.from(knownPeers).filter(
+        (peerId) => peerId !== selfId && !connected.has(peerId),
+      );
+
+      if (disconnectedPeers.length > 0) {
+        logger.log(
+          "P2P [Leader]: Reconnection check - attempting to connect to:",
+          disconnectedPeers,
+        );
+
+        for (const peerId of disconnectedPeers) {
+          // Check if we already have an outgoing connection attempt in progress
+          const existingConn = outgoingConnections().find(
+            (c) => c.peer === peerId,
+          );
+          if (existingConn) {
+            // Connection exists but not open - it might be stuck, close it and retry
+            logger.log(
+              "P2P [Leader]: Closing stuck connection to:",
+              peerId,
+            );
+            existingConn.close();
+          }
+
+          logger.log("P2P [Leader]: Reconnecting to peer:", peerId);
+          const conn = p.connect(peerId, { serialization: "binary" });
+          setupConnection(conn, "outgoing");
+        }
+      }
+    }, RECONNECT_INTERVAL);
+
+    onCleanup(() => clearInterval(reconnectInterval));
+  });
+
   // Helper to persist known peers to localStorage
   function persistKnownPeers(peerIds: string[]) {
     const knownPeersStr = localStorage.getItem("knownPeers");
