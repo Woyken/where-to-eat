@@ -412,6 +412,10 @@ function SettingsPage() {
                   onClick={saveConnectionName}
                   data-testid="connection-name-save"
                   size="sm"
+                  disabled={
+                    !connectionName().trim() ||
+                    connectionName().trim() === currentConnection()?.settings.connection.name
+                  }
                 >
                   <Save class="w-4 h-4" />
                   Save
