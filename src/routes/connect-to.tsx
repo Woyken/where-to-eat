@@ -147,7 +147,7 @@ function RouteComponent() {
       peerId: peerId(),
       connectionId: connectionId(),
     });
-    peer.addNewPeer(peerId());
+    peer.addNewPeer(peerId(), connectionId());
 
     const sendRequest = () => {
       logger.log("connect-to: sending request-storage", {

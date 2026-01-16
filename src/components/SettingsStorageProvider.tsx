@@ -58,6 +58,11 @@ type SettingsStorage = {
     connectionId: string,
     veto: NonNullable<StorageSchemaType["settings"]["eateryVetoes"]>[0],
   ) => void;
+  // Known peers management - scoped per connection
+  addKnownPeer: (connectionId: string, peerId: string) => void;
+  removeKnownPeer: (connectionId: string, peerId: string) => void;
+  getKnownPeers: (connectionId: string) => string[];
+  getAllKnownPeers: () => Map<string, string[]>;
 };
 
 const SettingsStorageContext = Solid.createContext<SettingsStorage>();
@@ -328,6 +333,9 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
                 existing.settings.eateryVetoes ?? [],
                 connection.settings.eateryVetoes ?? [],
               ),
+              // knownPeers is local-only - keep existing, don't sync from remote
+              // Each peer maintains its own list of discovered peers
+              knownPeers: existing.settings.knownPeers ?? [],
             },
           }),
         );
@@ -767,6 +775,59 @@ export function SettingsStorageProvider(props: Solid.ParentProps) {
           );
         }
       }
+    },
+
+    // Known peers management - scoped per connection
+    addKnownPeer: (connectionId, peerId) => {
+      const connectionIdx = store.connections.findIndex(
+        (x) => x.id === connectionId,
+      );
+      if (connectionIdx === -1) return;
+
+      const knownPeers =
+        store.connections[connectionIdx].settings.knownPeers ?? [];
+      if (knownPeers.includes(peerId)) return;
+
+      setSettings(
+        "connections",
+        connectionIdx,
+        "settings",
+        "knownPeers",
+        (peers) => [...(peers ?? []), peerId],
+      );
+    },
+
+    removeKnownPeer: (connectionId, peerId) => {
+      const connectionIdx = store.connections.findIndex(
+        (x) => x.id === connectionId,
+      );
+      if (connectionIdx === -1) return;
+
+      const knownPeers =
+        store.connections[connectionIdx].settings.knownPeers ?? [];
+      const peerIdx = knownPeers.indexOf(peerId);
+      if (peerIdx === -1) return;
+
+      setSettings(
+        "connections",
+        connectionIdx,
+        "settings",
+        "knownPeers",
+        (peers) => (peers ?? []).filter((p) => p !== peerId),
+      );
+    },
+
+    getKnownPeers: (connectionId) => {
+      const connection = store.connections.find((x) => x.id === connectionId);
+      return connection?.settings.knownPeers ?? [];
+    },
+
+    getAllKnownPeers: () => {
+      const result = new Map<string, string[]>();
+      for (const connection of store.connections) {
+        result.set(connection.id, connection.settings.knownPeers ?? []);
+      }
+      return result;
     },
   };
 

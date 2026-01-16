@@ -159,7 +159,7 @@ function WheelPage() {
       (x) => x.id === newUserId,
     );
     if (newUser) {
-      peer.broadcast({
+      peer.broadcastToConnection(connectionId(), {
         type: "updated-user",
         data: {
           connectionId: connectionId(),

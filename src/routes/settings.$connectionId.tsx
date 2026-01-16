@@ -89,7 +89,7 @@ function SettingsPage() {
       (x) => x.id === newUserId,
     );
     if (newUser) {
-      peer.broadcast({
+      peer.broadcastToConnection(connectionId(), {
         type: "updated-user",
         data: {
           connectionId: connectionId(),
@@ -155,7 +155,7 @@ function SettingsPage() {
     );
     if (!newEatery) return;
 
-    peer.broadcast({
+    peer.broadcastToConnection(connectionId(), {
       type: "updated-eatery",
       data: {
         connectionId: connectionId(),
@@ -165,7 +165,7 @@ function SettingsPage() {
 
     // When adding a new eatery, initialize scores for all existing users.
     for (const eateryScore of createdScores) {
-      peer.broadcast({
+      peer.broadcastToConnection(connectionId(), {
         type: "updated-eateryScore",
         data: {
           connectionId: connectionId(),
@@ -177,7 +177,7 @@ function SettingsPage() {
 
   const removeEatery = (id: string) => {
     settingsStorage.removeEatery(connectionId(), id);
-    peer.broadcast({
+    peer.broadcastToConnection(connectionId(), {
       type: "removed-eatery",
       data: {
         connectionId: connectionId(),
@@ -199,7 +199,7 @@ function SettingsPage() {
 
     const updatedEatery = currentConnection()?.settings.eateries.find((x) => x.id === eatery.id);
     if (updatedEatery) {
-      peer.broadcast({
+      peer.broadcastToConnection(connectionId(), {
         type: "updated-eatery",
         data: {
           connectionId: connectionId(),
@@ -227,7 +227,7 @@ function SettingsPage() {
       (x) => x.id === newUserId,
     );
     if (newUser) {
-      peer.broadcast({
+      peer.broadcastToConnection(connectionId(), {
         type: "updated-user",
         data: {
           connectionId: connectionId(),
@@ -243,7 +243,7 @@ function SettingsPage() {
     if (currentUserId() === id) {
       currentUserCtx.clearCurrentUser(connectionId());
     }
-    peer.broadcast({
+    peer.broadcastToConnection(connectionId(), {
       type: "removed-user",
       data: {
         connectionId: connectionId(),
@@ -265,7 +265,7 @@ function SettingsPage() {
 
     const updatedUser = currentConnection()?.settings.users.find((x) => x.id === user.id);
     if (updatedUser) {
-      peer.broadcast({
+      peer.broadcastToConnection(connectionId(), {
         type: "updated-user",
         data: {
           connectionId: connectionId(),
@@ -280,7 +280,7 @@ function SettingsPage() {
 
   const updateUserScore = (userId: string, eateryId: string, score: number) => {
     settingsStorage.updateScore(connectionId(), userId, eateryId, score);
-    peer.broadcast({
+    peer.broadcastToConnection(connectionId(), {
       type: "updated-eateryScore",
       data: {
         connectionId: connectionId(),
@@ -312,7 +312,7 @@ function SettingsPage() {
   const toggleVeto = (userId: string, eateryId: string) => {
     const veto = settingsStorage.toggleVeto(connectionId(), userId, eateryId);
     if (veto) {
-      peer.broadcast({
+      peer.broadcastToConnection(connectionId(), {
         type: "updated-eateryVeto",
         data: {
           connectionId: connectionId(),
@@ -331,7 +331,7 @@ function SettingsPage() {
 
     const updatedAt = Date.now();
     settingsStorage.updateConnection(connectionId(), nextName, updatedAt);
-    peer.broadcast({
+    peer.broadcastToConnection(connectionId(), {
       type: "updated-connection",
       data: {
         connectionId: connectionId(),
