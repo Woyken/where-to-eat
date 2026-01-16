@@ -152,5 +152,10 @@ Professional, warm, and approachable. Uses **burnt orange accent** with clean ty
 - ✅ `.food-card` and `.food-list-item` classes from app.css
 - ✅ Simple copy: "No restaurants yet", "Select a person"
 
+## Plans
+
+- Make the plan extremely concise. Sacrifice grammar for the sake of concision.
+- At the end of each plan, give me a list of unresolved questions to answer, if any.
+
 ---
 *Update this file when adding new patterns or significant architecture changes.*
