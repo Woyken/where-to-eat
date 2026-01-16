@@ -49,10 +49,14 @@ export const storageSchema = v.object({
 export const peer2PeerDataSchema = v.variant("type", [
   v.object({
     type: v.literal("request-known-peers"),
+    data: v.object({ connectionId: v.string() }),
   }),
   v.object({
     type: v.literal("known-peers"),
-    data: v.array(v.string()),
+    data: v.object({
+      connectionId: v.string(),
+      peerIds: v.array(v.string()),
+    }),
   }),
   v.object({
     type: v.literal("request-connection-ids"),

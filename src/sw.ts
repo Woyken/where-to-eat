@@ -36,9 +36,21 @@ precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
 // Navigation requests: Serve index.html (SPA)
-// Check to ensure index.html is in the precache manifest
-// This allows the app to work offline on any route
-registerRoute(new NavigationRoute(createHandlerBoundToURL("index.html")));
+// This allows the app to work offline on any route.
+//
+// IMPORTANT: Restrict NavigationRoute to only match requests within this SW's
+// intended base path. Without this, a SW at /where-to-eat/ would intercept
+// requests to /where-to-eat/previews/pr-17/ and serve the wrong index.html.
+// The negative lookahead (?!previews/) excludes nested preview deployments.
+const swScopePath = new URL(self.registration.scope).pathname;
+const scopeRegex = new RegExp(
+  `^${swScopePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!previews/)`,
+);
+registerRoute(
+  new NavigationRoute(createHandlerBoundToURL("index.html"), {
+    allowlist: [scopeRegex],
+  }),
+);
 
 // Static assets: CacheFirst for performance
 registerRoute(

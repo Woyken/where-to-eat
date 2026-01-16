@@ -42,7 +42,7 @@ type LeaderMessage =
   | { type: "leader-announce"; tabId: string }
   | { type: "p2p-outgoing"; data: Peer2PeerDataSchemaType }
   | { type: "p2p-incoming"; data: Peer2PeerDataSchemaType }
-  | { type: "add-known-peer"; peerId: string }
+  | { type: "add-known-peer"; peerId: string; connectionId: string }
   | { type: "peer-count-update"; count: number }
   | { type: "open-connections"; peerIds: string[] };
 
@@ -102,9 +102,12 @@ export function usePeer2PeerId(): () => string {
 }
 
 const peer2PeerContext = createContext<{
+  /** Broadcast to all connected peers - use only for non-connection-specific messages */
   broadcast: (event: Peer2PeerDataSchemaType) => void;
+  /** Broadcast only to peers that share this connection */
+  broadcastToConnection: (connectionId: string, event: Peer2PeerDataSchemaType) => void;
   sendToPeer: (peerId: string, event: Peer2PeerDataSchemaType) => boolean;
-  addNewPeer: (peerId: string) => void;
+  addNewPeer: (peerId: string, connectionId: string) => void;
   isPeerConnected: (peerId: string) => boolean;
   connectedPeerCount: () => number;
   connectedPeerIds: () => string[];
@@ -136,11 +139,7 @@ export function Peer2PeerSharing(props: ParentProps) {
   const [lastLeaderHeartbeat, setLastLeaderHeartbeat] = createSignal(0);
 
   // P2P state (only used by leader, but tracked by all for UI)
-  const [knownPeerIds, setKnownPeerIds] = createSignal<Set<string>>(new Set(), {
-    equals(prev, next) {
-      return prev.symmetricDifference(next).size === 0;
-    },
-  });
+  // Known peers are now stored per-connection in settingsStorage
   const [myPeerId, setMyPeerId] = createSignal<string | undefined>();
   const [peer, setPeer] = createSignal<Peer>();
   const [peerStatus, setPeerStatus] = createSignal<
@@ -161,6 +160,11 @@ export function Peer2PeerSharing(props: ParentProps) {
       return prev.symmetricDifference(next).size === 0;
     },
   });
+
+  // Track peers that should be added to connections we don't have yet
+  // Key: connectionId, Value: Set of peerIds
+  // When we receive storage for a connection, we'll add these peers to known peers
+  const pendingPeersForConnection = new Map<string, Set<string>>();
 
   // Peer count (synchronized across all tabs via BroadcastChannel)
   const [peerCount, setPeerCount] = createSignal(0);
@@ -278,7 +282,18 @@ export function Peer2PeerSharing(props: ParentProps) {
         case "add-known-peer":
           // A follower wants to add a peer - leader handles it
           if (isLeader()) {
-            setKnownPeerIds((old) => new Set(old).add(msg.peerId));
+            settingsStorage.addKnownPeer(msg.connectionId, msg.peerId);
+            // Also directly connect to this peer
+            const p = peer();
+            const selfId = myPeerId();
+            if (p && peerStatus() === "connected" && selfId && msg.peerId !== selfId) {
+              const alreadyConnected = currentlyConnectedPeerIds();
+              if (!alreadyConnected.has(msg.peerId)) {
+                logger.log("P2P [Leader]: Directly connecting to peer from follower request:", msg.peerId);
+                const conn = p.connect(msg.peerId, { serialization: "binary" });
+                setupConnection(conn, "outgoing");
+              }
+            }
           }
           break;
 
@@ -332,11 +347,29 @@ export function Peer2PeerSharing(props: ParentProps) {
       leaderChannel?.close();
     });
 
-    // Load known peers from localStorage
+    // Migration: Move global known peers to per-connection storage
     const knownPeersStr = localStorage.getItem("knownPeers");
     if (knownPeersStr) {
-      const existingPeers = JSON.parse(knownPeersStr) as string[];
-      setKnownPeerIds((old) => new Set([...old, ...existingPeers]));
+      try {
+        const globalPeers = JSON.parse(knownPeersStr) as string[];
+        if (globalPeers.length > 0) {
+          // Add global peers to all existing connections
+          for (const connection of settingsStorage.store.connections) {
+            for (const peerId of globalPeers) {
+              settingsStorage.addKnownPeer(connection.id, peerId);
+            }
+          }
+          logger.log(
+            "P2P: Migrated global known peers to per-connection storage:",
+            globalPeers,
+          );
+        }
+        // Remove global key after migration
+        localStorage.removeItem("knownPeers");
+        logger.log("P2P: Removed legacy global knownPeers from localStorage");
+      } catch (err) {
+        logger.error("P2P: Failed to migrate global known peers:", err);
+      }
     }
   });
 
@@ -471,7 +504,6 @@ export function Peer2PeerSharing(props: ParentProps) {
         } satisfies LeaderMessage);
         return next;
       });
-      peerConnectionSend(conn, { type: "request-known-peers" });
       // Request which connection IDs the remote peer has
       // We only share connections that both peers have in common
       peerConnectionSend(conn, { type: "request-connection-ids" });
@@ -519,7 +551,8 @@ export function Peer2PeerSharing(props: ParentProps) {
 
     if (direction === "incoming") {
       setIncomingConnections((prev) => [...prev, conn]);
-      setKnownPeerIds((prev) => new Set(prev).add(conn.peer));
+      // Note: We no longer add to knownPeers here globally
+      // Instead, peers are added per-connection when we discover shared connections
     } else {
       setOutgoingConnections((prev) => [...prev, conn]);
     }
@@ -571,17 +604,24 @@ export function Peer2PeerSharing(props: ParentProps) {
 
     // Handle protocol messages locally
     switch (message.type) {
-      case "request-known-peers":
+      case "request-known-peers": {
+        // Send known peers for the requested connection
+        const connectionId = message.data.connectionId;
+        const knownPeers = settingsStorage.getKnownPeers(connectionId);
         peerConnectionSend(conn, {
           type: "known-peers",
-          data: Array.from(knownPeerIds()),
+          data: { connectionId, peerIds: knownPeers },
         });
         return;
-      case "known-peers":
-        setKnownPeerIds((old) => new Set([...old, ...message.data]));
-        // Persist gossip-learned peers to localStorage
-        persistKnownPeers(message.data);
+      }
+      case "known-peers": {
+        // Add received peers to the specific connection's peer list
+        const { connectionId, peerIds } = message.data;
+        for (const peerId of peerIds) {
+          settingsStorage.addKnownPeer(connectionId, peerId);
+        }
         return;
+      }
       case "request-connection-ids":
         // Respond with the connection IDs we have locally
         peerConnectionSend(conn, {
@@ -594,8 +634,13 @@ export function Peer2PeerSharing(props: ParentProps) {
         // Send storage data only for connections that we BOTH have
         const remoteConnectionIds = new Set(message.data);
         const localConnections = settingsStorage.store.connections;
+        const localConnectionIds = new Set(localConnections.map(c => c.id));
+
         for (const connectionData of localConnections) {
           if (remoteConnectionIds.has(connectionData.id)) {
+            // Add this peer to the shared connection's known peers
+            settingsStorage.addKnownPeer(connectionData.id, conn.peer);
+
             const data = unwrap(connectionData);
             if (data) {
               logger.log(
@@ -604,8 +649,27 @@ export function Peer2PeerSharing(props: ParentProps) {
               );
               peerConnectionSend(conn, { type: "storage", data });
             }
+
+            // Request known peers for this specific connection
+            peerConnectionSend(conn, {
+              type: "request-known-peers",
+              data: { connectionId: connectionData.id },
+            });
           }
         }
+
+        // For connections the remote peer has but we don't, mark them as pending
+        // so we can add the peer to known peers when we receive the storage data
+        for (const remoteConnId of remoteConnectionIds) {
+          if (!localConnectionIds.has(remoteConnId)) {
+            logger.log("P2P [Leader]: Marking peer as pending for connection we don't have:", remoteConnId, conn.peer);
+            if (!pendingPeersForConnection.has(remoteConnId)) {
+              pendingPeersForConnection.set(remoteConnId, new Set());
+            }
+            pendingPeersForConnection.get(remoteConnId)!.add(conn.peer);
+          }
+        }
+
         // Also respond with our own connection IDs so the remote peer sends us their state
         // This ensures bidirectional sync even after leader changes
         // Only do this once per peer to avoid infinite loops
@@ -615,6 +679,25 @@ export function Peer2PeerSharing(props: ParentProps) {
             type: "connection-ids",
             data: localConnections.map((c) => c.id),
           });
+        }
+        return;
+      }
+      case "request-storage": {
+        // Handle request-storage in leader handler to respond directly to requester
+        const connectionId = message.data.connectionId;
+        logger.log("P2P [Leader]: Received request-storage for:", connectionId, "from:", conn.peer);
+        
+        const connectionData = unwrap(
+          settingsStorage.store.connections.find((c) => c.id === connectionId),
+        );
+        
+        if (connectionData) {
+          // Add requester to known peers for this connection (they're joining)
+          settingsStorage.addKnownPeer(connectionId, conn.peer);
+          
+          // Send storage directly to the requester
+          logger.log("P2P [Leader]: Sending storage directly to requester:", conn.peer);
+          peerConnectionSend(conn, { type: "storage", data: connectionData });
         }
         return;
       }
@@ -637,35 +720,35 @@ export function Peer2PeerSharing(props: ParentProps) {
       case "request-known-peers":
       case "request-connection-ids":
       case "connection-ids":
+      case "request-storage":
         // Already handled by leader in handleIncomingPeerData
         break;
-      case "request-storage": {
-        logger.log(
-          "P2P: Received request-storage for connectionId:",
-          event.data.connectionId,
-        );
-        // Only the leader should respond to request-storage from peers
-        // Followers will also see this via p2p-incoming but should not respond
-        // (to avoid duplicate responses)
-        if (!isFromLocalBroadcast || isLeader()) {
-          const connectionData = unwrap(
-            settingsStorage.store.connections.find(
-              (c) => c.id === event.data.connectionId,
-            ),
-          );
-          if (connectionData) {
-            broadcast({ type: "storage", data: connectionData });
-          }
-        }
-        break;
-      }
-      case "storage":
+      case "storage": {
+        const connectionId = event.data.id;
         logger.log(
           "P2P: Received storage data for connectionId:",
-          event.data.id,
+          connectionId,
         );
         settingsStorage.setConnection(event.data);
+
+        // Check if there are pending peers waiting to be added to this connection
+        const pendingPeers = pendingPeersForConnection.get(connectionId);
+        if (pendingPeers && pendingPeers.size > 0) {
+          logger.log("P2P: Adding pending peers to connection:", connectionId, Array.from(pendingPeers));
+          for (const peerId of pendingPeers) {
+            settingsStorage.addKnownPeer(connectionId, peerId);
+          }
+          pendingPeersForConnection.delete(connectionId);
+        }
+
+        // Now that we have this connection, request known peers from peers that share this connection
+        // This helps discover other peers in the mesh
+        broadcastToConnection(connectionId, {
+          type: "request-known-peers",
+          data: { connectionId },
+        });
         break;
+      }
       case "updated-eatery":
         settingsStorage.upsertEatery(
           event.data.connectionId,
@@ -714,9 +797,14 @@ export function Peer2PeerSharing(props: ParentProps) {
   createEffect(() => logger.log("P2P: Peer status changed", peerStatus()));
   createEffect(() => logger.log("P2P: Peer changed", peer()));
   createEffect(() => logger.log("P2P: My peer ID changed", myPeerId()));
-  createEffect(() =>
-    logger.log("P2P: Known peers changed", Array.from(knownPeerIds())),
-  );
+  createEffect(() => {
+    const allPeers = settingsStorage.getAllKnownPeers();
+    const logObj: Record<string, string[]> = {};
+    for (const [connId, peers] of allPeers) {
+      logObj[connId] = peers;
+    }
+    logger.log("P2P: Known peers changed (per-connection)", logObj);
+  });
   createEffect(() =>
     logger.log(
       "P2P: Currently connected peers changed",
@@ -731,15 +819,23 @@ export function Peer2PeerSharing(props: ParentProps) {
     const status = peerStatus();
     const p = peer();
     const selfId = myPeerId();
-    const knownPeers = knownPeerIds();
     const alreadyConnected = currentlyConnectedPeerIds();
+
+    // Gather all unique known peers across all connections
+    const allKnownPeers = new Set<string>();
+    for (const connection of settingsStorage.store.connections) {
+      const peers = connection.settings.knownPeers ?? [];
+      for (const peerId of peers) {
+        allKnownPeers.add(peerId);
+      }
+    }
 
     logger.log("P2P: Connect effect running", {
       isLeader: leader,
       peerStatus: status,
       hasPeer: !!p,
       selfId,
-      knownPeers: Array.from(knownPeers),
+      knownPeers: Array.from(allKnownPeers),
       alreadyConnected: Array.from(alreadyConnected),
     });
 
@@ -748,7 +844,7 @@ export function Peer2PeerSharing(props: ParentProps) {
     if (!p) return;
     if (!selfId) return;
 
-    for (const peerId of knownPeers) {
+    for (const peerId of allKnownPeers) {
       if (peerId === selfId) continue;
       if (alreadyConnected.has(peerId)) continue;
 
@@ -771,11 +867,18 @@ export function Peer2PeerSharing(props: ParentProps) {
       const selfId = myPeerId();
       if (!p || !selfId) return;
 
-      const knownPeers = knownPeerIds();
+      // Gather all unique known peers across all connections
+      const allKnownPeers = new Set<string>();
+      for (const connection of settingsStorage.store.connections) {
+        const peers = connection.settings.knownPeers ?? [];
+        for (const peerId of peers) {
+          allKnownPeers.add(peerId);
+        }
+      }
       const connected = currentlyConnectedPeerIds();
 
       // Find peers that should be connected but aren't
-      const disconnectedPeers = Array.from(knownPeers).filter(
+      const disconnectedPeers = Array.from(allKnownPeers).filter(
         (peerId) => peerId !== selfId && !connected.has(peerId),
       );
 
@@ -809,48 +912,47 @@ export function Peer2PeerSharing(props: ParentProps) {
     onCleanup(() => clearInterval(reconnectInterval));
   });
 
-  // Helper to persist known peers to localStorage
-  function persistKnownPeers(peerIds: string[]) {
-    const knownPeersStr = localStorage.getItem("knownPeers");
-    const existingPeers = knownPeersStr
-      ? (JSON.parse(knownPeersStr) as string[])
-      : [];
-    let changed = false;
-    for (const peerId of peerIds) {
-      if (!existingPeers.includes(peerId)) {
-        existingPeers.push(peerId);
-        changed = true;
-      }
-    }
-    if (changed) {
-      localStorage.setItem("knownPeers", JSON.stringify(existingPeers));
-    }
-  }
-
   function broadcastToPeers(message: Peer2PeerDataSchemaType) {
     const connections = [...incomingConnections(), ...outgoingConnections()];
     connections.forEach((conn) => peerConnectionSend(conn, message));
   }
 
   // Public API
-  function addNewPeer(peerId: string) {
-    logger.log("P2P: Adding new known peer:", peerId);
+  function addNewPeer(peerId: string, connectionId: string) {
+    logger.log("P2P: Adding new known peer:", peerId, "for connection:", connectionId);
 
-    // Always add to local state first (leader will pick it up via effect)
-    setKnownPeerIds((old) => new Set(old).add(peerId));
+    // Add to the specific connection's known peers (if connection exists)
+    settingsStorage.addKnownPeer(connectionId, peerId);
 
-    if (!isLeader()) {
-      // Also tell leader to add this peer
-      leaderChannel?.postMessage({
-        type: "add-known-peer",
-        peerId,
-      } satisfies LeaderMessage);
-    }
+    // Always tell leader to add this peer (in case we're not leader or leader election is pending)
+    leaderChannel?.postMessage({
+      type: "add-known-peer",
+      peerId,
+      connectionId,
+    } satisfies LeaderMessage);
 
-    // Persist to localStorage
-    persistKnownPeers([peerId]);
+    // Also try to connect directly if we're the leader
+    // This handles the case where we become leader after the broadcast message is sent
+    const tryConnect = () => {
+      const p = peer();
+      const selfId = myPeerId();
+      if (isLeader() && p && peerStatus() === "connected" && selfId && peerId !== selfId) {
+        const alreadyConnected = currentlyConnectedPeerIds();
+        if (!alreadyConnected.has(peerId)) {
+          logger.log("P2P [Leader]: Directly connecting to new peer:", peerId);
+          const conn = p.connect(peerId, { serialization: "binary" });
+          setupConnection(conn, "outgoing");
+        }
+      }
+    };
 
-    requestStorageForAllConnections();
+    // Try immediately
+    tryConnect();
+
+    // Also try after a short delay (in case leader election completes)
+    setTimeout(tryConnect, 500);
+
+    requestStorageForConnection(connectionId);
   }
 
   function broadcast(event: Peer2PeerDataSchemaType) {
@@ -865,6 +967,34 @@ export function Peer2PeerSharing(props: ParentProps) {
         data: event,
       } satisfies LeaderMessage);
     }
+  }
+
+  function broadcastToConnection(connectionId: string, event: Peer2PeerDataSchemaType) {
+    logger.log("P2P: Broadcasting to connection:", connectionId, "event:", event.type);
+
+    if (isLeader()) {
+      broadcastToConnectionPeers(connectionId, event);
+    } else {
+      // Send to leader to broadcast (leader will filter by connection)
+      leaderChannel?.postMessage({
+        type: "p2p-outgoing",
+        data: event,
+      } satisfies LeaderMessage);
+    }
+  }
+
+  function broadcastToConnectionPeers(connectionId: string, message: Peer2PeerDataSchemaType) {
+    // Get known peers for this specific connection
+    const knownPeersForConnection = new Set(settingsStorage.getKnownPeers(connectionId));
+    
+    // Filter open connections to only include peers that are known for this connection
+    const connections = [...incomingConnections(), ...outgoingConnections()];
+    const relevantConnections = connections.filter(conn => knownPeersForConnection.has(conn.peer));
+    
+    logger.log("P2P: Sending to", relevantConnections.length, "peers for connection:", connectionId, 
+      "out of", connections.length, "total connections");
+    
+    relevantConnections.forEach((conn) => peerConnectionSend(conn, message));
   }
 
   function sendToPeer(peerId: string, event: Peer2PeerDataSchemaType): boolean {
@@ -895,18 +1025,16 @@ export function Peer2PeerSharing(props: ParentProps) {
     return openConnections().has(peerId);
   }
 
-  function requestStorageForAllConnections() {
-    const connectionIds = settingsStorage.store.connections.map((c) => c.id);
-    logger.log("P2P: Requesting storage for connections:", connectionIds);
-    for (const connectionId of connectionIds) {
-      broadcast({ type: "request-storage", data: { connectionId } });
-    }
+  function requestStorageForConnection(connectionId: string) {
+    logger.log("P2P: Requesting storage for connection:", connectionId);
+    broadcast({ type: "request-storage", data: { connectionId } });
   }
 
   return (
     <peer2PeerContext.Provider
       value={{
         broadcast,
+        broadcastToConnection,
         sendToPeer,
         addNewPeer,
         isPeerConnected,

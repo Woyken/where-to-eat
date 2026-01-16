@@ -34,19 +34,9 @@ function getWorkbox(): Workbox | null {
       // Request current status from service worker
       p2pRequestStatus();
 
-      // Send known peers from localStorage to service worker
-
-      const knownPeersStr = localStorage.getItem("knownPeers");
-      const knownPeers = knownPeersStr
-        ? (JSON.parse(knownPeersStr) as string[])
-        : [];
-
-      if (knownPeers.length > 0) {
-        sendMessageToSW({
-          type: "set-known-peer-ids",
-          data: knownPeers,
-        });
-      }
+      // Note: Known peers are now stored per-connection in localStorage (wte-connections)
+      // and are managed by SettingsStorageProvider. The SW doesn't need them directly
+      // since P2P is handled client-side.
     });
 
     // Handle updates found (waiting state)

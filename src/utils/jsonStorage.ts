@@ -45,6 +45,8 @@ export const storageSchema = v.object({
     eateryScores: v.array(storageEateryScoreSchema),
     // Optional for backwards compatibility with already-saved local data.
     eateryVetoes: v.optional(v.array(storageEateryVetoSchema)),
+    // Known peer IDs for P2P reconnection - scoped per connection
+    knownPeers: v.optional(v.array(v.string())),
   }),
 });
 
