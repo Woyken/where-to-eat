@@ -1,5 +1,34 @@
 import { expect, test } from "@playwright/test";
-import { selectOrCreateUser } from "./helpers";
+import { injectConnectionData, selectOrCreateUser } from "./helpers";
+
+test("settings shows relative last edited tag", async ({ page }) => {
+  const connectionId = "11111111-1111-4111-8111-111111111111";
+  const fiveMonthsAgo = Date.now() - 5 * 30 * 24 * 60 * 60 * 1000 - 60_000;
+
+  await injectConnectionData(page, {
+    id: connectionId,
+    settings: {
+      connection: { name: "Session", updatedAt: fiveMonthsAgo },
+      eateries: [],
+      users: [
+        {
+          id: "user-1",
+          name: "Test User",
+          email: null,
+          updatedAt: fiveMonthsAgo,
+        },
+      ],
+      eateryScores: [],
+      eateryVetoes: [],
+    },
+  });
+
+  await page.goto(`/settings/${connectionId}`);
+
+  await expect(page.getByTestId("last-edited-tag")).toContainText(
+    "Last edited 5 months ago",
+  );
+});
 
 test("can name a new connection and rename it", async ({ page }) => {
   await page.goto("/");

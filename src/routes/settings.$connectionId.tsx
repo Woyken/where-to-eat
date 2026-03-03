@@ -10,6 +10,7 @@ import { createEffect, createMemo, createSignal, For, Show } from "solid-js";
 import { useCurrentUser } from "~/components/CurrentUserProvider";
 import { useSettingsStorage } from "~/components/SettingsStorageProvider";
 import { UserSelectionDialog } from "~/components/UserSelectionDialog";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
@@ -28,6 +29,31 @@ import {
 import { StorageSchemaType } from "~/utils/jsonStorage";
 import { logger } from "~/utils/logger";
 import { usePeer2Peer } from "~/utils/peer2peerSharing";
+
+const relativeTimeFormat = new Intl.RelativeTimeFormat(undefined, {
+  numeric: "auto",
+});
+
+const formatRelativeTime = (timestamp: number) => {
+  const diffSeconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (diffSeconds < 60) return "just now";
+
+  const units = [
+    { unit: "year", seconds: 60 * 60 * 24 * 365 },
+    { unit: "month", seconds: 60 * 60 * 24 * 30 },
+    { unit: "day", seconds: 60 * 60 * 24 },
+    { unit: "hour", seconds: 60 * 60 },
+    { unit: "minute", seconds: 60 },
+  ] as const;
+
+  for (const { unit, seconds } of units) {
+    if (diffSeconds >= seconds) {
+      return relativeTimeFormat.format(-Math.floor(diffSeconds / seconds), unit);
+    }
+  }
+
+  return "just now";
+};
 
 export const Route = createFileRoute("/settings/$connectionId")({
   component: SettingsPage,
@@ -305,6 +331,23 @@ function SettingsPage() {
       (x) => !x._deleted,
     ),
   );
+  const lastSettingsUpdatedAt = createMemo(() => {
+    const conn = currentConnection();
+    if (!conn) return 0;
+
+    const timestamps = [
+      conn.settings.connection.updatedAt,
+      ...conn.settings.eateries.map((x) => x.updatedAt),
+      ...conn.settings.users.map((x) => x.updatedAt),
+      ...conn.settings.eateryScores.map((x) => x.updatedAt),
+      ...(conn.settings.eateryVetoes ?? []).map((x) => x.updatedAt),
+    ];
+
+    return Math.max(...timestamps);
+  });
+  const lastEditedText = createMemo(() =>
+    formatRelativeTime(lastSettingsUpdatedAt()),
+  );
 
   const isEateryVetoed = (userId: string, eateryId: string) =>
     activeVetoes().some((v) => v.userId === userId && v.eateryId === eateryId);
@@ -390,7 +433,12 @@ function SettingsPage() {
           {/* Connection Name Card */}
           <Card class="food-card page-section">
             <CardHeader class="pb-3">
-              <CardTitle class="text-base">Session Name</CardTitle>
+              <CardTitle class="text-base flex items-center justify-between gap-2">
+                <span>Session Name</span>
+                <Badge variant="secondary" data-testid="last-edited-tag">
+                  Last edited {lastEditedText()}
+                </Badge>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div class="flex flex-col sm:flex-row gap-3 sm:items-end">
