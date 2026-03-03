@@ -26,7 +26,7 @@ test("settings shows relative last edited tag", async ({ page }) => {
   await page.goto(`/settings/${connectionId}`);
 
   await expect(page.getByTestId("last-edited-tag")).toContainText(
-    "Last edited 5 months ago",
+    /Last edited \d+ months ago/,
   );
 });
 

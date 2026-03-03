@@ -343,7 +343,10 @@ function SettingsPage() {
       ...(conn.settings.eateryVetoes ?? []).map((x) => x.updatedAt),
     ];
 
-    return Math.max(...timestamps);
+    return Math.max(
+      0,
+      ...timestamps.filter((x): x is number => Number.isFinite(x)),
+    );
   });
   const lastEditedText = createMemo(() =>
     formatRelativeTime(lastSettingsUpdatedAt()),
